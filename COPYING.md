@@ -5,17 +5,18 @@ Orphos is licensed under 2-Clause BSD License
 
 ## 2-Clause BSD License
 ```
-Copyright 2018 Takezoe,Tomoaki <tomoaki3478@res.ac>
+Copyright (c) 2018 Takezoe,Tomoaki <tomoaki3478@res.ac>
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
+   list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Apache License, Version 2.0
 ```
-Copyright 2018 Takezoe,Tomoaki <tomoaki3478@res.ac>
+Copyright (c) 2018 Takezoe,Tomoaki <tomoaki3478@res.ac>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
