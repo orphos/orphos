@@ -1,4 +1,4 @@
-# Copying
+# License
 Orphos is licensed under 2-Clause BSD License
 <https://opensource.org/licenses/BSD-2-Clause>, or Apache License, Version 2.0
 <https://www.apache.org/licenses/LICENSE-2.0>, at your option.
