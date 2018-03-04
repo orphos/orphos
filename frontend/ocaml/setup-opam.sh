@@ -19,5 +19,11 @@ opam pin -y add biniou 1.2.0
 opam pin -y add yojson 1.4.1
 opam pin -y add merlin 3.0.5
 
+opam pin -y add result 1.3
+opam pin -y add topkg 0.9.1
+opam pin -y add cmdliner 1.0.2
+opam pin -y add ocp-build 1.99.20-beta
+opam pin -y add ocp-indent 1.6.1
+
 echo 'Run `eval $(opam config env)` before starting to develop ocaml-orphos!'
 
