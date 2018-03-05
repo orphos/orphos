@@ -1,5 +1,5 @@
 {
-open Mlorphc_parsing
+open Mlorph_parsing
 }
 rule lex = parse
   | eof { EOF }

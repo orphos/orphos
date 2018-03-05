@@ -8,5 +8,5 @@ clean:
 %.native:
 	ocamlbuild $@
 
-test: mlorphc.native
-	./mlorphc.native
+test: mlorph.native
+	./mlorph.native
