@@ -10,6 +10,7 @@ opam pin -y add ocamlbuild 0.12.0
 opam pin -y add batteries 2.8.0
 opam pin -y add jbuilder 1.0+beta18
 opam pin -y add menhir 20171222
+opam pin -y add zarith 1.7
 opam pin -y add ounit 2.0.7
 
 # development tools

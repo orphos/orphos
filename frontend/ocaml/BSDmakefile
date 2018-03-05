@@ -1,0 +1,12 @@
+.PHONY: all clean test
+
+all: test
+
+clean:
+	ocamlbuild -clean
+
+mlorphc.native:
+	ocamlbuild ${.TARGET}
+
+test: mlorphc.native
+	./mlorphc.native
