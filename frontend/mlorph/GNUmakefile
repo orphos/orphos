@@ -5,8 +5,10 @@ all: test
 clean:
 	ocamlbuild -clean
 
-%.native:
+%.native: FORCE
 	ocamlbuild $@
+
+FORCE:
 
 test: mlorph.native
 	./mlorph.native
