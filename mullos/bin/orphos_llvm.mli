@@ -2,4 +2,4 @@
  *
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
-val hello_llvm: unit -> string;
+val hello_llvm: unit -> string
