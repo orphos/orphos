@@ -1,0 +1,39 @@
+opam-version: "2.0"
+name: "mullos"
+version: "1.0.0-m.1"
+synopsis: "Mullos is an implementation of Orphos Programming Language"
+maintainer: "tomoaki3478@res.ac"
+authors: ["Takezoe,Tomoaki"]
+homepage: "https://orphos.res.ac/"
+bug-reports: "https://github.com/orphos/orphos"
+dev-repo: "git+https://github.com/orphos/orphos.git"
+license: "LGPLv3-or-later"
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name] {with-test}
+]
+depends: [
+  "ISO8601" {= "0.2.5"}
+  "base" {= "v0.11.1"}
+  "base-bigarray" {= "base"}
+  "base-bytes" {= "base"}
+  "base-threads" {= "base"}
+  "base-unix" {= "base"}
+  "conf-m4" {= "1"}
+  "conf-pkg-config" {= "1.1"}
+  "conf-sqlite3" {= "1"}
+  "dune" {= "1.5.1"}
+  "gen" {= "0.5.1"}
+  "jbuilder" {= "transition"}
+  "menhir" {= "20181113"}
+  "ocaml" {= "4.07.1"}
+  "ocaml-base-compiler" {= "4.07.1"}
+  "ocamlbuild" {= "0.12.0"}
+  "ocamlfind" {= "1.8.0"}
+  "ppx_tools" {= "5.1+4.06.0"}
+  "sedlex" {= "1.99.3"}
+  "sexplib0" {= "v0.11.0"}
+  "sqlite3" {= "4.4.1"}
+  "stdio" {= "v0.11.0"}
+  "toml" {= "5.0.0"}
+]

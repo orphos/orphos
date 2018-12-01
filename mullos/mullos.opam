@@ -1,0 +1,24 @@
+opam-version: "2.0"
+name: "mullos"
+version: "1.0.0-m.1"
+synopsis: "Mullos is an implementation of Orphos Programming Language"
+maintainer: "tomoaki3478@res.ac"
+authors: ["Takezoe,Tomoaki"]
+homepage: "https://orphos.res.ac/"
+bug-reports: "https://github.com/orphos/orphos"
+dev-repo: "git+https://github.com/orphos/orphos.git"
+license: "LGPLv3-or-later"
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name] {with-test}
+]
+depends: [
+  "ocaml"
+  "dune" {build}
+  "base"
+  "sedlex"
+  "menhir"
+  "sqlite3"
+  "toml"
+  "llvm"
+]
