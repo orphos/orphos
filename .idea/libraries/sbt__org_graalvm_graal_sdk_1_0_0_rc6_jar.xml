@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.graalvm:graal-sdk:1.0.0-rc6:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.graalvm/graal-sdk/jars/graal-sdk-1.0.0-rc6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.graalvm/graal-sdk/srcs/graal-sdk-1.0.0-rc6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

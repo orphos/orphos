@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: com.oracle.truffle:truffle-api:1.0.0-rc6:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.oracle.truffle/truffle-api/jars/truffle-api-1.0.0-rc6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.oracle.truffle/truffle-api/srcs/truffle-api-1.0.0-rc6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
