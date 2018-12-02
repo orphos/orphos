@@ -1,6 +1,8 @@
 (executables
  (names orphos_main)
- (libraries llvm))
+ (libraries
+   base
+   llvm))
 
 (install
  (section bin)
