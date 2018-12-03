@@ -2,4 +2,4 @@
  *
  * SPDX-Identifier:LGPL-3.0-or-later
  *)
-let _ = print_endline (Orphos_llvm.hello_llvm ())
+let _ = print_endline (Mullos_llvm.hello_llvm ())

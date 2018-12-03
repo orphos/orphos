@@ -1,9 +1,9 @@
 (executables
- (names orphos_main)
+ (names mullos_main)
  (libraries
    base
    llvm))
 
 (install
  (section bin)
-(files (orphos_main.exe as mullos)))
+(files (mullos_main.exe as mullos)))
