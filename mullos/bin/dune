@@ -4,6 +4,9 @@
    base
    llvm))
 
+(menhir
+  (modules mullos_parser))
+
 (install
  (section bin)
 (files (mullos_main.exe as mullos)))
