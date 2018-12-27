@@ -149,7 +149,9 @@ variant_body:
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
 
-type_class: TYPE CLASS TYPE_IDENTIFIER type_parameter_list? EQ INDENT type_class_body DEDENT { () }
+type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? CLASS INDENT type_class_body DEDENT { () }
+
+type_class_parameter: TYPE_IDENTIFIER type_parameter_list? EQ_GREATER { () }
 
 type_parameter_list:
   TYPE_IDENTIFIER { () }
