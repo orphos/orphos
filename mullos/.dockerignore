@@ -1,0 +1,6 @@
+/_opam
+/_build
+.merlin
+/mullos.install
+/.idea
+/Dockerfile

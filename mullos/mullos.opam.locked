@@ -20,7 +20,7 @@ depends: [
   "base-threads" {= "base"}
   "base-unix" {= "base"}
   "conf-cmake" {= "1"}
-  "conf-llvm" {= "7.0.0"}
+  "conf-llvm" {= "5.0.0"}
   "conf-m4" {= "1"}
   "conf-pkg-config" {= "1.1"}
   "conf-python-2-7" {= "1.0"}
@@ -30,7 +30,7 @@ depends: [
   "gen" {= "0.5.1"}
   "integers" {= "0.2.2"}
   "jbuilder" {= "transition"}
-  "llvm" {= "7.0.0"}
+  "llvm" {= "5.0.0"}
   "menhir" {= "20181113"}
   "ocaml" {= "4.07.1"}
   "ocaml-base-compiler" {= "4.07.1"}
