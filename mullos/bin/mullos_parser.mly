@@ -60,12 +60,12 @@
 
 compilation_unit: definition_list  EOF { () }
 
-definition: DEF pattern parameter_list EQ expression where_clause? { () }
+definition: DEF pattern parameter_list? EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN expression RPAREN
   | expression LPAREN argument_list RPAREN { () }
-  | LET pattern parameter_list EQ expression SEMI expression { () }
+  | LET pattern parameter_list? EQ expression SEMI expression { () }
   | expression PLUS expression { () }
   | expression HYPHEN expression { () }
   | expression ASTERISK expression { () }
