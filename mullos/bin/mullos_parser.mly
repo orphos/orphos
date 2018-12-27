@@ -94,6 +94,8 @@ expression: IDENTIFIER { () }
   | PLUS expression { () }
   | HYPHEN expression { () }
   | CIRCUMFLEX expression { () }
+  | AMPERSAND expression { () }
+  | ASTERISK expression { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
@@ -141,6 +143,7 @@ type_expression:
   | LPAREN type_expression RPAREN { () }
   | TYPE_IDENTIFIER type_argument_list { () }
   | type_expression COMMA type_expression { () }
+  | ASTERISK type_expression { () }
 
 type_argument_list:
   type_expression { () }
