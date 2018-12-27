@@ -10,6 +10,7 @@
 %token SEMI
 %token COMMA
 %token DEF
+%token LET
 %token WHERE
 %token <string * Lexing.position> IDENTIFIER
 %token EOF
