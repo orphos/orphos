@@ -24,6 +24,7 @@ value_definition: DEF IDENTIFIER EQ expression { () }
 
 expression: IDENTIFIER { () }
   | expression LPAREN argument_list RPAREN { () }
+  | LET IDENTIFIER EQ expression SEMI expression { () }
 
 argument_list:
   expression { () }
