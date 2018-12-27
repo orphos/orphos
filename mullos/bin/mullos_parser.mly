@@ -76,7 +76,13 @@ linkage:
   INTERNAL { () }
   | EXTERNAL { () }
 
-definition: linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+annotation: AT IDENTIFIER LPAREN argument_list? RPAREN { () }
+
+annotation_list:
+  annotation { () }
+  | annotation annotation_list { () }
+
+definition: annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
