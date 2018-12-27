@@ -58,6 +58,7 @@
 %token DATA
 %token RAISE
 %token CATCH
+%token BIG_DOT
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -207,11 +208,17 @@ declaration: DEF IDENTIFIER COLON type_expression { () }
 
 instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LBRACKET definition_list RBRACKET { () }
 
+extensible_variant_declaration: TYPE TYPE_IDENTIFIER EQ BIG_DOT { () }
+
+extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_clause { () }
+
 top_level_definition:
   definition { () }
   | type_class { () }
   | variant { () }
   | declaration { () }
+  | extensible_variant_declaration { () }
+  | extensible_variant_definition { () }
 
 top_level_definition_list:
   top_level_definition { () }
