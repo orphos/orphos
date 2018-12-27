@@ -46,7 +46,7 @@
 
 compilation_unit: definition_list  EOF { () }
 
-value_definition: DEF IDENTIFIER EQ expression { () }
+value_definition: DEF IDENTIFIER EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN expression RPAREN
