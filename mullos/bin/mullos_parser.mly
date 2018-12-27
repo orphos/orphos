@@ -91,6 +91,7 @@ expression: IDENTIFIER { () }
   | expression COMMA expression { () }
   | expression MATCH INDENT pattern_clause_list DEDENT { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
+  | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
   | expression SEMI expression { () }
   | TEXT { () }
