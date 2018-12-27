@@ -48,6 +48,7 @@
 %token TEXT
 %token NUMBER
 %token FN
+%token UNSAFE
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -64,7 +65,7 @@
 
 compilation_unit: top_level_definition_list  EOF { () }
 
-definition: DEF pattern parameter_list? EQ expression where_clause? { () }
+definition: UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
