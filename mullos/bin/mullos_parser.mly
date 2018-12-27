@@ -14,8 +14,6 @@
 %token WHERE
 %token <string * Lexing.position> IDENTIFIER
 %token EOF
-%token INDENT
-%token DEDENT
 %token PLUS
 %token HYPHEN
 %token ASTERISK
@@ -89,7 +87,7 @@ expression: IDENTIFIER { () }
   | expression VERTICAL expression { () }
   | expression BIG_VERTICAL expression { () }
   | expression COMMA expression { () }
-  | expression MATCH INDENT pattern_clause_list DEDENT { () }
+  | expression MATCH LBRACKET pattern_clause_list RBRACKET { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
@@ -127,7 +125,7 @@ parameter_list:
   pattern { () }
   | pattern parameter_list { () }
 
-where_clause: WHERE INDENT definition_list DEDENT { () }
+where_clause: WHERE LBRACKET definition_list RBRACKET { () }
 
 definition_list: definition { () }
   | definition SEMI definition_list { () }
@@ -151,7 +149,7 @@ variant_body:
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
 
-type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? CLASS INDENT type_class_body DEDENT { () }
+type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? CLASS LBRACKET type_class_body RBRACKET { () }
 
 type_class_parameter: TYPE_IDENTIFIER type_parameter_list? EQ_GREATER { () }
 
@@ -167,7 +165,7 @@ declaration_list:
 
 declaration: DEF IDENTIFIER COLON type_expression { () }
 
-instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ INDENT definition_list DEDENT { () }
+instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LBRACKET definition_list RBRACKET { () }
 
 top_level_definition:
   definition { () }
