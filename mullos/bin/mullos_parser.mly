@@ -52,6 +52,7 @@
 %token PLUS_EQ
 %token HYPHEN_EQ
 %token BIG_EQ
+%token COLON_EQ
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -97,7 +98,7 @@ expression: IDENTIFIER { () }
   | expression MATCH LBRACKET pattern_clause_list RBRACKET { () }
   | expression PLUS_EQ expression { () }
   | expression HYPHEN_EQ expression { () }
-  | expression EQ expression { () }
+  | expression COLON_EQ expression { () }
   | EXCLAMATION expression { () }
   | PLUS expression { () }
   | HYPHEN expression { () }
