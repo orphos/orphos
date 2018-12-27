@@ -55,6 +55,7 @@
 %token COLON_EQ
 %token EXTERNAL
 %token INTERNAL
+%token DATA
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -171,7 +172,11 @@ type_argument_list:
   | type_expression type_argument_list { () }
 
 variant:
-  TYPE TYPE_IDENTIFIER EQ variant_body { () }
+  DATA TYPE_IDENTIFIER variant_parameter_list? EQ variant_body { () }
+
+variant_parameter_list:
+  TYPE_IDENTIFIER { () }
+  | TYPE_IDENTIFIER variant_parameter_list { () }
 
 variant_body:
   variant_clause { () }
@@ -179,7 +184,7 @@ variant_body:
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
 
-type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? CLASS LBRACKET type_class_body RBRACKET { () }
+type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LBRACKET type_class_body RBRACKET { () }
 
 type_class_parameter: TYPE_IDENTIFIER type_parameter_list? EQ_GREATER { () }
 
