@@ -83,6 +83,7 @@ expression: IDENTIFIER { () }
   | expression COMMA expression { () }
   | expression MATCH INDENT pattern_clause_list DEDENT { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
+  | expression COLON TYPE_IDENTIFIER { () }
 
 pattern_clause_list:
   pattern_clause { () }
