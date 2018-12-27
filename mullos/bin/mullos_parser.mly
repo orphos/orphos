@@ -16,6 +16,11 @@
 %token EOF
 %token INDENT
 %token DEDENT
+%token OP_ADDPREC
+%token OP_MULPREC
+
+%left OP_ADDPREC
+%left OP_MULPREC
 
 %start<unit> compilation_unit
 
@@ -28,6 +33,8 @@ value_definition: DEF IDENTIFIER EQ expression { () }
 expression: IDENTIFIER { () }
   | expression LPAREN argument_list RPAREN { () }
   | LET IDENTIFIER EQ expression SEMI expression { () }
+  | expression OP_ADDPREC expression { () }
+  | expression OP_MULPREC expression { () }
 
 argument_list:
   expression { () }
