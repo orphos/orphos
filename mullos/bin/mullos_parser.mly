@@ -32,13 +32,24 @@
 %token BIG_VERTICAL
 %token BIG_LESS
 %token BIG_GREATER
+%token AT
+%token COLON
+%token BIG_COLON
+%token TYPE_IDENTIFIER
+%token MATCH
+%token CASE
+%token LOWLINE
+%token EQ_GREATER
+%token IF
 
+%left COMMA
 %right VERTIAL BIG_VERICAL
 %right AMPERSAND BIG_AMPERSAND
 %left EQ LESS GREATER EXCLAMATION_EQ
 %left BIG_LESS BIG_GREATER
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOIDUS PERCENT
+%nonassoc MATCH
 
 %start<unit> compilation_unit
 
@@ -46,12 +57,12 @@
 
 compilation_unit: definition_list  EOF { () }
 
-value_definition: DEF IDENTIFIER EQ expression where_clause? { () }
+definition: DEF pattern parameter_list EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN expression RPAREN
   | expression LPAREN argument_list RPAREN { () }
-  | LET IDENTIFIER EQ expression SEMI expression { () }
+  | LET pattern parameter_list EQ expression SEMI expression { () }
   | expression PLUS expression { () }
   | expression HYPHEN expression { () }
   | expression ASTERISK expression { () }
@@ -68,12 +79,36 @@ expression: IDENTIFIER { () }
   | expression BIG_AMPERSAND expression { () }
   | expression VERTICAL expression { () }
   | expression BIG_VERTICAL expression { () }
+  | expression COMMA expression { () }
+  | expression MATCH INDENT pattern_clause_list DEDENT { () }
+
+pattern_clause_list:
+  pattern_clause { () }
+  | pattern_clause SEMI pattern_clause_list { () }
+
+pattern_clause: CASE pattern pattern_condition? EQ_GREATER expression { () }
+
+pattern_condition: IF expression { () }
+
+pattern:
+  IDENTIFIER { () }
+  | LPAREN pattern RPAREN { () }
+  | IDENTIFIER AT pattern { () }
+  | IDENTIFIER LPAREN pattern RPAREN { () }
+  | pattern COMMA pattern { () }
+  | pattern BIG_COLON pattern { () }
+  | pattern COLON TYPE_IDENTIFIER { () }
+  | LOWLINE { () }
 
 argument_list:
   expression { () }
-  | expression COMMA argument_list { () }
+  | expression argument_list { () }
+
+parameter_list:
+  pattern { () }
+  | pattern parameter_list { () }
 
 where_clause: WHERE INDENT definition_list DEDENT { () }
 
-definition_list: value_definition { () }
-  | value_definition SEMI definition_list { () }
+definition_list: definition { () }
+  | definition SEMI definition_list { () }
