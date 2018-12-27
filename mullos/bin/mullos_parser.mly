@@ -56,6 +56,8 @@
 %token EXTERNAL
 %token INTERNAL
 %token DATA
+%token RAISE
+%token CATCH
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -125,12 +127,15 @@ expression: IDENTIFIER { () }
   | TEXT { () }
   | NUMBER { () }
   | FN parameter_list EQ_GREATER expression { () }
+  | RAISE expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
   | pattern_clause SEMI pattern_clause_list { () }
 
-pattern_clause: CASE pattern pattern_condition? EQ_GREATER expression { () }
+pattern_clause:
+  CASE pattern pattern_condition? EQ_GREATER expression { () }
+  | CATCH TYPE_IDENTIFIER pattern pattern_condition? EQ_GREATER expression { () }
 
 pattern_condition: IF expression { () }
 
