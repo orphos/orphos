@@ -47,6 +47,8 @@
 %token NUMBER
 %token FN
 %token UNSAFE
+%token EXCLAMATION
+%token CIRCUMFLEX
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -88,6 +90,10 @@ expression: IDENTIFIER { () }
   | expression BIG_VERTICAL expression { () }
   | expression COMMA expression { () }
   | expression MATCH LBRACKET pattern_clause_list RBRACKET { () }
+  | EXCLAMATION expression { () }
+  | PLUS expression { () }
+  | HYPHEN expression { () }
+  | CIRCUMFLEX expression { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
