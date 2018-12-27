@@ -41,6 +41,7 @@
 %token LOWLINE
 %token EQ_GREATER
 %token IF
+%token ELSE
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -81,6 +82,7 @@ expression: IDENTIFIER { () }
   | expression BIG_VERTICAL expression { () }
   | expression COMMA expression { () }
   | expression MATCH INDENT pattern_clause_list DEDENT { () }
+  | IF LPAREN expression RPAREN expression ELSE expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
