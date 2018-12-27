@@ -44,6 +44,7 @@
 %token ELSE
 %token TYPE
 %token CLASS
+%token INSTANCE
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -58,7 +59,7 @@
 
 %%
 
-compilation_unit: definition_list  EOF { () }
+compilation_unit: top_level_definition_list  EOF { () }
 
 definition: DEF pattern parameter_list? EQ expression where_clause? { () }
 
@@ -140,7 +141,7 @@ variant_body:
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
 
-type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ CLASS INDENT type_class_body DEDENT { () }
+type_class: TYPE CLASS TYPE_IDENTIFIER type_parameter_list? EQ INDENT type_class_body DEDENT { () }
 
 type_parameter_list:
   TYPE_IDENTIFIER { () }
@@ -154,3 +155,14 @@ declaration_list:
 
 declaration: DEF IDENTIFIER COLON type_expression { () }
 
+instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ INDENT definition_list DEDENT { () }
+
+top_level_definition:
+  definition { () }
+  | type_class { () }
+  | variant { () }
+  | declaration { () }
+
+top_level_definition_list:
+  top_level_definition { () }
+  | top_level_definition top_level_definition_list { () }
