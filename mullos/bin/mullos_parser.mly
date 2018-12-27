@@ -87,6 +87,7 @@ expression: IDENTIFIER { () }
   | expression MATCH INDENT pattern_clause_list DEDENT { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | expression COLON type_expression { () }
+  | expression SEMI expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
