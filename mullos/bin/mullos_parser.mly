@@ -140,10 +140,17 @@ variant_body:
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
 
-type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ CLASS type_class_body { () }
+type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ CLASS INDENT type_class_body DEDENT { () }
 
 type_parameter_list:
   TYPE_IDENTIFIER { () }
   | TYPE_IDENTIFIER type_parameter_list { () }
 
-type_class_body: definition_list { () }
+type_class_body: declaration_list { () }
+
+declaration_list:
+  declaration { () }
+  | declaration SEMI declaration_list { () }
+
+declaration: DEF IDENTIFIER COLON type_expression { () }
+
