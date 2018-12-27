@@ -49,11 +49,15 @@
 %token UNSAFE
 %token EXCLAMATION
 %token CIRCUMFLEX
+%token PLUS_EQ
+%token HYPHEN_EQ
+%token BIG_EQ
 
+%right EQ PLUS_EQ MINU_EQ
 %left COMMA
 %right VERTIAL BIG_VERICAL
 %right AMPERSAND BIG_AMPERSAND
-%left EQ LESS GREATER EXCLAMATION_EQ
+%left BIG_EQ LESS GREATER EXCLAMATION_EQ
 %left BIG_LESS BIG_GREATER
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOIDUS PERCENT
@@ -83,6 +87,7 @@ expression: IDENTIFIER { () }
   | expression BIG_GREATER expression { () }
   | expression LESS expression { () }
   | expression GREATER expression { () }
+  | expression BIG_EQ expression { () }
   | expression EXCLAMATION_EQ expression { () }
   | expression AMPERSAND expression { () }
   | expression BIG_AMPERSAND expression { () }
@@ -90,6 +95,9 @@ expression: IDENTIFIER { () }
   | expression BIG_VERTICAL expression { () }
   | expression COMMA expression { () }
   | expression MATCH LBRACKET pattern_clause_list RBRACKET { () }
+  | expression PLUS_EQ expression { () }
+  | expression HYPHEN_EQ expression { () }
+  | expression EQ expression { () }
   | EXCLAMATION expression { () }
   | PLUS expression { () }
   | HYPHEN expression { () }
