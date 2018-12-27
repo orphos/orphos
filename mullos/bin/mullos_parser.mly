@@ -49,6 +49,7 @@ compilation_unit: definition_list  EOF { () }
 value_definition: DEF IDENTIFIER EQ expression { () }
 
 expression: IDENTIFIER { () }
+  | LPAREN expression RPAREN
   | expression LPAREN argument_list RPAREN { () }
   | LET IDENTIFIER EQ expression SEMI expression { () }
   | expression PLUS expression { () }
