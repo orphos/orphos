@@ -53,6 +53,8 @@
 %token HYPHEN_EQ
 %token BIG_EQ
 %token COLON_EQ
+%token EXTERNAL
+%token INTERNAL
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -70,7 +72,11 @@
 
 compilation_unit: top_level_definition_list  EOF { () }
 
-definition: UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+linkage:
+  INTERNAL { () }
+  | EXTERNAL { () }
+
+definition: linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
