@@ -14,6 +14,8 @@
 %token WHERE
 %token <string * Lexing.position> IDENTIFIER
 %token EOF
+%token INDENT
+%token DEDENT
 
 %start<unit> compilation_unit
 
@@ -31,7 +33,7 @@ argument_list:
   expression { () }
   | expression COMMA argument_list { () }
 
-where_clause: WHERE LBRACKET definition_list RBRACKET { () }
+where_clause: WHERE INDENT definition_list DEDENT { () }
 
 definition_list: value_definition { () }
   | value_definition SEMI definition_list { () }
