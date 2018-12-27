@@ -45,6 +45,8 @@
 %token TYPE
 %token CLASS
 %token INSTANCE
+%token TEXT
+%token NUMBER
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -89,6 +91,8 @@ expression: IDENTIFIER { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | expression COLON type_expression { () }
   | expression SEMI expression { () }
+  | TEXT { () }
+  | NUMBER { () }
 
 pattern_clause_list:
   pattern_clause { () }
@@ -108,6 +112,8 @@ pattern:
   | pattern BIG_COLON pattern { () }
   | pattern COLON type_expression { () }
   | LOWLINE { () }
+  | TEXT { () }
+  | NUMBER { () }
 
 argument_list:
   expression { () }
