@@ -42,6 +42,8 @@
 %token EQ_GREATER
 %token IF
 %token ELSE
+%token TYPE
+%token CLASS
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -83,7 +85,7 @@ expression: IDENTIFIER { () }
   | expression COMMA expression { () }
   | expression MATCH INDENT pattern_clause_list DEDENT { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
-  | expression COLON TYPE_IDENTIFIER { () }
+  | expression COLON type_expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
@@ -100,7 +102,7 @@ pattern:
   | IDENTIFIER LPAREN pattern RPAREN { () }
   | pattern COMMA pattern { () }
   | pattern BIG_COLON pattern { () }
-  | pattern COLON TYPE_IDENTIFIER { () }
+  | pattern COLON type_expression { () }
   | LOWLINE { () }
 
 argument_list:
@@ -115,3 +117,30 @@ where_clause: WHERE INDENT definition_list DEDENT { () }
 
 definition_list: definition { () }
   | definition SEMI definition_list { () }
+
+type_expression:
+  TYPE_IDENTIFIER { () }
+  | LPAREN type_expression RPAREN { () }
+  | TYPE_IDENTIFIER type_argument_list { () }
+  | type_expression COMMA type_expression { () }
+
+type_argument_list:
+  type_expression { () }
+  | type_expression type_argument_list { () }
+
+variant:
+  TYPE TYPE_IDENTIFIER EQ variant_body { () }
+
+variant_body:
+  variant_clause { () }
+  | variant_clause VERTICAL variant_body { () }
+
+variant_clause: TYPE_IDENTIFIER type_expression { () }
+
+type_class: TYPE TYPE_IDENTIFIER type_parameter_list? EQ CLASS type_class_body { () }
+
+type_parameter_list:
+  TYPE_IDENTIFIER { () }
+  | TYPE_IDENTIFIER type_parameter_list { () }
+
+type_class_body: definition_list { () }
