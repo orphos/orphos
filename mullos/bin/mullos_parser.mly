@@ -63,7 +63,8 @@ compilation_unit: definition_list  EOF { () }
 definition: DEF pattern parameter_list? EQ expression where_clause? { () }
 
 expression: IDENTIFIER { () }
-  | LPAREN expression RPAREN
+  | LPAREN RPAREN { () }
+  | LPAREN expression RPAREN { () }
   | expression LPAREN argument_list RPAREN { () }
   | LET pattern parameter_list? EQ expression SEMI expression { () }
   | expression PLUS expression { () }
@@ -97,6 +98,7 @@ pattern_condition: IF expression { () }
 
 pattern:
   IDENTIFIER { () }
+  | LPAREN RPAREN { () }
   | LPAREN pattern RPAREN { () }
   | IDENTIFIER AT pattern { () }
   | IDENTIFIER LPAREN pattern RPAREN { () }
