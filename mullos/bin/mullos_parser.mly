@@ -47,6 +47,7 @@
 %token INSTANCE
 %token TEXT
 %token NUMBER
+%token FN
 
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -93,6 +94,7 @@ expression: IDENTIFIER { () }
   | expression SEMI expression { () }
   | TEXT { () }
   | NUMBER { () }
+  | FN parameter_list EQ_GREATER expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
