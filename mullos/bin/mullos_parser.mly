@@ -30,10 +30,13 @@
 %token BIG_AMPERSAND
 %token VERTICAL
 %token BIG_VERTICAL
+%token BIG_LESS
+%token BIG_GREATER
 
 %right VERTIAL BIG_VERICAL
 %right AMPERSAND BIG_AMPERSAND
 %left EQ LESS GREATER EXCLAMATION_EQ
+%left BIG_LESS BIG_GREATER
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOIDUS PERCENT
 
@@ -55,6 +58,8 @@ expression: IDENTIFIER { () }
   | expression PERCENT expression { () }
   | expression BIG_PLUS expression { () }
   | expression BIG_HYPHEN expression { () }
+  | expression BIG_LESS expression { () }
+  | expression BIG_GREATER expression { () }
   | expression LESS expression { () }
   | expression GREATER expression { () }
   | expression EXCLAMATION_EQ expression { () }
