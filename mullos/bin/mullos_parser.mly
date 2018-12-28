@@ -61,6 +61,7 @@
 %token BIG_DOT
 %token HYPHEN_GREATER
 %token DOT
+%token DERIVING
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -185,7 +186,7 @@ type_argument_list:
   | type_expression type_argument_list { () }
 
 variant:
-  DATA TYPE_IDENTIFIER variant_parameter_list? EQ variant_body { () }
+  DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_body { () }
 
 variant_parameter_list:
   TYPE_IDENTIFIER { () }
@@ -196,6 +197,12 @@ variant_body:
   | variant_clause VERTICAL variant_body { () }
 
 variant_clause: TYPE_IDENTIFIER type_expression { () }
+
+deriving_clause: DERIVING deriving_clause_body { () }
+
+deriving_clause_body:
+  TYPE_IDENTIFIER { () }
+  | TYPE_IDENTIFIER COMMA deriving_clause_body { () }
 
 type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LBRACKET type_class_body RBRACKET { () }
 
