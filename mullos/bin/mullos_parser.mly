@@ -60,6 +60,7 @@
 %token CATCH
 %token BIG_DOT
 %token HYPHEN_GREATER
+%token DOT
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -70,6 +71,7 @@
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOIDUS PERCENT
 %nonassoc MATCH
+%left DOT
 
 %start<unit> compilation_unit
 
@@ -131,6 +133,7 @@ expression: IDENTIFIER { () }
   | FN parameter_list EQ_GREATER expression { () }
   | RAISE expression { () }
   | IDENTIFIER HYPHEN_GREATER expression { () }
+  | expression DOT IDENTIFIER { () }
 
 pattern_clause_list:
   pattern_clause { () }
