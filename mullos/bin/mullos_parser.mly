@@ -62,6 +62,8 @@
 %token HYPHEN_GREATER
 %token DOT
 %token DERIVING
+%token LABEL
+%token GOTO
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -128,13 +130,16 @@ expression: IDENTIFIER { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
-  | expression SEMI expression { () }
+  | label_clause? expression SEMI label_clause? expression { () }
   | TEXT { () }
   | NUMBER { () }
   | FN parameter_list EQ_GREATER expression { () }
   | RAISE expression { () }
   | IDENTIFIER HYPHEN_GREATER expression { () }
   | expression DOT IDENTIFIER { () }
+  | GOTO expression { () }
+
+label_clause: LABEL IDENTIFIER COLON { () }
 
 pattern_clause_list:
   pattern_clause { () }
