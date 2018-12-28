@@ -59,6 +59,7 @@
 %token RAISE
 %token CATCH
 %token BIG_DOT
+%token HYPHEN_GREATER
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -129,6 +130,7 @@ expression: IDENTIFIER { () }
   | NUMBER { () }
   | FN parameter_list EQ_GREATER expression { () }
   | RAISE expression { () }
+  | IDENTIFIER HYPHEN_GREATER expression { () }
 
 pattern_clause_list:
   pattern_clause { () }
@@ -152,6 +154,7 @@ pattern:
   | LOWLINE { () }
   | TEXT { () }
   | NUMBER { () }
+  | IDENTIFIER HYPHEN_GREATER pattern { () }
 
 argument_list:
   expression { () }
@@ -172,6 +175,7 @@ type_expression:
   | TYPE_IDENTIFIER type_argument_list { () }
   | type_expression COMMA type_expression { () }
   | ASTERISK type_expression { () }
+  | IDENTIFIER HYPHEN_GREATER type_expression { () }
 
 type_argument_list:
   type_expression { () }
