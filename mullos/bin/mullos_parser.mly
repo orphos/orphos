@@ -5,8 +5,8 @@
 %token EQ
 %token LPAREN
 %token RPAREN
-%token LBRACKET
-%token RBRACKET
+%token LCBRACKET
+%token RCBRACKET
 %token SEMI
 %token COMMA
 %token DEF
@@ -117,7 +117,7 @@ expression: IDENTIFIER { () }
   | expression VERTICAL expression { () }
   | expression BIG_VERTICAL expression { () }
   | expression COMMA expression { () }
-  | expression MATCH LBRACKET pattern_clause_list RBRACKET { () }
+  | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { () }
   | expression PLUS_EQ expression { () }
   | expression HYPHEN_EQ expression { () }
   | expression COLON_EQ expression { () }
@@ -173,7 +173,7 @@ parameter_list:
   pattern { () }
   | pattern parameter_list { () }
 
-where_clause: WHERE LBRACKET definition_list RBRACKET { () }
+where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 
 definition_list: definition { () }
   | definition SEMI definition_list { () }
@@ -209,7 +209,7 @@ deriving_clause_body:
   TYPE_IDENTIFIER { () }
   | TYPE_IDENTIFIER COMMA deriving_clause_body { () }
 
-type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LBRACKET type_class_body RBRACKET { () }
+type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LCBRACKET type_class_body RCBRACKET { () }
 
 type_class_parameter: TYPE_IDENTIFIER type_parameter_list? EQ_GREATER { () }
 
@@ -225,7 +225,7 @@ declaration_list:
 
 declaration: DEF IDENTIFIER COLON type_expression { () }
 
-instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LBRACKET definition_list RBRACKET { () }
+instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LCBRACKET definition_list RCBRACKET { () }
 
 extensible_variant_declaration: TYPE TYPE_IDENTIFIER EQ BIG_DOT { () }
 
