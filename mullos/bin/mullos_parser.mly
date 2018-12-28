@@ -64,6 +64,7 @@
 %token DERIVING
 %token LABEL
 %token GOTO
+%token LOWLINE_LCBRACKET
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -185,10 +186,16 @@ type_expression:
   | type_expression COMMA type_expression { () }
   | ASTERISK type_expression { () }
   | IDENTIFIER HYPHEN_GREATER type_expression { () }
+  | type_expression LOWLINE_LCBRACKET effect_expression RCBRACKET { () }
 
 type_argument_list:
   type_expression { () }
   | type_expression type_argument_list { () }
+
+effect_expression:
+  type_expression { () }
+  | type_expression BIG_PLUS effect_expression { () }
+  | LOWLINE { () }
 
 variant:
   DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_body { () }
