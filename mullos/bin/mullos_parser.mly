@@ -64,6 +64,7 @@
 %token DERIVING
 %token LABEL
 %token GOTO
+%token BOOL
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -133,6 +134,7 @@ expression: IDENTIFIER { () }
   | expression SEMI expression { () }
   | TEXT { () }
   | NUMBER { () }
+  | BOOL { () }
   | FN parameter_list EQ_GREATER expression { () }
   | RAISE expression { () }
   | IDENTIFIER HYPHEN_GREATER expression { () }
@@ -164,6 +166,7 @@ pattern:
   | LOWLINE { () }
   | TEXT { () }
   | NUMBER { () }
+  | BOOL { () }
   | IDENTIFIER HYPHEN_GREATER pattern { () }
 
 argument_list:
