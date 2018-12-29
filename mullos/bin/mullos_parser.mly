@@ -65,7 +65,9 @@
 %token LABEL
 %token GOTO
 %token BOOL
+%token DOLLAR
 
+%right DOLLAR
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
 %right VERTIAL BIG_VERICAL
@@ -122,6 +124,7 @@ expression: IDENTIFIER { () }
   | expression PLUS_EQ expression { () }
   | expression HYPHEN_EQ expression { () }
   | expression COLON_EQ expression { () }
+  | expression DOLLAR expression { () }
   | EXCLAMATION expression { () }
   | PLUS expression { () }
   | HYPHEN expression { () }
