@@ -190,6 +190,9 @@ type_expression:
   | ASTERISK type_expression { () }
   | IDENTIFIER HYPHEN_GREATER type_expression { () }
   | type_expression LCBRACKET effect_expression RCBRACKET { () }
+  | NUMBER { () }
+  | TEXT { () }
+  | BOOL { () }
 
 type_argument_list:
   type_expression { () }
