@@ -64,7 +64,6 @@
 %token DERIVING
 %token LABEL
 %token GOTO
-%token LOWLINE_LCBRACKET
 
 %right EQ PLUS_EQ MINU_EQ
 %left COMMA
@@ -186,7 +185,7 @@ type_expression:
   | type_expression COMMA type_expression { () }
   | ASTERISK type_expression { () }
   | IDENTIFIER HYPHEN_GREATER type_expression { () }
-  | type_expression LOWLINE_LCBRACKET effect_expression RCBRACKET { () }
+  | type_expression LCBRACKET effect_expression RCBRACKET { () }
 
 type_argument_list:
   type_expression { () }
