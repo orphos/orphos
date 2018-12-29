@@ -206,6 +206,7 @@ effect_expression:
 
 variant:
   DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_body { () }
+  | DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ type_expression { () }
 
 variant_parameter_list:
   TYPE_IDENTIFIER { () }
