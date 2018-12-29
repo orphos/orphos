@@ -130,7 +130,7 @@ expression: IDENTIFIER { () }
   | IF LPAREN expression RPAREN expression ELSE expression { () }
   | IF LPAREN expression RPAREN expression { () }
   | expression COLON type_expression { () }
-  | label_clause? expression SEMI label_clause? expression { () }
+  | expression SEMI expression { () }
   | TEXT { () }
   | NUMBER { () }
   | FN parameter_list EQ_GREATER expression { () }
@@ -138,6 +138,7 @@ expression: IDENTIFIER { () }
   | IDENTIFIER HYPHEN_GREATER expression { () }
   | expression DOT IDENTIFIER { () }
   | GOTO expression { () }
+  | label_clause expression { () }
 
 label_clause: LABEL IDENTIFIER COLON { () }
 
