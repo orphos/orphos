@@ -193,6 +193,7 @@ type_expression:
   | NUMBER { () }
   | TEXT { () }
   | BOOL { () }
+  | type_expression EQ_GREATER type_expression { () }
 
 type_argument_list:
   type_expression { () }
