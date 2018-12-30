@@ -217,18 +217,24 @@ effect_expression:
   | LOWLINE { () }
 
 variant:
-  DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_body { () }
+  DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_constructor_list { () }
   | DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ type_expression { () }
 
 variant_parameter_list:
   TYPE_IDENTIFIER { () }
   | TYPE_IDENTIFIER variant_parameter_list { () }
 
-variant_body:
-  variant_clause { () }
-  | variant_clause VERTICAL variant_body { () }
+variant_constructor_list:
+  variant_constructor { () }
+  | variant_constructor VERTICAL variant_constructor_list { () }
 
-variant_clause: TYPE_IDENTIFIER type_expression { () }
+variant_constructor:
+  TYPE_IDENTIFIER variant_constructor_parameter_and_result { () }
+  | TYPE_IDENTIFIER { () }
+
+variant_constructor_parameter_and_result: COLON type_expression variant_constructor_result? { () }
+
+variant_constructor_result: EQ_GREATER type_expression { () }
 
 deriving_clause: DERIVING deriving_clause_body { () }
 
@@ -256,7 +262,7 @@ instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LCBRACKET definition_li
 
 extensible_variant_declaration: TYPE TYPE_IDENTIFIER EQ BIG_DOT { () }
 
-extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_clause { () }
+extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
 
 top_level_definition:
   definition { () }
