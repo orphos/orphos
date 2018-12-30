@@ -193,7 +193,7 @@ parameter_list:
 where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 
 definition_list: definition { () }
-  | definition SEMI definition_list { () }
+  | definition definition_list { () }
 
 type_expression:
   type_name { () }
