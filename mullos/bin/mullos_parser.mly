@@ -67,6 +67,7 @@
 %token BOOL
 %token DOLLAR
 %token NUMBERSIGN
+%token THEN
 
 %right DOLLAR
 %right EQ PLUS_EQ MINU_EQ
@@ -140,8 +141,8 @@ expression: IDENTIFIER { () }
   | CIRCUMFLEX expression { () }
   | AMPERSAND expression { () }
   | ASTERISK expression { () }
-  | IF LPAREN expression RPAREN expression ELSE expression { () }
-  | IF LPAREN expression RPAREN expression { () }
+  | IF expression THEN expression ELSE expression { () }
+  | IF expression THEN expression { () }
   | expression COLON type_expression { () }
   | expression SEMI expression { () }
   | TEXT { () }
