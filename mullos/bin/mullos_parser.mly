@@ -66,6 +66,7 @@
 %token GOTO
 %token BOOL
 %token DOLLAR
+%token NUMBERSIGN
 
 %right DOLLAR
 %right EQ PLUS_EQ MINU_EQ
@@ -77,7 +78,7 @@
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOIDUS PERCENT
 %nonassoc MATCH
-%left DOT
+%left NUMBERSIGN
 
 %start<unit> compilation_unit
 
@@ -96,6 +97,14 @@ annotation_list:
   | annotation annotation_list { () }
 
 definition: annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+
+value_name:
+  IDENTIFIER DOT value_name { () }
+  | IDENTIFIER { () }
+
+type_name:
+  TYPE_IDENTIFIER DOT type_name { () }
+  | TYPE_IDENTIFIER { () }
 
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
@@ -141,7 +150,7 @@ expression: IDENTIFIER { () }
   | FN parameter_list EQ_GREATER expression { () }
   | RAISE expression { () }
   | IDENTIFIER HYPHEN_GREATER expression { () }
-  | expression DOT IDENTIFIER { () }
+  | expression NUMBERSIGN IDENTIFIER { () }
   | GOTO expression { () }
   | label_clause expression { () }
 
@@ -153,12 +162,12 @@ pattern_clause_list:
 
 pattern_clause:
   CASE pattern pattern_condition? EQ_GREATER expression { () }
-  | CATCH TYPE_IDENTIFIER pattern pattern_condition? EQ_GREATER expression { () }
+  | CATCH type_name pattern pattern_condition? EQ_GREATER expression { () }
 
 pattern_condition: IF expression { () }
 
 pattern:
-  IDENTIFIER { () }
+  value_name { () }
   | LPAREN RPAREN { () }
   | LPAREN pattern RPAREN { () }
   | IDENTIFIER AT pattern { () }
@@ -186,9 +195,9 @@ definition_list: definition { () }
   | definition SEMI definition_list { () }
 
 type_expression:
-  TYPE_IDENTIFIER { () }
+  type_name { () }
   | LPAREN type_expression RPAREN { () }
-  | TYPE_IDENTIFIER type_argument_list { () }
+  | type_name type_argument_list { () }
   | type_expression COMMA type_expression { () }
   | ASTERISK type_expression { () }
   | IDENTIFIER HYPHEN_GREATER type_expression { () }
@@ -224,16 +233,16 @@ variant_clause: TYPE_IDENTIFIER type_expression { () }
 deriving_clause: DERIVING deriving_clause_body { () }
 
 deriving_clause_body:
-  TYPE_IDENTIFIER { () }
-  | TYPE_IDENTIFIER COMMA deriving_clause_body { () }
+  type_name { () }
+  | type_name COMMA deriving_clause_body { () }
 
 type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LCBRACKET type_class_body RCBRACKET { () }
 
-type_class_parameter: TYPE_IDENTIFIER type_parameter_list? EQ_GREATER { () }
+type_class_parameter: type_name type_parameter_list? EQ_GREATER { () }
 
 type_parameter_list:
-  TYPE_IDENTIFIER { () }
-  | TYPE_IDENTIFIER type_parameter_list { () }
+  type_name { () }
+  | type_name type_parameter_list { () }
 
 type_class_body: declaration_list { () }
 
