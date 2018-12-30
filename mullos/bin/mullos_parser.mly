@@ -255,7 +255,7 @@ type_class_body: declaration_list { () }
 
 declaration_list:
   declaration { () }
-  | declaration SEMI declaration_list { () }
+  | declaration declaration_list { () }
 
 declaration: DEF IDENTIFIER COLON type_expression { () }
 
