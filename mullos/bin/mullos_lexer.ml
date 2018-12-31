@@ -5,11 +5,11 @@
 open Mullos_parser
 
 type context = {
-  mutable indentation_stack: int list;
+  mutable newline_region_stack: bool list;
 }
 
 let new_lexer () =
-  let context = { indentation_stack = [] } in
+  let context = { newline_region_stack = [true] } in
   let rec lex lexbuf =
     match%sedlex lexbuf with
     | Plus (' ' | '\t') -> lex lexbuf
@@ -27,8 +27,16 @@ let new_lexer () =
     | "::" -> BIG_COLON
     | ":=" -> COLON_EQ
     | "==" -> BIG_EQ
-    | "=>" -> EQ_GREATER
-    | "case" -> CASE
+    | "=>" ->
+      begin match context.newline_region_stack with
+      | false :: t -> context.newline_region_stack <- t
+      | true :: _ -> failwith "inconsistent lexer context"
+      | [] ->  failwith "inconsistent lexer context"
+      end;
+      EQ_GREATER
+    | "case" ->
+      context.newline_region_stack <- false :: context.newline_region_stack;
+      CASE
     | "catch" -> CATCH
     | "class" -> CLASS
     | "data" -> DATA
@@ -56,8 +64,16 @@ let new_lexer () =
     | '#' -> NUMBERSIGN
     | '$' -> DOLLAR
     | '&' -> AMPERSAND
-    | '(' -> LPAREN
-    | ')' -> RPAREN
+    | '(' ->
+      context.newline_region_stack <- false :: context.newline_region_stack;
+      LPAREN
+    | ')' ->
+      begin match context.newline_region_stack with
+      | false :: t -> context.newline_region_stack <- t
+      | true :: _ -> failwith "inconsistent lexer context"
+      | [] ->  failwith "inconsistent lexer context"
+      end;
+      RPAREN
     | '*' -> ASTERISK
     | '+' -> PLUS
     | '.' -> DOT
@@ -70,9 +86,17 @@ let new_lexer () =
     | '@' -> AT
     | '^' -> CIRCUMFLEX
     | '_' -> LOWLINE
-    | '{' -> LCBRACKET
+    | '{' ->
+      context.newline_region_stack <- true :: context.newline_region_stack;
+      LCBRACKET
     | '|' -> VERTICAL
-    | '}' -> RCBRACKET
+    | '}' ->
+      begin match context.newline_region_stack with
+      | true :: t -> context.newline_region_stack <- t
+      | false :: _ -> failwith "inconsistent lexer context"
+      | [] ->  failwith "inconsistent lexer context"
+      end;
+      RCBRACKET
     | Plus (('a' .. 'z') | '_') -> IDENTIFIER
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
