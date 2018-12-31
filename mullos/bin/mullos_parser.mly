@@ -68,6 +68,7 @@
 %token DOLLAR
 %token NUMBERSIGN
 %token THEN
+%token TYPEVAR_IDENTIFIER
 
 %right DOLLAR
 %right EQ PLUS_EQ MINU_EQ
@@ -106,6 +107,7 @@ value_name:
 type_name:
   TYPE_IDENTIFIER DOT type_name { () }
   | TYPE_IDENTIFIER { () }
+  | TYPEVAR_IDENTIFIER { () }
 
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
@@ -222,8 +224,8 @@ variant:
   | DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ type_expression { () }
 
 variant_parameter_list:
-  TYPE_IDENTIFIER { () }
-  | TYPE_IDENTIFIER variant_parameter_list { () }
+  TYPEVAR_IDENTIFIER { () }
+  | TYPEVAR_IDENTIFIER variant_parameter_list { () }
 
 variant_constructor_list:
   variant_constructor { () }
