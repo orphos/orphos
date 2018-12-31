@@ -3,5 +3,6 @@
  * SPDX-Identifier:LGPL-3.0-or-later
  *)
 open Mullos_parser
+open Mullos_lexer
 
 let _ = print_endline (Mullos_llvm.hello_llvm ())

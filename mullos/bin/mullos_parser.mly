@@ -12,7 +12,7 @@
 %token DEF
 %token LET
 %token WHERE
-%token <string * Lexing.position> IDENTIFIER
+%token IDENTIFIER
 %token EOF
 %token PLUS
 %token HYPHEN

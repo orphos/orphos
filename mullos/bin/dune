@@ -2,7 +2,9 @@
  (names mullos_main)
  (libraries
    base
-   llvm))
+   sedlex
+   llvm)
+ (preprocess (pps sedlex.ppx)))
 
 (menhir
   (modules mullos_parser))
