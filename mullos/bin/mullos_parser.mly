@@ -161,7 +161,7 @@ label_clause: LABEL IDENTIFIER COLON { () }
 
 pattern_clause_list:
   pattern_clause { () }
-  | pattern_clause SEMI pattern_clause_list { () }
+  | pattern_clause pattern_clause_list { () }
 
 pattern_clause:
   CASE pattern pattern_condition? EQ_GREATER expression { () }
