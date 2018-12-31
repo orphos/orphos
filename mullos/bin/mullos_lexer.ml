@@ -12,6 +12,8 @@ let new_lexer () =
   let context = { indentation_stack = [] } in
   let rec lex lexbuf =
     match%sedlex lexbuf with
+    | Plus (' ' | '\t') -> lex lexbuf
+    | '\n', Plus (' ' | '\t') -> lex lexbuf
     | "!=" -> EXCLAMATION_EQ
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
