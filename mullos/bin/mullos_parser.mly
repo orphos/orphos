@@ -71,14 +71,14 @@
 %token TYPEVAR_IDENTIFIER
 
 %right DOLLAR
-%right EQ PLUS_EQ MINU_EQ
+%right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
-%right VERTIAL BIG_VERICAL
+%right VERTICAL BIG_VERTICAL
 %right AMPERSAND BIG_AMPERSAND
 %left BIG_EQ LESS GREATER EXCLAMATION_EQ
 %left BIG_LESS BIG_GREATER
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
-%left ASTERISK SOIDUS PERCENT
+%left ASTERISK SOLIDUS PERCENT
 %nonassoc MATCH
 %left NUMBERSIGN
 
@@ -235,7 +235,9 @@ variant_constructor:
   TYPE_IDENTIFIER variant_constructor_parameter_and_result { () }
   | TYPE_IDENTIFIER { () }
 
-variant_constructor_parameter_and_result: COLON type_expression variant_constructor_result? { () }
+variant_constructor_parameter_and_result:
+  COLON type_expression { () }
+  | COLON type_expression variant_constructor_result { () }
 
 variant_constructor_result: EQ_GREATER type_expression { () }
 
