@@ -112,6 +112,7 @@ type_name:
 expression: IDENTIFIER { () }
   | LPAREN RPAREN { () }
   | LPAREN expression RPAREN { () }
+  | LCBRACKET expression RCBRACKET { () }
   | expression LPAREN argument_list RPAREN { () }
   | LET pattern parameter_list? EQ expression SEMI expression { () }
   | expression PLUS expression { () }
