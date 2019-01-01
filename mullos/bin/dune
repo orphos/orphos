@@ -3,6 +3,7 @@
  (libraries
    base
    sedlex
+   zarith
    llvm)
  (preprocess (pps sedlex.ppx)))
 

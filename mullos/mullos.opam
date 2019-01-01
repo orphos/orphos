@@ -21,4 +21,5 @@ depends: [
   "sqlite3"
   "toml"
   "llvm"
+  "zarith"
 ]
