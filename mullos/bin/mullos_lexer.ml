@@ -7,6 +7,7 @@ open Mullos_parser
 type context = {
   mutable newline_region_stack: bool list;
   mutable token_buf: token list;
+  mutable offside_stack: int list;
 }
 
 let expression_start = [
@@ -42,7 +43,7 @@ let expression_end = [
 ]
 
 let new_lexer () =
-  let context = { newline_region_stack = [true]; token_buf= [] } in
+  let context = { newline_region_stack = [true]; token_buf= []; offside_stack = [] } in
   let push_newline_region enabled = context.newline_region_stack <- enabled :: context.newline_region_stack in
   let pop_newline_region enabled =
     match context.newline_region_stack with
@@ -54,14 +55,14 @@ let new_lexer () =
       context.token_buf <- t;
       h
     | [] ->
-      let t1 = lex_impl lexbuf in
-      if List.mem t1 expression_end then
+      begin match lex_impl lexbuf with
+      | t1 when List.mem t1 expression_end ->
         begin match lex_impl lexbuf with
-        | SEMI true ->
+        | NL _ as t2 ->
           let t3 = lex_impl lexbuf in
           if List.mem t3 expression_start then
             begin
-              context.token_buf <- [SEMI true; t3];
+              context.token_buf <- [t2; t3];
               t1
             end
           else
@@ -73,14 +74,55 @@ let new_lexer () =
           context.token_buf <- [t2];
           t1
         end
-      else
-        t1
+      | WHERE ->
+        begin match lex_impl lexbuf with
+        | NL offside ->
+          begin match lex_impl lexbuf with
+          | LCBRACKET ->
+            context.token_buf <- [LCBRACKET];
+            WHERE
+          | t3 ->
+            context.offside_stack <- offside :: context.offside_stack;
+            context.token_buf <- [LCBRACKET; t3];
+            WHERE
+          end
+        | t2 ->
+          context.token_buf <- [t2];
+          WHERE
+        end
+      | NL indentation ->
+        let rec aux  = function
+          | buf, h :: t when h > indentation -> aux (RCBRACKET :: buf,  t)
+          | x -> x in
+        let (buf, stack) = aux ([], context.offside_stack) in
+        context.offside_stack <- stack;
+        context.token_buf <- List.append buf context.token_buf;
+        lex lexbuf
+      | t1 -> t1
+      end
+  and lex_newline lexbuf =
+    match%sedlex lexbuf with
+    | '\n' ->
+      Sedlexing.new_line lexbuf;
+      lex_newline lexbuf
+    | _ -> lex_indentation lexbuf
+  and lex_indentation lexbuf =
+    let i = { contents = 0 } in
+    match%sedlex lexbuf with
+    | ' ' ->
+      i := !i + 1;
+      lex_indentation lexbuf
+    | '\t' ->
+      i := !i + 4;
+      lex_indentation lexbuf
+    | _ -> NL !i
   and lex_impl lexbuf =
     match%sedlex lexbuf with
     | Plus (' ' | '\t') -> lex lexbuf
-    | '\n', Plus (' ' | '\t') ->
+    | Plus '\n' ->
+      Sedlexing.new_line lexbuf;
       if (List.hd context.newline_region_stack) then
-        SEMI true
+        lex_newline lexbuf
       else
         lex_impl lexbuf
     | "!=" -> EXCLAMATION_EQ
@@ -140,7 +182,7 @@ let new_lexer () =
     | '.' -> DOT
     | '/' -> SOLIDUS
     | ':' -> COLON
-    | ';' -> SEMI false
+    | ';' -> SEMI
     | '<' -> LESS
     | '=' -> EQ
     | '>' -> GREATER

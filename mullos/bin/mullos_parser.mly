@@ -7,7 +7,7 @@
 %token RPAREN
 %token LCBRACKET
 %token RCBRACKET
-%token <bool (* is_newline *)> SEMI
+%token SEMI
 %token COMMA
 %token DEF
 %token LET
@@ -69,6 +69,7 @@
 %token NUMBERSIGN
 %token THEN
 %token TYPEVAR_IDENTIFIER
+%token <int> NL
 
 %right DOLLAR
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
@@ -115,6 +116,7 @@ expression: IDENTIFIER { () }
   | LCBRACKET expression RCBRACKET { () }
   | expression LPAREN argument_list RPAREN { () }
   | LET pattern parameter_list? EQ expression SEMI expression { () }
+  | LET pattern parameter_list? EQ expression NL expression { () }
   | expression PLUS expression { () }
   | expression HYPHEN expression { () }
   | expression ASTERISK expression { () }
@@ -148,6 +150,7 @@ expression: IDENTIFIER { () }
   | IF expression THEN expression { () }
   | expression COLON type_expression { () }
   | expression SEMI expression { () }
+  | expression NL expression { () }
   | TEXT { () }
   | NUMBER { () }
   | BOOL { () }
