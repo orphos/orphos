@@ -11,35 +11,35 @@ type context = {
 }
 
 let expression_start = [
-  LPAREN;
-  LCBRACKET;
-  LET;
-  EXCLAMATION;
-  PLUS;
-  HYPHEN;
-  CIRCUMFLEX;
   AMPERSAND;
   ASTERISK;
-  IF;
-  TEXT;
-  NUMBER;
   BOOL;
+  CIRCUMFLEX;
+  EXCLAMATION;
   FN;
-  RAISE;
-  IDENTIFIER;
   GOTO;
+  HYPHEN;
+  IDENTIFIER;
+  IF;
   LABEL;
+  LCBRACKET;
+  LET;
+  LPAREN;
+  NUMBER;
+  PLUS;
+  RAISE;
+  TEXT;
 ]
 
 let expression_end = [
-  RPAREN;
-  RCBRACKET;
-  TYPE_IDENTIFIER;
-  TYPEVAR_IDENTIFIER;
-  TEXT;
-  NUMBER;
   BOOL;
   IDENTIFIER;
+  NUMBER;
+  RCBRACKET;
+  RPAREN;
+  TEXT;
+  TYPEVAR_IDENTIFIER;
+  TYPE_IDENTIFIER;
 ]
 
 let new_lexer () =
