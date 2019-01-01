@@ -10,37 +10,37 @@ type context = {
   mutable offside_stack: int list;
 }
 
-let expression_start = [
-  AMPERSAND;
-  ASTERISK;
-  BOOL;
-  CIRCUMFLEX;
-  EXCLAMATION;
-  FN;
-  GOTO;
-  HYPHEN;
-  IDENTIFIER;
-  IF;
-  LABEL;
-  LCBRACKET;
-  LET;
-  LPAREN;
-  NUMBER;
-  PLUS;
-  RAISE;
-  TEXT;
-]
+let is_expression_start = function
+  | AMPERSAND
+  | ASTERISK
+  | BOOL _
+  | CIRCUMFLEX
+  | EXCLAMATION
+  | FN
+  | GOTO
+  | HYPHEN
+  | IDENTIFIER
+  | IF
+  | LABEL
+  | LCBRACKET
+  | LET
+  | LPAREN
+  | NUMBER
+  | PLUS
+  | RAISE
+  | TEXT -> true
+  | _ -> false
 
-let expression_end = [
-  BOOL;
-  IDENTIFIER;
-  NUMBER;
-  RCBRACKET;
-  RPAREN;
-  TEXT;
-  TYPEVAR_IDENTIFIER;
-  TYPE_IDENTIFIER;
-]
+let is_expression_end = function
+  | BOOL _
+  | IDENTIFIER
+  | NUMBER
+  | RCBRACKET
+  | RPAREN
+  | TEXT
+  | TYPEVAR_IDENTIFIER
+  | TYPE_IDENTIFIER -> true
+  | _ -> false
 
 let new_lexer () =
   let context = { newline_region_stack = [true]; token_buf= []; offside_stack = [] } in
@@ -56,11 +56,11 @@ let new_lexer () =
       h
     | [] ->
       begin match lex_impl lexbuf with
-      | t1 when List.mem t1 expression_end ->
+      | t1 when is_expression_end t1 ->
         begin match lex_impl lexbuf with
         | NL _ as t2 ->
           let t3 = lex_impl lexbuf in
-          if List.mem t3 expression_start then
+          if is_expression_start t3 then
             begin
               context.token_buf <- [t2; t3];
               t1
@@ -151,7 +151,7 @@ let new_lexer () =
     | "deriving" -> DERIVING
     | "else" -> ELSE
     | "external" -> EXTERNAL
-    | "false" -> BOOL
+    | "false" -> BOOL false
     | "fn" -> FN
     | "goto" -> GOTO
     | "if" -> IF
@@ -162,7 +162,7 @@ let new_lexer () =
     | "match" -> MATCH
     | "raise" -> RAISE
     | "then" -> THEN
-    | "true" -> BOOL
+    | "true" -> BOOL true
     | "type" -> TYPE
     | "unsafe" -> UNSAFE
     | "where" -> WHERE

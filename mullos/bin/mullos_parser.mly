@@ -4,6 +4,8 @@
  *)
 %{
 
+open Mullos_syntax
+
 %}
 
 %token AMPERSAND
@@ -18,7 +20,7 @@
 %token BIG_LESS
 %token BIG_PLUS
 %token BIG_VERTICAL
-%token BOOL
+%token <bool> BOOL
 %token CASE
 %token CATCH
 %token CIRCUMFLEX
@@ -114,56 +116,57 @@ type_name:
   | TYPE_IDENTIFIER { () }
   | TYPEVAR_IDENTIFIER { () }
 
-expression: IDENTIFIER { () }
-  | LPAREN RPAREN { () }
-  | LPAREN expression RPAREN { () }
-  | LCBRACKET expression RCBRACKET { () }
-  | expression LPAREN argument_list RPAREN { () }
-  | LET pattern parameter_list? EQ expression SEMI expression { () }
-  | LET pattern parameter_list? EQ expression NL expression { () }
-  | expression PLUS expression { () }
-  | expression HYPHEN expression { () }
-  | expression ASTERISK expression { () }
-  | expression SOLIDUS expression { () }
-  | expression PERCENT expression { () }
-  | expression BIG_PLUS expression { () }
-  | expression BIG_HYPHEN expression { () }
-  | expression BIG_LESS expression { () }
-  | expression BIG_GREATER expression { () }
-  | expression LESS expression { () }
-  | expression GREATER expression { () }
-  | expression BIG_EQ expression { () }
-  | expression EXCLAMATION_EQ expression { () }
-  | expression AMPERSAND expression { () }
-  | expression BIG_AMPERSAND expression { () }
-  | expression VERTICAL expression { () }
-  | expression BIG_VERTICAL expression { () }
-  | expression COMMA expression { () }
-  | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { () }
-  | expression PLUS_EQ expression { () }
-  | expression HYPHEN_EQ expression { () }
-  | expression COLON_EQ expression { () }
-  | expression DOLLAR expression { () }
-  | EXCLAMATION expression { () }
-  | PLUS expression { () }
-  | HYPHEN expression { () }
-  | CIRCUMFLEX expression { () }
-  | AMPERSAND expression { () }
-  | ASTERISK expression { () }
-  | IF expression THEN expression ELSE expression { () }
-  | IF expression THEN expression { () }
-  | expression COLON type_expression { () }
-  | expression SEMI expression { () }
-  | expression NL expression { () }
-  | TEXT { () }
-  | NUMBER { () }
-  | BOOL { () }
-  | FN parameter_list EQ_GREATER expression { () }
-  | RAISE expression { () }
-  | IDENTIFIER HYPHEN_GREATER expression { () }
-  | expression NUMBERSIGN IDENTIFIER { () }
-  | GOTO expression { () }
-  | label_clause expression { () }
+expression:
+  | IDENTIFIER { failwith "not implemented" }
+  | LPAREN RPAREN { failwith "not implemented" }
+  | LPAREN expression RPAREN { failwith "not implemented" }
+  | LCBRACKET expression RCBRACKET { failwith "not implemented" }
+  | expression LPAREN argument_list RPAREN { failwith "not implemented" }
+  | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
+  | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
+  | expression PLUS expression { failwith "not implemented" }
+  | expression HYPHEN expression { failwith "not implemented" }
+  | expression ASTERISK expression { failwith "not implemented" }
+  | expression SOLIDUS expression { failwith "not implemented" }
+  | expression PERCENT expression { failwith "not implemented" }
+  | expression BIG_PLUS expression { failwith "not implemented" }
+  | expression BIG_HYPHEN expression { failwith "not implemented" }
+  | expression BIG_LESS expression { failwith "not implemented" }
+  | expression BIG_GREATER expression { failwith "not implemented" }
+  | expression LESS expression { failwith "not implemented" }
+  | expression GREATER expression { failwith "not implemented" }
+  | expression BIG_EQ expression { failwith "not implemented" }
+  | expression EXCLAMATION_EQ expression { failwith "not implemented" }
+  | expression AMPERSAND expression { failwith "not implemented" }
+  | expression BIG_AMPERSAND expression { failwith "not implemented" }
+  | expression VERTICAL expression { failwith "not implemented" }
+  | expression BIG_VERTICAL expression { failwith "not implemented" }
+  | expression COMMA expression { failwith "not implemented" }
+  | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { failwith "not implemented" }
+  | expression PLUS_EQ expression { failwith "not implemented" }
+  | expression HYPHEN_EQ expression { failwith "not implemented" }
+  | expression COLON_EQ expression { failwith "not implemented" }
+  | expression DOLLAR expression { failwith "not implemented" }
+  | EXCLAMATION expression { failwith "not implemented" }
+  | PLUS expression { failwith "not implemented" }
+  | HYPHEN expression { failwith "not implemented" }
+  | CIRCUMFLEX expression { failwith "not implemented" }
+  | AMPERSAND expression { failwith "not implemented" }
+  | ASTERISK expression { failwith "not implemented" }
+  | IF expression THEN expression ELSE expression { failwith "not implemented" }
+  | IF expression THEN expression { failwith "not implemented" }
+  | expression COLON type_expression { failwith "not implemented" }
+  | expression SEMI expression { failwith "not implemented" }
+  | expression NL expression { failwith "not implemented" }
+  | TEXT { failwith "not implemented" }
+  | NUMBER { failwith "not implemented" }
+  | BOOL { Bool $1 }
+  | FN parameter_list EQ_GREATER expression { failwith "not implemented" }
+  | RAISE expression { failwith "not implemented" }
+  | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
+  | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
+  | GOTO expression { failwith "not implemented" }
+  | label_clause expression { failwith "not implemented" }
 
 label_clause: LABEL IDENTIFIER COLON { () }
 
