@@ -6,14 +6,83 @@ open Mullos_parser
 
 type context = {
   mutable newline_region_stack: bool list;
+  mutable token_buf: token list;
 }
 
+let expression_start = [
+  LPAREN;
+  LCBRACKET;
+  LET;
+  EXCLAMATION;
+  PLUS;
+  HYPHEN;
+  CIRCUMFLEX;
+  AMPERSAND;
+  ASTERISK;
+  IF;
+  TEXT;
+  NUMBER;
+  BOOL;
+  FN;
+  RAISE;
+  IDENTIFIER;
+  GOTO;
+  LABEL;
+]
+
+let expression_end = [
+  RPAREN;
+  RCBRACKET;
+  TYPE_IDENTIFIER;
+  TYPEVAR_IDENTIFIER;
+  TEXT;
+  NUMBER;
+  BOOL;
+  IDENTIFIER;
+]
+
 let new_lexer () =
-  let context = { newline_region_stack = [true] } in
+  let context = { newline_region_stack = [true]; token_buf= [] } in
+  let push_newline_region enabled = context.newline_region_stack <- enabled :: context.newline_region_stack in
+  let pop_newline_region enabled =
+    match context.newline_region_stack with
+    | h :: t when h = enabled -> context.newline_region_stack <- t
+    | _ -> failwith "inconsistent lexer context" in
   let rec lex lexbuf =
+    match context.token_buf with
+    | h :: t ->
+      context.token_buf <- t;
+      h
+    | [] ->
+      let t1 = lex_impl lexbuf in
+      if List.mem t1 expression_end then
+        begin match lex_impl lexbuf with
+        | SEMI true ->
+          let t3 = lex_impl lexbuf in
+          if List.mem t3 expression_start then
+            begin
+              context.token_buf <- [SEMI true; t3];
+              t1
+            end
+          else
+            begin
+              context.token_buf <- [t3];
+              t1
+            end
+        | t2 ->
+          context.token_buf <- [t2];
+          t1
+        end
+      else
+        t1
+  and lex_impl lexbuf =
     match%sedlex lexbuf with
     | Plus (' ' | '\t') -> lex lexbuf
-    | '\n', Plus (' ' | '\t') -> lex lexbuf
+    | '\n', Plus (' ' | '\t') ->
+      if (List.hd context.newline_region_stack) then
+        SEMI true
+      else
+        lex_impl lexbuf
     | "!=" -> EXCLAMATION_EQ
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
@@ -28,14 +97,10 @@ let new_lexer () =
     | ":=" -> COLON_EQ
     | "==" -> BIG_EQ
     | "=>" ->
-      begin match context.newline_region_stack with
-      | false :: t -> context.newline_region_stack <- t
-      | true :: _ -> failwith "inconsistent lexer context"
-      | [] ->  failwith "inconsistent lexer context"
-      end;
+      pop_newline_region false;
       EQ_GREATER
     | "case" ->
-      context.newline_region_stack <- false :: context.newline_region_stack;
+      push_newline_region false;
       CASE
     | "catch" -> CATCH
     | "class" -> CLASS
@@ -65,21 +130,17 @@ let new_lexer () =
     | '$' -> DOLLAR
     | '&' -> AMPERSAND
     | '(' ->
-      context.newline_region_stack <- false :: context.newline_region_stack;
+      push_newline_region false;
       LPAREN
     | ')' ->
-      begin match context.newline_region_stack with
-      | false :: t -> context.newline_region_stack <- t
-      | true :: _ -> failwith "inconsistent lexer context"
-      | [] ->  failwith "inconsistent lexer context"
-      end;
+      pop_newline_region false;
       RPAREN
     | '*' -> ASTERISK
     | '+' -> PLUS
     | '.' -> DOT
     | '/' -> SOLIDUS
     | ':' -> COLON
-    | ';' -> SEMI
+    | ';' -> SEMI false
     | '<' -> LESS
     | '=' -> EQ
     | '>' -> GREATER
@@ -87,15 +148,11 @@ let new_lexer () =
     | '^' -> CIRCUMFLEX
     | '_' -> LOWLINE
     | '{' ->
-      context.newline_region_stack <- true :: context.newline_region_stack;
+      push_newline_region true;
       LCBRACKET
     | '|' -> VERTICAL
     | '}' ->
-      begin match context.newline_region_stack with
-      | true :: t -> context.newline_region_stack <- t
-      | false :: _ -> failwith "inconsistent lexer context"
-      | [] ->  failwith "inconsistent lexer context"
-      end;
+      pop_newline_region true;
       RCBRACKET
     | Plus (('a' .. 'z') | '_') -> IDENTIFIER
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER

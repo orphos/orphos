@@ -7,7 +7,7 @@
 %token RPAREN
 %token LCBRACKET
 %token RCBRACKET
-%token SEMI
+%token <bool (* is_newline *)> SEMI
 %token COMMA
 %token DEF
 %token LET
