@@ -153,8 +153,8 @@ expression:
   | CIRCUMFLEX expression { Apply(Identifier "^", $2) }
   | AMPERSAND expression { Apply(Identifier "&", $2) }
   | ASTERISK expression { Apply(Identifier "*", $2) }
-  | IF expression THEN expression ELSE expression { failwith "not implemented" }
-  | IF expression THEN expression { failwith "not implemented" }
+  | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
+  | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression { failwith "not implemented" }
   | expression SEMI expression { failwith "not implemented" }
   | expression NL expression { failwith "not implemented" }
