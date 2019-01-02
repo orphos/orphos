@@ -204,18 +204,12 @@ let new_reader () =
     | '"' -> read_text lexbuf
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;
-      read_decimal lexbuf
-    (*
-    | ('1' .. '9'), Star ('0' .. '9'), Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
-    | ('1' .. '9'), Star ('0' .. '9'), 'u', ('1' .. '9'), Star ('0' .. '9') -> NUMBER
-    | ('1' .. '9'), Star ('0' .. '9') -> NUMBER
-    | "0x", Plus (('0' .. '9') | ('a' .. 'f')) , Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
-    | "0b", Plus ('0' | '1') , Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
-    | '0', Star ('0' .. '7') , Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
-    | Plus ('0' .. '9'), '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
-    | '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
-    | Plus ('0' .. '9'), '.', Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
-    *)
+      read_number lexbuf 10
+    | "0x" -> read_number lexbuf 16
+    | "0b" -> read_number lexbuf 2
+    | "0" ->
+      Sedlexing.rollback lexbuf;
+      read_number lexbuf 8
     | _ -> failwith ""
   and read_text lexbuf =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in
@@ -264,20 +258,50 @@ let new_reader () =
         v := !v * 16 + aux 'A' + 10;
         read_unicode_escape lexbuf limit
       | _ -> failwith "unexpecd end of unicode escape"
-  and read_decimal lexbuf =
+  and read_number lexbuf radix =
     let i = ref 0 in
     let e = ref 0 in
     let reading_exponent = ref false in
     let number_literal_type = ref ZType in
-    let read_digit () =  Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code '0' in
     let create_token () = NUMBER (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), !number_literal_type) in
-    let rec loop () =
+    let rec read_digit base_char base_num =
+      Sedlexing.rollback lexbuf;
+      i := !i * radix + (Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code base_char) + base_num;
+      if !reading_exponent then
+        e := !e + 1;
+      loop ()
+    and loop () =
       match%sedlex lexbuf with
-      | '0' .. '9' ->
-        i := !i * 10 + read_digit ();
-        if !reading_exponent then
-          e := !e + 1;
-        loop ()
+      | '0' .. '1' ->
+        read_digit '0' 0
+      | '2' .. '7' ->
+        if radix < 8 then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else read_digit '0' 0
+      | '2' .. '9' ->
+        if radix < 10 then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else read_digit '0' 0
+      | 'a' .. 'e' ->
+        if radix < 16 then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else read_digit 'a' 10
+      | 'A' .. 'F' ->
+        if radix < 16 then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else read_digit 'A' 10
       | '.' ->
         if !reading_exponent then
           begin
@@ -297,8 +321,17 @@ let new_reader () =
         number_literal_type := IntType (read_precision lexbuf);
         create_token ()
       | 'f' ->
-        number_literal_type := FloatType (read_precision lexbuf);
-        create_token ()
+        if radix = 10 then
+          begin
+            number_literal_type := FloatType (read_precision lexbuf);
+            create_token ()
+          end
+        else if radix < 16 then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else read_digit 'a' 10
       | _ -> create_token () in
     loop ()
   and read_precision lexbuf =
