@@ -58,7 +58,7 @@ open Mullos_syntax
 %token LPAREN
 %token MATCH
 %token <int> NL
-%token NUMBER
+%token <Q.t * Mullos_syntax.number_literal_type> NUMBER
 %token NUMBERSIGN
 %token PERCENT
 %token PLUS

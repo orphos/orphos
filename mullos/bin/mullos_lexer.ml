@@ -3,6 +3,7 @@
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
 open Mullos_parser
+open Mullos_syntax
 
 type context = {
   mutable newline_region_stack: bool list;
@@ -25,7 +26,7 @@ let is_expression_start = function
   | LCBRACKET
   | LET
   | LPAREN
-  | NUMBER
+  | NUMBER _
   | PLUS
   | RAISE
   | TEXT _ -> true
@@ -34,7 +35,7 @@ let is_expression_start = function
 let is_expression_end = function
   | BOOL _
   | IDENTIFIER
-  | NUMBER
+  | NUMBER _
   | RCBRACKET
   | RPAREN
   | TEXT _
@@ -201,6 +202,10 @@ let new_reader () =
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
     | 0x03b1 .. 0x03c9 -> TYPEVAR_IDENTIFIER
     | '"' -> read_text lexbuf
+    | ('1' .. '9') ->
+      Sedlexing.rollback lexbuf;
+      read_decimal lexbuf
+    (*
     | ('1' .. '9'), Star ('0' .. '9'), Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9'), 'u', ('1' .. '9'), Star ('0' .. '9') -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9') -> NUMBER
@@ -210,6 +215,7 @@ let new_reader () =
     | Plus ('0' .. '9'), '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | Plus ('0' .. '9'), '.', Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
+    *)
     | _ -> failwith ""
   and read_text lexbuf =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in
@@ -258,6 +264,33 @@ let new_reader () =
         v := !v * 16 + aux 'A' + 10;
         read_unicode_escape lexbuf limit
       | _ -> failwith "unexpecd end of unicode escape"
+  and read_decimal lexbuf =
+    let i = ref 0 in
+    let e = ref 0 in
+    let reading_exponent = ref false in
+    let read_digit () =  Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code '0' in
+    let create_token () = NUMBER (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), QType) in
+    let rec loop () =
+      match%sedlex lexbuf with
+      | '0' .. '9' ->
+        i := !i * 10 + read_digit ();
+        if !reading_exponent then
+          e := !e + 1;
+        loop ()
+      | '.' ->
+        if !reading_exponent then
+          begin
+            Sedlexing.rollback lexbuf;
+            create_token ()
+          end
+        else
+          begin
+            reading_exponent := true;
+            loop ()
+          end
+      | ('i' | 'u' | 'f') -> failwith "not implemented"
+      | _ -> create_token () in
+    loop ()
     in
   read
 
