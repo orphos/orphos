@@ -16,4 +16,5 @@ type exp =
   | Identifier of string
   | Unit
   | Apply of exp * exp
+  | Tuple of exp list
 
