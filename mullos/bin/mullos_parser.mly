@@ -147,12 +147,12 @@ expression:
   | expression HYPHEN_EQ expression { failwith "not implemented" }
   | expression COLON_EQ expression { failwith "not implemented" }
   | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
-  | EXCLAMATION expression { failwith "not implemented" }
-  | PLUS expression { failwith "not implemented" }
-  | HYPHEN expression { failwith "not implemented" }
-  | CIRCUMFLEX expression { failwith "not implemented" }
-  | AMPERSAND expression { failwith "not implemented" }
-  | ASTERISK expression { failwith "not implemented" }
+  | EXCLAMATION expression { Apply(Identifier "!", $2) }
+  | PLUS expression { Apply(Identifier "+", $2) }
+  | HYPHEN expression { Apply(Identifier "-", $2) }
+  | CIRCUMFLEX expression { Apply(Identifier "^", $2) }
+  | AMPERSAND expression { Apply(Identifier "&", $2) }
+  | ASTERISK expression { Apply(Identifier "*", $2) }
   | IF expression THEN expression ELSE expression { failwith "not implemented" }
   | IF expression THEN expression { failwith "not implemented" }
   | expression COLON type_expression { failwith "not implemented" }
