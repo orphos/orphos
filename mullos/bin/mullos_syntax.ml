@@ -19,4 +19,5 @@ type exp =
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
   | Seq of exp * exp
+  | Goto of exp
 
