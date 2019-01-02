@@ -159,7 +159,10 @@ expression:
   | expression SEMI expression { failwith "not implemented" }
   | expression NL expression { failwith "not implemented" }
   | TEXT { Text $1 }
-  | NUMBER { failwith "not implemented" }
+  | NUMBER {
+      let v, t = $1 in
+      Number(v, t)
+    }
   | BOOL { Bool $1 }
   | FN parameter_list EQ_GREATER expression { failwith "not implemented" }
   | RAISE expression { failwith "not implemented" }
