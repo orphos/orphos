@@ -200,10 +200,12 @@ let new_reader () =
     | ('a' .. 'z'), Star (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '_' , Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '_' -> LOWLINE
-    | '`' -> read_quoted_identifier lexbuf
-    | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
-    | '\'', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | "``" -> failwith "empty identifier"
+    | '`' -> IDENTIFIER (read_quoted_identifier lexbuf '`')
+    | "\'\'", Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | '\'' -> TYPE_IDENTIFIER (read_quoted_identifier lexbuf '\'')
     | '"' -> read_text lexbuf
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;
@@ -346,14 +348,19 @@ let new_reader () =
         loop ()
       | _ -> !i in
     loop ()
-  and read_quoted_identifier lexbuf =
+  and read_quoted_identifier lexbuf mark =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in
     let rec loop () =
       match%sedlex lexbuf with
-      | '`' -> IDENTIFIER (CamomileLibrary.UTF8.Buf.contents buf)
       | any ->
-        CamomileLibrary.UTF8.Buf.add_string buf (Sedlexing.Utf8.lexeme lexbuf);
-        loop ()
+        let c = Sedlexing.lexeme_char lexbuf 0 in
+        if c = Uchar.of_char mark then
+          CamomileLibrary.UTF8.Buf.contents buf
+        else
+          begin
+            CamomileLibrary.UTF8.Buf.add_string buf (Sedlexing.Utf8.lexeme lexbuf);
+            loop ()
+          end
       | _ -> failwith "unreachable" in
     loop ()
     in
