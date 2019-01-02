@@ -42,24 +42,24 @@ let is_expression_end = function
   | TYPE_IDENTIFIER -> true
   | _ -> false
 
-let new_lexer () =
+let new_reader () =
   let context = { newline_region_stack = [true]; token_buf= []; offside_stack = [] } in
   let push_newline_region enabled = context.newline_region_stack <- enabled :: context.newline_region_stack in
   let pop_newline_region enabled =
     match context.newline_region_stack with
     | h :: t when h = enabled -> context.newline_region_stack <- t
     | _ -> failwith "inconsistent lexer context" in
-  let rec lex lexbuf =
+  let rec read lexbuf =
     match context.token_buf with
     | h :: t ->
       context.token_buf <- t;
       h
     | [] ->
-      begin match lex_impl lexbuf with
+      begin match read_raw lexbuf with
       | t1 when is_expression_end t1 ->
-        begin match lex_impl lexbuf with
+        begin match read_raw lexbuf with
         | NL _ as t2 ->
-          let t3 = lex_impl lexbuf in
+          let t3 = read_raw lexbuf in
           if is_expression_start t3 then
             begin
               context.token_buf <- [t2; t3];
@@ -75,9 +75,9 @@ let new_lexer () =
           t1
         end
       | WHERE ->
-        begin match lex_impl lexbuf with
+        begin match read_raw lexbuf with
         | NL offside ->
-          begin match lex_impl lexbuf with
+          begin match read_raw lexbuf with
           | LCBRACKET ->
             context.token_buf <- [LCBRACKET];
             WHERE
@@ -97,34 +97,34 @@ let new_lexer () =
         let (buf, stack) = aux ([], context.offside_stack) in
         context.offside_stack <- stack;
         context.token_buf <- List.append buf context.token_buf;
-        lex lexbuf
+        read lexbuf
       | t1 -> t1
       end
-  and lex_newline lexbuf =
+  and read_newline lexbuf =
     match%sedlex lexbuf with
     | '\n' ->
       Sedlexing.new_line lexbuf;
-      lex_newline lexbuf
-    | _ -> lex_indentation lexbuf
-  and lex_indentation lexbuf =
+      read_newline lexbuf
+    | _ -> read_indentation lexbuf
+  and read_indentation lexbuf =
     let i = { contents = 0 } in
     match%sedlex lexbuf with
     | ' ' ->
       i := !i + 1;
-      lex_indentation lexbuf
+      read_indentation lexbuf
     | '\t' ->
       i := !i + 4;
-      lex_indentation lexbuf
+      read_indentation lexbuf
     | _ -> NL !i
-  and lex_impl lexbuf =
+  and read_raw lexbuf =
     match%sedlex lexbuf with
-    | Plus (' ' | '\t') -> lex lexbuf
+    | Plus (' ' | '\t') -> read lexbuf
     | Plus '\n' ->
       Sedlexing.new_line lexbuf;
       if (List.hd context.newline_region_stack) then
-        lex_newline lexbuf
+        read_newline lexbuf
       else
-        lex_impl lexbuf
+        read_raw lexbuf
     | "!=" -> EXCLAMATION_EQ
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
@@ -259,5 +259,5 @@ let new_lexer () =
         lex_unicode_escape lexbuf limit
       | _ -> failwith "unexpecd end of unicode escape"
     in
-  lex
+  read
 
