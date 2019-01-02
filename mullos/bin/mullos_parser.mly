@@ -156,8 +156,8 @@ expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression { failwith "not implemented" }
-  | expression SEMI expression { failwith "not implemented" }
-  | expression NL expression { failwith "not implemented" }
+  | expression SEMI expression { Seq ($1, $3) }
+  | expression NL expression { Seq ($1, $3) }
   | TEXT { Text $1 }
   | NUMBER {
       let v, t = $1 in
