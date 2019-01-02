@@ -200,7 +200,7 @@ let new_reader () =
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
     | 0x03b1 .. 0x03c9 -> TYPEVAR_IDENTIFIER
-    | '"' -> lex_text lexbuf
+    | '"' -> read_text lexbuf
     | ('1' .. '9'), Star ('0' .. '9'), Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9'), 'u', ('1' .. '9'), Star ('0' .. '9') -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9') -> NUMBER
@@ -211,24 +211,24 @@ let new_reader () =
     | '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | Plus ('0' .. '9'), '.', Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | _ -> failwith ""
-  and lex_text lexbuf =
+  and read_text lexbuf =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in
     let rec aux () =
       match%sedlex lexbuf with
       | '"' -> TEXT (Buffer.contents buf)
       | eof -> failwith "unexpeted EOF"
       | '\\' ->
-        CamomileLibrary.UTF8.Buf.add_char buf (lex_escape lexbuf);
+        CamomileLibrary.UTF8.Buf.add_char buf (read_escape lexbuf);
         aux ()
       | any ->
         CamomileLibrary.UTF8.Buf.add_string buf (Sedlexing.Utf8.lexeme lexbuf);
         aux ()
       | _ -> failwith "unreachable" in
     aux ()
-  and lex_escape lexbuf =
+  and read_escape lexbuf =
     match%sedlex lexbuf with
-    | 'u' -> lex_unicode_escape lexbuf 4
-    | 'U' -> lex_unicode_escape lexbuf 8
+    | 'u' -> read_unicode_escape lexbuf 4
+    | 'U' -> read_unicode_escape lexbuf 8
     | '\'' -> CamomileLibrary.UChar.of_char '\''
     | '"' -> CamomileLibrary.UChar.of_char '"'
     | '\\' -> CamomileLibrary.UChar.of_char '\\'
@@ -240,7 +240,7 @@ let new_reader () =
     | 't' -> CamomileLibrary.UChar.of_char '\t'
     | 'v' -> CamomileLibrary.UChar.of_int 0x0b
     | _ -> failwith "Invalid escape sequence"
-  and lex_unicode_escape lexbuf limit =
+  and read_unicode_escape lexbuf limit =
     let v = ref 0 in
     let i = ref 0 in
     if !i = limit then
@@ -250,13 +250,13 @@ let new_reader () =
       match%sedlex lexbuf with
       | '0' .. '9' ->
         v := !v * 16 + aux '0';
-        lex_unicode_escape lexbuf limit
+        read_unicode_escape lexbuf limit
       | 'a' .. 'f' ->
         v := !v * 16 + aux 'a' + 10;
-        lex_unicode_escape lexbuf limit
+        read_unicode_escape lexbuf limit
       | 'A' .. 'F' ->
         v := !v * 16 + aux 'A' + 10;
-        lex_unicode_escape lexbuf limit
+        read_unicode_escape lexbuf limit
       | _ -> failwith "unexpecd end of unicode escape"
     in
   read
