@@ -39,8 +39,8 @@ let is_expression_end = function
   | RCBRACKET
   | RPAREN
   | TEXT _
-  | TYPEVAR_IDENTIFIER
-  | TYPE_IDENTIFIER -> true
+  | TYPEVAR_IDENTIFIER _
+  | TYPE_IDENTIFIER _ -> true
   | _ -> false
 
 let new_reader () =
@@ -201,9 +201,9 @@ let new_reader () =
     | '_' , Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '_' -> LOWLINE
     | '`' -> read_quoted_identifier lexbuf
-    | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
-    | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
-    | 0x03b1 .. 0x03c9 -> TYPEVAR_IDENTIFIER
+    | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | '\'', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '"' -> read_text lexbuf
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;

@@ -71,8 +71,8 @@ open Mullos_syntax
 %token <string> TEXT
 %token THEN
 %token TYPE
-%token TYPEVAR_IDENTIFIER
-%token TYPE_IDENTIFIER
+%token <string> TYPEVAR_IDENTIFIER
+%token <string> TYPE_IDENTIFIER
 %token UNSAFE
 %token VERTICAL
 %token WHERE
