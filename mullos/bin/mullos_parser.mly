@@ -118,7 +118,7 @@ type_name:
 
 expression:
   | IDENTIFIER { Identifier $1 }
-  | LPAREN RPAREN { failwith "not implemented" }
+  | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { failwith "not implemented" }
   | LCBRACKET expression RCBRACKET { failwith "not implemented" }
   | expression LPAREN argument_list RPAREN { failwith "not implemented" }
