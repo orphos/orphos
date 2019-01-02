@@ -15,4 +15,5 @@ type exp =
   | Text of string
   | Identifier of string
   | Unit
+  | Apply of exp * exp
 

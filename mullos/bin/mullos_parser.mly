@@ -121,7 +121,7 @@ expression:
   | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { $2 }
   | LCBRACKET expression RCBRACKET { $2 }
-  | expression LPAREN argument_list RPAREN { failwith "not implemented" }
+  | expression LPAREN expression RPAREN { Apply($1, $3) }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
   | expression PLUS expression { failwith "not implemented" }
