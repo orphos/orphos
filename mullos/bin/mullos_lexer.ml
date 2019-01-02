@@ -28,7 +28,7 @@ let is_expression_start = function
   | NUMBER
   | PLUS
   | RAISE
-  | TEXT -> true
+  | TEXT _ -> true
   | _ -> false
 
 let is_expression_end = function
@@ -37,7 +37,7 @@ let is_expression_end = function
   | NUMBER
   | RCBRACKET
   | RPAREN
-  | TEXT
+  | TEXT _
   | TYPEVAR_IDENTIFIER
   | TYPE_IDENTIFIER -> true
   | _ -> false
@@ -200,7 +200,7 @@ let new_lexer () =
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
     | 0x03b1 .. 0x03c9 -> TYPEVAR_IDENTIFIER
-    | '"', Sub (any, '"'), '"' -> TEXT
+    | '"' -> lex_text lexbuf
     | ('1' .. '9'), Star ('0' .. '9'), Opt (('i' | 'u'), ('1' .. '9'), Star ('0' .. '9')) -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9'), 'u', ('1' .. '9'), Star ('0' .. '9') -> NUMBER
     | ('1' .. '9'), Star ('0' .. '9') -> NUMBER
@@ -210,6 +210,54 @@ let new_lexer () =
     | Plus ('0' .. '9'), '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | '.', Plus ('0' .. '9'), Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
     | Plus ('0' .. '9'), '.', Opt ('E', Opt ('+' | '-'), Plus ('0' .. '9')), Opt ('f', Plus ('0' .. '9')) -> NUMBER
-    | _ -> failwith "" in
+    | _ -> failwith ""
+  and lex_text lexbuf =
+    let buf = CamomileLibrary.UTF8.Buf.create 1024 in
+    let rec aux () =
+      match%sedlex lexbuf with
+      | '"' -> TEXT (Buffer.contents buf)
+      | eof -> failwith "unexpeted EOF"
+      | '\\' ->
+        CamomileLibrary.UTF8.Buf.add_char buf (lex_escape lexbuf);
+        aux ()
+      | any ->
+        CamomileLibrary.UTF8.Buf.add_string buf (Sedlexing.Utf8.lexeme lexbuf);
+        aux ()
+      | _ -> failwith "unreachable" in
+    aux ()
+  and lex_escape lexbuf =
+    match%sedlex lexbuf with
+    | 'u' -> lex_unicode_escape lexbuf 4
+    | 'U' -> lex_unicode_escape lexbuf 8
+    | '\'' -> CamomileLibrary.UChar.of_char '\''
+    | '"' -> CamomileLibrary.UChar.of_char '"'
+    | '\\' -> CamomileLibrary.UChar.of_char '\\'
+    | 'a' -> CamomileLibrary.UChar.of_int 0x07
+    | 'b' -> CamomileLibrary.UChar.of_char '\b'
+    | 'f' -> CamomileLibrary.UChar.of_int 0x0c
+    | 'n' -> CamomileLibrary.UChar.of_char '\n'
+    | 'r' -> CamomileLibrary.UChar.of_char '\r'
+    | 't' -> CamomileLibrary.UChar.of_char '\t'
+    | 'v' -> CamomileLibrary.UChar.of_int 0x0b
+    | _ -> failwith "Invalid escape sequence"
+  and lex_unicode_escape lexbuf limit =
+    let v = ref 0 in
+    let i = ref 0 in
+    if !i = limit then
+      CamomileLibrary.UChar.of_int !i
+    else
+      let aux base =  Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code base in
+      match%sedlex lexbuf with
+      | '0' .. '9' ->
+        v := !v * 16 + aux '0';
+        lex_unicode_escape lexbuf limit
+      | 'a' .. 'f' ->
+        v := !v * 16 + aux 'a' + 10;
+        lex_unicode_escape lexbuf limit
+      | 'A' .. 'F' ->
+        v := !v * 16 + aux 'A' + 10;
+        lex_unicode_escape lexbuf limit
+      | _ -> failwith "unexpecd end of unicode escape"
+    in
   lex
 

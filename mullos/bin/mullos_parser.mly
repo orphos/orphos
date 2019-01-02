@@ -68,7 +68,7 @@ open Mullos_syntax
 %token RPAREN
 %token SEMI
 %token SOLIDUS
-%token TEXT
+%token <string> TEXT
 %token THEN
 %token TYPE
 %token TYPEVAR_IDENTIFIER
@@ -158,7 +158,7 @@ expression:
   | expression COLON type_expression { failwith "not implemented" }
   | expression SEMI expression { failwith "not implemented" }
   | expression NL expression { failwith "not implemented" }
-  | TEXT { failwith "not implemented" }
+  | TEXT { Text $1 }
   | NUMBER { failwith "not implemented" }
   | BOOL { Bool $1 }
   | FN parameter_list EQ_GREATER expression { failwith "not implemented" }
