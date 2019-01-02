@@ -46,7 +46,7 @@ open Mullos_syntax
 %token HYPHEN
 %token HYPHEN_EQ
 %token HYPHEN_GREATER
-%token IDENTIFIER
+%token <string> IDENTIFIER
 %token IF
 %token INSTANCE
 %token INTERNAL
@@ -117,7 +117,7 @@ type_name:
   | TYPEVAR_IDENTIFIER { () }
 
 expression:
-  | IDENTIFIER { failwith "not implemented" }
+  | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { failwith "not implemented" }
   | LPAREN expression RPAREN { failwith "not implemented" }
   | LCBRACKET expression RCBRACKET { failwith "not implemented" }

@@ -20,7 +20,7 @@ let is_expression_start = function
   | FN
   | GOTO
   | HYPHEN
-  | IDENTIFIER
+  | IDENTIFIER _
   | IF
   | LABEL
   | LCBRACKET
@@ -34,7 +34,7 @@ let is_expression_start = function
 
 let is_expression_end = function
   | BOOL _
-  | IDENTIFIER
+  | IDENTIFIER _
   | NUMBER _
   | RCBRACKET
   | RPAREN
@@ -197,7 +197,8 @@ let new_reader () =
     | '}' ->
       pop_newline_region true;
       RCBRACKET
-    | Plus (('a' .. 'z') | '_') -> IDENTIFIER
+    | Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | '`' -> read_quoted_identifier lexbuf
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
     | 0x03b1 .. 0x03c9 -> TYPEVAR_IDENTIFIER
@@ -342,6 +343,16 @@ let new_reader () =
         i := !i * 10 + Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code '0';
         loop ()
       | _ -> !i in
+    loop ()
+  and read_quoted_identifier lexbuf =
+    let buf = CamomileLibrary.UTF8.Buf.create 1024 in
+    let rec loop () =
+      match%sedlex lexbuf with
+      | '`' -> IDENTIFIER (CamomileLibrary.UTF8.Buf.contents buf)
+      | any ->
+        CamomileLibrary.UTF8.Buf.add_string buf (Sedlexing.Utf8.lexeme lexbuf);
+        loop ()
+      | _ -> failwith "unreachable" in
     loop ()
     in
   read
