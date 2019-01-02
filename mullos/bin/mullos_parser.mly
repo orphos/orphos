@@ -124,29 +124,29 @@ expression:
   | expression LPAREN expression RPAREN { Apply($1, $3) }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
-  | expression PLUS expression { failwith "not implemented" }
-  | expression HYPHEN expression { failwith "not implemented" }
-  | expression ASTERISK expression { failwith "not implemented" }
-  | expression SOLIDUS expression { failwith "not implemented" }
-  | expression PERCENT expression { failwith "not implemented" }
-  | expression BIG_PLUS expression { failwith "not implemented" }
-  | expression BIG_HYPHEN expression { failwith "not implemented" }
-  | expression BIG_LESS expression { failwith "not implemented" }
-  | expression BIG_GREATER expression { failwith "not implemented" }
-  | expression LESS expression { failwith "not implemented" }
-  | expression GREATER expression { failwith "not implemented" }
-  | expression BIG_EQ expression { failwith "not implemented" }
-  | expression EXCLAMATION_EQ expression { failwith "not implemented" }
-  | expression AMPERSAND expression { failwith "not implemented" }
-  | expression BIG_AMPERSAND expression { failwith "not implemented" }
-  | expression VERTICAL expression { failwith "not implemented" }
-  | expression BIG_VERTICAL expression { failwith "not implemented" }
+  | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
+  | expression HYPHEN expression { Apply(Identifier "-", Tuple [$1; $3]) }
+  | expression ASTERISK expression { Apply(Identifier "*", Tuple [$1; $3]) }
+  | expression SOLIDUS expression { Apply(Identifier "/", Tuple [$1; $3]) }
+  | expression PERCENT expression { Apply(Identifier "%", Tuple [$1; $3]) }
+  | expression BIG_PLUS expression { Apply(Identifier "++", Tuple [$1; $3]) }
+  | expression BIG_HYPHEN expression { Apply(Identifier "--", Tuple [$1; $3]) }
+  | expression BIG_LESS expression { Apply(Identifier "<<", Tuple [$1; $3]) }
+  | expression BIG_GREATER expression { Apply(Identifier ">>", Tuple [$1; $3]) }
+  | expression LESS expression { Apply(Identifier "<", Tuple [$1; $3]) }
+  | expression GREATER expression { Apply(Identifier ">", Tuple [$1; $3]) }
+  | expression BIG_EQ expression { Apply(Identifier "==", Tuple [$1; $3]) }
+  | expression EXCLAMATION_EQ expression { Apply(Identifier "!=", Tuple [$1; $3]) }
+  | expression AMPERSAND expression { Apply(Identifier "&", Tuple [$1; $3]) }
+  | expression BIG_AMPERSAND expression { Apply(Identifier "&&", Tuple [$1; $3]) }
+  | expression VERTICAL expression { Apply(Identifier "|", Tuple [$1; $3]) }
+  | expression BIG_VERTICAL expression { Apply(Identifier "||", Tuple [$1; $3]) }
   | expression COMMA tuple_tail { Tuple ($1 :: $3) }
   | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { failwith "not implemented" }
   | expression PLUS_EQ expression { failwith "not implemented" }
   | expression HYPHEN_EQ expression { failwith "not implemented" }
   | expression COLON_EQ expression { failwith "not implemented" }
-  | expression DOLLAR expression { failwith "not implemented" }
+  | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
   | EXCLAMATION expression { failwith "not implemented" }
   | PLUS expression { failwith "not implemented" }
   | HYPHEN expression { failwith "not implemented" }
