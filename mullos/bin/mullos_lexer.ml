@@ -268,8 +268,9 @@ let new_reader () =
     let i = ref 0 in
     let e = ref 0 in
     let reading_exponent = ref false in
+    let number_literal_type = ref ZType in
     let read_digit () =  Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code '0' in
-    let create_token () = NUMBER (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), QType) in
+    let create_token () = NUMBER (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), !number_literal_type) in
     let rec loop () =
       match%sedlex lexbuf with
       | '0' .. '9' ->
@@ -286,10 +287,28 @@ let new_reader () =
         else
           begin
             reading_exponent := true;
+            number_literal_type := QType;
             loop ()
           end
-      | ('i' | 'u' | 'f') -> failwith "not implemented"
+      | 'i' ->
+        number_literal_type := IntType (read_precision lexbuf);
+        create_token ()
+      | 'u' ->
+        number_literal_type := IntType (read_precision lexbuf);
+        create_token ()
+      | 'f' ->
+        number_literal_type := FloatType (read_precision lexbuf);
+        create_token ()
       | _ -> create_token () in
+    loop ()
+  and read_precision lexbuf =
+    let i = ref 0 in
+    let rec loop () =
+      match%sedlex lexbuf with
+      | '0' .. '9' ->
+        i := !i * 10 + Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code '0';
+        loop ()
+      | _ -> !i in
     loop ()
     in
   read
