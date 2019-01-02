@@ -19,6 +19,7 @@ depends: [
   "base-bytes" {= "base"}
   "base-threads" {= "base"}
   "base-unix" {= "base"}
+  "camomile" {= "1.0.1"}
   "conf-cmake" {= "1"}
   "conf-gmp" {= "1"}
   "conf-llvm" {= "5.0.0"}

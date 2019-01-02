@@ -22,4 +22,5 @@ depends: [
   "toml"
   "llvm"
   "zarith"
+  "camomile"
 ]
