@@ -197,7 +197,9 @@ let new_reader () =
     | '}' ->
       pop_newline_region true;
       RCBRACKET
-    | Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | ('a' .. 'z'), Star (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | '_' , Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | '_' -> LOWLINE
     | '`' -> read_quoted_identifier lexbuf
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER
     | '`', Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER
