@@ -119,7 +119,7 @@ type_name:
 expression:
   | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { Unit }
-  | LPAREN expression RPAREN { failwith "not implemented" }
+  | LPAREN expression RPAREN { $2 }
   | LCBRACKET expression RCBRACKET { failwith "not implemented" }
   | expression LPAREN argument_list RPAREN { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
