@@ -45,4 +45,9 @@ type ty =
   | TBool of bool
   | TLambda of ty * ty
   | TLazy of ty
+  | TEff of ty * eff
+and eff =
+  | ETy of ty
+  | ECombine of eff * eff
+  | EWildcard
 

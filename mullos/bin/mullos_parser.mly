@@ -233,7 +233,7 @@ type_expression:
   | type_expression COMMA type_tuple_tail { TTuple ($1 :: $3) }
   | ASTERISK type_expression { TPointer $2 }
   | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
-  | type_expression LCBRACKET effect_expression RCBRACKET { failwith "not implemented" }
+  | type_expression LCBRACKET effect_expression RCBRACKET { TEff ($1, $3) }
   | NUMBER { let v, s = $1 in TNumber (v, s) }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
@@ -249,9 +249,9 @@ type_tuple_tail:
   | type_expression { [$1] }
 
 effect_expression:
-  type_expression { () }
-  | type_expression BIG_PLUS effect_expression { () }
-  | LOWLINE { () }
+  type_expression { ETy $1 }
+  | effect_expression BIG_PLUS effect_expression { ECombine ($1, $3) }
+  | LOWLINE { EWildcard }
 
 variant:
   DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_constructor_list { () }
