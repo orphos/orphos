@@ -107,8 +107,8 @@ annotation_list:
 definition: annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
 
 value_name:
-  IDENTIFIER DOT value_name { () }
-  | IDENTIFIER { () }
+  IDENTIFIER DOT value_name { $1 :: $3 }
+  | IDENTIFIER { [$1] }
 
 type_name:
   TYPE_IDENTIFIER DOT type_name { () }
@@ -186,19 +186,26 @@ pattern_clause:
 pattern_condition: IF expression { () }
 
 pattern:
-  value_name { () }
-  | LPAREN RPAREN { () }
-  | LPAREN pattern RPAREN { () }
-  | IDENTIFIER AT pattern { () }
-  | IDENTIFIER LPAREN pattern RPAREN { () }
-  | pattern COMMA pattern { () }
-  | pattern BIG_COLON pattern { () }
-  | pattern COLON type_expression { () }
-  | LOWLINE { () }
-  | TEXT { () }
-  | NUMBER { () }
-  | BOOL { () }
-  | IDENTIFIER HYPHEN_GREATER pattern { () }
+  value_name { PIdent $1 }
+  | LPAREN RPAREN { PUnit }
+  | LPAREN pattern RPAREN { $2 }
+  | IDENTIFIER AT pattern { PBind ($1, $3) }
+  | IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
+  | pattern COMMA tuple_pat_tail { PTuple ($1 :: $3) }
+  | pattern BIG_COLON pattern { PCons ($1, $3) }
+  | pattern COLON type_expression { failwith "not implemented" }
+  | LOWLINE { PWildcard }
+  | TEXT { PText $1 }
+  | NUMBER {
+      let v, s = $1 in
+      PNumber (v, s)
+    }
+  | BOOL { PBool $1 }
+  | IDENTIFIER HYPHEN_GREATER pattern { failwith "not implemented" }
+
+tuple_pat_tail:
+  | pattern COMMA tuple_pat_tail { $1 :: $3 }
+  | pattern { [$1] }
 
 argument_list:
   expression { () }

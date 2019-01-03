@@ -20,3 +20,14 @@ type exp =
   | IfThenElse of exp * exp * exp option
   | Seq of exp * exp
 
+type pat =
+  | PIdent of string list
+  | PUnit
+  | PBind of string * pat
+  | PCtor of string * pat
+  | PTuple of pat list
+  | PCons of pat * pat
+  | PWildcard
+  | PText of string
+  | PNumber of Q.t * number_literal_type
+  | PBool of bool
