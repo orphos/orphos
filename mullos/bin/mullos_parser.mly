@@ -110,10 +110,13 @@ value_name:
   IDENTIFIER DOT value_name { $1 :: $3 }
   | IDENTIFIER { [$1] }
 
+type_ident:
+  | TYPE_IDENTIFIER DOT type_ident { $1 :: $3 }
+  | TYPE_IDENTIFIER { [$1] }
+
 type_name:
-  TYPE_IDENTIFIER DOT type_name { () }
-  | TYPE_IDENTIFIER { () }
-  | TYPEVAR_IDENTIFIER { () }
+  | type_ident { TIdent $1 }
+  | TYPEVAR_IDENTIFIER { TVar $1 }
 
 expression:
   | IDENTIFIER { Identifier $1 }
@@ -221,21 +224,25 @@ definition_list: definition { () }
   | definition definition_list { () }
 
 type_expression:
-  type_name { () }
-  | LPAREN type_expression RPAREN { () }
-  | type_name type_argument_list { () }
-  | type_expression COMMA type_expression { () }
-  | ASTERISK type_expression { () }
-  | IDENTIFIER HYPHEN_GREATER type_expression { () }
-  | type_expression LCBRACKET effect_expression RCBRACKET { () }
-  | NUMBER { () }
-  | TEXT { () }
-  | BOOL { () }
-  | type_expression EQ_GREATER type_expression { () }
+  | type_name { $1 }
+  | LPAREN type_expression RPAREN { $2 }
+  | type_name type_argument_list { TApply ($1, $2) }
+  | type_expression COMMA type_tuple_tail { TTuple ($1 :: $3) }
+  | ASTERISK type_expression { TPointer $2 }
+  | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
+  | type_expression LCBRACKET effect_expression RCBRACKET { failwith "not implemented" }
+  | NUMBER { let v, s = $1 in TNumber (v, s) }
+  | TEXT { TText $1 }
+  | BOOL { TBool $1 }
+  | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
 
 type_argument_list:
-  type_expression { () }
-  | type_expression type_argument_list { () }
+  type_expression { [$1] }
+  | type_expression type_argument_list { $1 :: $2 }
+
+type_tuple_tail:
+  | type_expression COMMA type_tuple_tail { $1 :: $3 }
+  | type_expression { [$1] }
 
 effect_expression:
   type_expression { () }

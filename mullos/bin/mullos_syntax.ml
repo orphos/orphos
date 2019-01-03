@@ -31,3 +31,15 @@ type pat =
   | PText of string
   | PNumber of Q.t * number_literal_type
   | PBool of bool
+
+type ty =
+  | TIdent of string list
+  | TVar of string
+  | TApply of ty * ty list
+  | TTuple of ty list
+  | TPointer of ty
+  | TNumber of Q.t * number_literal_type
+  | TText of string
+  | TBool of bool
+  | TLambda of ty * ty
+
