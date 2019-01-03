@@ -18,7 +18,6 @@ let is_expression_start = function
   | CIRCUMFLEX
   | EXCLAMATION
   | FN
-  | GOTO
   | HYPHEN
   | IDENTIFIER _
   | IF
@@ -154,7 +153,6 @@ let new_reader () =
     | "external" -> EXTERNAL
     | "false" -> BOOL false
     | "fn" -> FN
-    | "goto" -> GOTO
     | "if" -> IF
     | "instance" -> INSTANCE
     | "internal" -> INTERNAL

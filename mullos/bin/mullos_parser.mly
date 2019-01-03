@@ -41,7 +41,6 @@ open Mullos_syntax
 %token EXCLAMATION_EQ
 %token EXTERNAL
 %token FN
-%token GOTO
 %token GREATER
 %token HYPHEN
 %token HYPHEN_EQ
@@ -168,7 +167,6 @@ expression:
   | RAISE expression { failwith "not implemented" }
   | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
-  | GOTO expression { Goto $2 }
   | label_clause expression { failwith "not implemented" }
 
 tuple_tail:
