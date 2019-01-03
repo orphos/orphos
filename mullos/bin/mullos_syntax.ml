@@ -19,6 +19,7 @@ type exp =
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
   | Seq of exp * exp
+  | Lazy of exp
 
 type pat =
   | PIdent of string list
@@ -31,6 +32,7 @@ type pat =
   | PText of string
   | PNumber of Q.t * number_literal_type
   | PBool of bool
+  | PLazy of pat
 
 type ty =
   | TIdent of string list
@@ -42,4 +44,5 @@ type ty =
   | TText of string
   | TBool of bool
   | TLambda of ty * ty
+  | TLazy of ty
 

@@ -50,6 +50,7 @@ open Mullos_syntax
 %token INSTANCE
 %token INTERNAL
 %token LABEL
+%token LAZY
 %token LCBRACKET
 %token LESS
 %token LET
@@ -171,6 +172,7 @@ expression:
   | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
   | label_clause expression { failwith "not implemented" }
+  | LAZY expression { Lazy $2 }
 
 tuple_tail:
   | expression COMMA tuple_tail { $1 :: $3 }
@@ -205,6 +207,7 @@ pattern:
     }
   | BOOL { PBool $1 }
   | IDENTIFIER HYPHEN_GREATER pattern { failwith "not implemented" }
+  | LAZY pattern { PLazy $2 }
 
 tuple_pat_tail:
   | pattern COMMA tuple_pat_tail { $1 :: $3 }
@@ -235,6 +238,7 @@ type_expression:
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
   | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
+  | LAZY type_expression { TLazy $2 }
 
 type_argument_list:
   type_expression { [$1] }

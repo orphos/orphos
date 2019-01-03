@@ -22,6 +22,7 @@ let is_expression_start = function
   | IDENTIFIER _
   | IF
   | LABEL
+  | LAZY
   | LCBRACKET
   | LET
   | LPAREN
@@ -157,6 +158,7 @@ let new_reader () =
     | "instance" -> INSTANCE
     | "internal" -> INTERNAL
     | "label" -> LABEL
+    | "lazy" -> LAZY
     | "let" -> LET
     | "match" -> MATCH
     | "raise" -> RAISE
