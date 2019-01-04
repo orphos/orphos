@@ -9,6 +9,7 @@
  (preprocess (pps sedlex.ppx)))
 
 (menhir
+  (flags --explain)
   (modules mullos_parser))
 
 (install
