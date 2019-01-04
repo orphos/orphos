@@ -20,8 +20,8 @@ type exp =
   | IfThenElse of exp * exp * exp option
   | Seq of exp * exp
   | Lazy of exp
-
-type pat =
+  | Lambda of pat * exp
+and pat =
   | PIdent of string list
   | PUnit
   | PBind of string * pat

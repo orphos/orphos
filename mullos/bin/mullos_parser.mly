@@ -167,7 +167,7 @@ expression:
       Number(v, t)
     }
   | BOOL { Bool $1 }
-  | FN parameter_list EQ_GREATER expression { failwith "not implemented" }
+  | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
   | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
