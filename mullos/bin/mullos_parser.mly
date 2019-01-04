@@ -105,7 +105,9 @@ annotation_list:
   annotation { () }
   | annotation annotation_list { () }
 
-definition: annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+definition:
+  | annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+  | annotation_list? linkage? UNSAFE? DEF pattern parameter_list? { () }
 
 value_name:
   IDENTIFIER DOT value_name { $1 :: $3 }
@@ -289,13 +291,7 @@ type_parameter_list:
   type_name { () }
   | type_name type_parameter_list { () }
 
-type_class_body: declaration_list { () }
-
-declaration_list:
-  declaration { () }
-  | declaration declaration_list { () }
-
-declaration: DEF IDENTIFIER COLON type_expression { () }
+type_class_body: top_level_definition_list { () }
 
 instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LCBRACKET definition_list RCBRACKET { () }
 
@@ -307,7 +303,6 @@ top_level_definition:
   definition { () }
   | type_class { () }
   | variant { () }
-  | declaration { () }
   | extensible_variant_declaration { () }
   | extensible_variant_definition { () }
 
