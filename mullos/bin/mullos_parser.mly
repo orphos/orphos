@@ -77,6 +77,7 @@ open Mullos_syntax
 %token VERTICAL
 %token WHERE
 
+%left Application
 %right DOLLAR
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
@@ -126,7 +127,7 @@ expression:
   | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { $2 }
   | LCBRACKET expression RCBRACKET { $2 }
-  | expression LPAREN expression RPAREN { Apply($1, $3) }
+  | expression expression %prec Application { Apply($1, $2) }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
   | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
