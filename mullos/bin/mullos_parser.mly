@@ -96,6 +96,7 @@ open Mullos_syntax
 %left ASTERISK SOLIDUS PERCENT
 %right unary_op
 %nonassoc MATCH
+%right LAZY
 %left NUMBERSIGN
 
 %start<unit> compilation_unit
