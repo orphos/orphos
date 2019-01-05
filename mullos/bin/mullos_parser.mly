@@ -222,11 +222,24 @@ pattern_clause:
 
 pattern_condition: IF expression { () }
 
-pattern:
-  value_name { PIdent $1 }
+simple_pattern:
+  | value_name { PIdent $1 }
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
   | IDENTIFIER AT pattern { PBind ($1, $3) }
+  | simple_pattern BIG_COLON simple_pattern { PCons ($1, $3) }
+  | simple_pattern COLON type_expression { failwith "not implemented" }
+  | LOWLINE { PWildcard }
+  | TEXT { PText $1 }
+  | NUMBER {
+        let v, s = $1 in
+        PNumber (v, s)
+      }
+  | BOOL { PBool $1 }
+  | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
+  | LAZY pattern { PLazy $2 }
+
+pattern:
   | TYPE_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
@@ -235,17 +248,7 @@ pattern:
         | x -> PTuple ($1 :: [x])
         end
       }
-  | pattern BIG_COLON pattern { PCons ($1, $3) }
-  | pattern COLON type_expression { failwith "not implemented" }
-  | LOWLINE { PWildcard }
-  | TEXT { PText $1 }
-  | NUMBER {
-      let v, s = $1 in
-      PNumber (v, s)
-    }
-  | BOOL { PBool $1 }
-  | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
-  | LAZY pattern { PLazy $2 }
+  | simple_pattern { $1 }
 
 tuple_pat_tail:
   | pattern COMMA tuple_pat_tail { $1 :: $3 }
@@ -256,8 +259,8 @@ argument_list:
   | expression argument_list { () }
 
 parameter_list:
-  pattern { () }
-  | pattern parameter_list { () }
+  simple_pattern { () }
+  | simple_pattern parameter_list { () }
 
 where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 
