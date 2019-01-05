@@ -304,7 +304,7 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_constructor_list { () }
+  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause? EQ variant_constructor_list { () }
 
 type_definition_body:
   | variant_constructor_list { () }
