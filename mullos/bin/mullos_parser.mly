@@ -80,6 +80,8 @@ open Mullos_syntax
 %token WHERE
 
 %right DOLLAR
+%right COLON
+%right RAISE
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
 %right VERTICAL BIG_VERTICAL
