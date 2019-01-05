@@ -237,7 +237,7 @@ pattern:
       PNumber (v, s)
     }
   | BOOL { PBool $1 }
-  | IDENTIFIER HYPHEN_GREATER pattern { failwith "not implemented" }
+  | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
   | LAZY pattern { PLazy $2 }
 
 tuple_pat_tail:
