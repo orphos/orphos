@@ -79,6 +79,8 @@ open Mullos_syntax
 %token VERTICAL
 %token WHERE
 
+%nonassoc NL SEMI
+%nonassoc LET
 %right DOLLAR
 %right COLON
 %right RAISE
