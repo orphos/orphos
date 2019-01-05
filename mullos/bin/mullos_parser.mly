@@ -121,8 +121,10 @@ attribute_list:
   | attribute attribute_list { () }
 
 definition:
-  | attribute_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
-  | attribute_list? linkage? UNSAFE? DEF pattern parameter_list? { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern EQ expression where_clause? { () }
+  | attribute_list? linkage? UNSAFE? DEF IDENTIFIER parameter_list EQ expression where_clause? { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern { () }
+  | attribute_list? linkage? UNSAFE? DEF IDENTIFIER parameter_list { () }
 
 value_name:
   IDENTIFIER DOT value_name { $1 :: $3 }
@@ -159,8 +161,10 @@ application_expression:
 
 expression:
   | application_expression { $1 }
-  | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
-  | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
+  | LET pattern EQ expression NL expression { failwith "not implemented" }
+  | LET IDENTIFIER parameter_list EQ expression SEMI expression { failwith "not implemented" }
+  | LET pattern EQ expression SEMI expression { failwith "not implemented" }
+  | LET IDENTIFIER parameter_list EQ expression NL expression { failwith "not implemented" }
   | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
   | expression HYPHEN expression { Apply(Identifier "-", Tuple [$1; $3]) }
   | expression ASTERISK expression { Apply(Identifier "*", Tuple [$1; $3]) }
