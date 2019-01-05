@@ -221,7 +221,13 @@ pattern:
   | LPAREN pattern RPAREN { $2 }
   | IDENTIFIER AT pattern { PBind ($1, $3) }
   | IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
-  | pattern COMMA tuple_pat_tail { PTuple ($1 :: $3) }
+  | pattern COMMA pattern {
+        let rhs = $3 in
+        begin match rhs with
+        | PTuple xs -> PTuple ($1 :: xs)
+        | x -> PTuple ($1 :: [x])
+        end
+      }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
   | pattern COLON type_expression { failwith "not implemented" }
   | LOWLINE { PWildcard }
