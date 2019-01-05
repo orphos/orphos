@@ -275,7 +275,7 @@ type_expression:
       }
   | ASTERISK type_expression { TPointer $2 }
   | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
-  | type_expression LCBRACKET effect_expression RCBRACKET { TEff ($1, $3) }
+  | type_expression AT effect_expression { TEff ($1, $3) }
   | NUMBER { let v, s = $1 in TNumber (v, s) }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
