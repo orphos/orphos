@@ -21,6 +21,7 @@ open Mullos_syntax
 %token BIG_PLUS
 %token BIG_VERTICAL
 %token <bool> BOOL
+%token <bool> BOOLTYPE
 %token CASE
 %token CATCH
 %token CIRCUMFLEX
@@ -57,7 +58,8 @@ open Mullos_syntax
 %token LPAREN
 %token MATCH
 %token <int> NL
-%token <Q.t * Mullos_syntax.number_literal_type> NUMBER
+%token <Mullos_syntax.number> NUMBER
+%token <Mullos_syntax.number> NUMBERTYPE
 %token NUMBERSIGN
 %token NUMBERSIGN_EXCLAMATION_LBRACKET
 %token NUMBERSIGN_LBRACKET
@@ -72,6 +74,7 @@ open Mullos_syntax
 %token SEMI
 %token SOLIDUS
 %token <string> TEXT
+%token <string> TEXTTYPE
 %token THEN
 %token TILDE
 %token TYPE
@@ -146,10 +149,7 @@ simple_expression:
   | LPAREN expression RPAREN { $2 }
   | LCBRACKET seq RCBRACKET { Seq $2 }
   | TEXT { Text $1 }
-  | NUMBER {
-        let v, t = $1 in
-        Number(v, t)
-      }
+  | NUMBER { Number $1 }
   | BOOL { Bool $1 }
 
 seq:
@@ -229,10 +229,7 @@ simple_pattern:
   | IDENTIFIER AT pattern { PBind ($1, $3) }
   | LOWLINE { PWildcard }
   | TEXT { PText $1 }
-  | NUMBER {
-        let v, s = $1 in
-        PNumber (v, s)
-      }
+  | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
   | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
   | LAZY pattern { PLazy $2 }
@@ -269,9 +266,9 @@ definition_list: definition { () }
 
 simple_type_expression:
   | type_name { $1 }
-  | NUMBER { let v, s = $1 in TNumber (v, s) }
-  | TEXT { TText $1 }
-  | BOOL { TBool $1 }
+  | NUMBERTYPE { TNumber $1 }
+  | TEXTTYPE { TText $1 }
+  | BOOLTYPE { TBool $1 }
   | LPAREN type_expression RPAREN { $2 }
 
 application_type_expression:

@@ -9,9 +9,11 @@ type number_literal_type =
   | IntType of int
   | FloatType of int
 
+type number = Q.t * number_literal_type
+
 type exp =
   | Bool of bool
-  | Number of Q.t * number_literal_type
+  | Number of number
   | Text of string
   | Identifier of string
   | Unit
@@ -30,7 +32,7 @@ and pat =
   | PCons of pat * pat
   | PWildcard
   | PText of string
-  | PNumber of Q.t * number_literal_type
+  | PNumber of number
   | PBool of bool
   | PLazy of pat
 
@@ -40,7 +42,7 @@ type ty =
   | TApply of ty * ty
   | TTuple of ty list
   | TPointer of ty
-  | TNumber of Q.t * number_literal_type
+  | TNumber of number
   | TText of string
   | TBool of bool
   | TLambda of ty * ty

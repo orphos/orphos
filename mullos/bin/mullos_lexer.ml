@@ -211,21 +211,32 @@ let new_reader () =
     | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '\'' -> TYPE_IDENTIFIER (read_quoted_identifier lexbuf '\'')
-    | '"' -> read_text lexbuf
+    | '"' -> TEXT (read_text lexbuf)
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;
-      read_number lexbuf 10
-    | "0x" -> read_number lexbuf 16
-    | "0b" -> read_number lexbuf 2
+      NUMBER (read_number lexbuf 10)
+    | "0x" -> NUMBER (read_number lexbuf 16)
+    | "0b" -> NUMBER (read_number lexbuf 2)
     | "0" ->
       Sedlexing.rollback lexbuf;
-      read_number lexbuf 8
+      NUMBER (read_number lexbuf 8)
+    | "#\"" -> TEXTTYPE (read_text lexbuf)
+    | "#true" -> BOOLTYPE true
+    | "#false" -> BOOLTYPE false
+    | '#', ('1' .. '9') ->
+      Sedlexing.rollback lexbuf;
+      NUMBERTYPE (read_number lexbuf 10)
+    | "#0x" -> NUMBERTYPE (read_number lexbuf 16)
+    | "#0b" -> NUMBERTYPE (read_number lexbuf 2)
+    | "#0" ->
+      Sedlexing.rollback lexbuf;
+      NUMBERTYPE (read_number lexbuf 8)
     | _ -> failwith ""
   and read_text lexbuf =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in
     let rec aux () =
       match%sedlex lexbuf with
-      | '"' -> TEXT (Buffer.contents buf)
+      | '"' -> Buffer.contents buf
       | eof -> failwith "unexpeted EOF"
       | '\\' ->
         CamomileLibrary.UTF8.Buf.add_char buf (read_escape lexbuf);
@@ -273,7 +284,7 @@ let new_reader () =
     let e = ref 0 in
     let reading_exponent = ref false in
     let number_literal_type = ref ZType in
-    let create_token () = NUMBER (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), !number_literal_type) in
+    let create_token () = (Q.make (Z.of_int !i) (Z.mul (Z.of_int !e) (Z.of_int 10)), !number_literal_type) in
     let rec read_digit base_char base_num =
       Sedlexing.rollback lexbuf;
       i := !i * radix + (Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code base_char) + base_num;
