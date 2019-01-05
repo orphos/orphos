@@ -21,7 +21,6 @@ let is_expression_start = function
   | HYPHEN
   | IDENTIFIER _
   | IF
-  | LABEL
   | LAZY
   | LCBRACKET
   | LET
@@ -159,7 +158,6 @@ let new_reader () =
     | "if" -> IF
     | "instance" -> INSTANCE
     | "internal" -> INTERNAL
-    | "label" -> LABEL
     | "lazy" -> LAZY
     | "let" -> LET
     | "match" -> MATCH

@@ -48,7 +48,6 @@ open Mullos_syntax
 %token IF
 %token INSTANCE
 %token INTERNAL
-%token LABEL
 %token LAZY
 %token LCBRACKET
 %token LESS
@@ -199,10 +198,7 @@ expression:
   | RAISE expression { failwith "not implemented" }
   | IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
-  | label_clause expression { failwith "not implemented" }
   | LAZY expression { Lazy $2 }
-
-label_clause: LABEL IDENTIFIER COLON { () }
 
 pattern_clause_list:
   pattern_clause { () }
