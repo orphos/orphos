@@ -247,14 +247,6 @@ pattern:
   | pattern BIG_COLON pattern { PCons ($1, $3) }
   | simple_pattern { $1 }
 
-tuple_pat_tail:
-  | pattern COMMA tuple_pat_tail { $1 :: $3 }
-  | pattern { [$1] }
-
-argument_list:
-  expression { () }
-  | expression argument_list { () }
-
 parameter_list:
   simple_pattern { () }
   | simple_pattern parameter_list { () }
@@ -294,10 +286,6 @@ type_argument_list:
   simple_type_expression { [$1] }
   | simple_type_expression type_argument_list { $1 :: $2 }
 
-type_tuple_tail:
-  | type_expression COMMA type_tuple_tail { $1 :: $3 }
-  | type_expression { [$1] }
-
 effect_expression:
   type_expression { ETy $1 }
   | effect_expression BIG_PLUS effect_expression { ECombine ($1, $3) }
@@ -305,10 +293,6 @@ effect_expression:
 
 type_definition:
   | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause? EQ variant_constructor_list { () }
-
-type_definition_body:
-  | variant_constructor_list { () }
-  | type_expression { () }
 
 variant_parameter_list:
   TYPEVAR_IDENTIFIER { () }
