@@ -266,7 +266,13 @@ type_expression:
   | type_name { $1 }
   | LPAREN type_expression RPAREN { $2 }
   | type_name type_argument_list { TApply ($1, $2) }
-  | type_expression COMMA type_tuple_tail { TTuple ($1 :: $3) }
+  | type_expression COMMA type_expression {
+        let x = $3 in
+        begin match x with
+        | TTuple xs -> TTuple ($1 :: xs)
+        | x -> TTuple ($1 :: [x])
+        end
+      }
   | ASTERISK type_expression { TPointer $2 }
   | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
   | type_expression LCBRACKET effect_expression RCBRACKET { TEff ($1, $3) }
