@@ -143,15 +143,18 @@ simple_expression:
         Number(v, t)
       }
   | BOOL { Bool $1 }
-  | simple_expression simple_expression { Apply($1, $2) }
 
 seq:
   | expression SEMI seq { $1 :: $3 }
   | expression NL seq  { $1 :: $3 }
   | expression { [$1] }
 
-expression:
+application_expression:
   | simple_expression { $1 }
+  | application_expression simple_expression { Apply($1, $2) }
+
+expression:
+  | application_expression { $1 }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
   | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
