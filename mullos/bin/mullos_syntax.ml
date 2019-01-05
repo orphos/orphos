@@ -18,7 +18,7 @@ type exp =
   | Apply of exp * exp
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
-  | Seq of exp * exp
+  | Seq of exp list
   | Lazy of exp
   | Lambda of pat * exp
 and pat =

@@ -86,8 +86,8 @@ open Mullos_syntax
 %left BIG_LESS BIG_GREATER
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOLIDUS PERCENT
+%right unary_op
 %nonassoc MATCH
-%left Application
 %left NUMBERSIGN
 
 %start<unit> compilation_unit
@@ -122,12 +122,26 @@ type_name:
   | type_ident { TIdent $1 }
   | TYPEVAR_IDENTIFIER { TVar $1 }
 
-expression:
+simple_expression:
   | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { $2 }
-  | LCBRACKET expression RCBRACKET { $2 }
-  | expression expression %prec Application { Apply($1, $2) }
+  | LCBRACKET seq RCBRACKET { Seq $2 }
+  | TEXT { Text $1 }
+  | NUMBER {
+        let v, t = $1 in
+        Number(v, t)
+      }
+  | BOOL { Bool $1 }
+  | simple_expression simple_expression { Apply($1, $2) }
+
+seq:
+  | expression SEMI seq { $1 :: $3 }
+  | expression NL seq  { $1 :: $3 }
+  | expression { [$1] }
+
+expression:
+  | simple_expression { $1 }
   | LET pattern parameter_list? EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern parameter_list? EQ expression NL expression { failwith "not implemented" }
   | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
@@ -153,23 +167,15 @@ expression:
   | expression HYPHEN_EQ expression { failwith "not implemented" }
   | expression COLON_EQ expression { failwith "not implemented" }
   | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
-  | EXCLAMATION expression { Apply(Identifier "!", $2) }
-  | PLUS expression { Apply(Identifier "+", $2) }
-  | HYPHEN expression { Apply(Identifier "-", $2) }
-  | CIRCUMFLEX expression { Apply(Identifier "^", $2) }
-  | AMPERSAND expression { Apply(Identifier "&", $2) }
-  | ASTERISK expression { Apply(Identifier "*", $2) }
+  | EXCLAMATION expression %prec unary_op { Apply(Identifier "!", $2) }
+  | PLUS expression %prec unary_op { Apply(Identifier "+", $2) }
+  | HYPHEN expression %prec unary_op { Apply(Identifier "-", $2) }
+  | CIRCUMFLEX expression %prec unary_op { Apply(Identifier "^", $2) }
+  | AMPERSAND expression %prec unary_op { Apply(Identifier "&", $2) }
+  | ASTERISK expression %prec unary_op { Apply(Identifier "*", $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression { failwith "not implemented" }
-  | expression SEMI expression { Seq ($1, $3) }
-  | expression NL expression { Seq ($1, $3) }
-  | TEXT { Text $1 }
-  | NUMBER {
-      let v, t = $1 in
-      Number(v, t)
-    }
-  | BOOL { Bool $1 }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
   | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
