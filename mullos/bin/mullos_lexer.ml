@@ -150,7 +150,6 @@ let new_reader () =
       CASE
     | "catch" -> CATCH
     | "class" -> CLASS
-    | "data" -> DATA
     | "def" -> DEF
     | "deriving" -> DERIVING
     | "else" -> ELSE

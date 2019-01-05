@@ -28,7 +28,6 @@ open Mullos_syntax
 %token COLON
 %token COLON_EQ
 %token COMMA
-%token DATA
 %token DEF
 %token DERIVING
 %token DOLLAR
@@ -265,9 +264,12 @@ effect_expression:
   | effect_expression BIG_PLUS effect_expression { ECombine ($1, $3) }
   | LOWLINE { EWildcard }
 
-variant:
-  DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_constructor_list { () }
-  | DATA TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ type_expression { () }
+type_definition:
+  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause_body? EQ variant_constructor_list { () }
+
+type_definition_body:
+  | variant_constructor_list { () }
+  | type_expression { () }
 
 variant_parameter_list:
   TYPEVAR_IDENTIFIER { () }
@@ -312,7 +314,7 @@ extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor 
 top_level_definition:
   definition { () }
   | type_class { () }
-  | variant { () }
+  | type_definition { () }
   | extensible_variant_declaration { () }
   | extensible_variant_definition { () }
 
