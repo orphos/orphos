@@ -85,7 +85,6 @@ open Mullos_syntax
 %token WHERE
 
 %nonassoc NL SEMI
-%nonassoc LET
 %nonassoc FN
 %nonassoc THEN
 %nonassoc ELSE
