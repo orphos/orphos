@@ -63,6 +63,7 @@ open Mullos_syntax
 %token PERCENT
 %token PLUS
 %token PLUS_EQ
+%token QUESTION
 %token RAISE
 %token RBRACKET
 %token RCBRACKET
@@ -198,6 +199,7 @@ expression:
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
   | TILDE IDENTIFIER COLON expression { failwith "not implemented" }
+  | QUESTION IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
   | LAZY expression { Lazy $2 }
 

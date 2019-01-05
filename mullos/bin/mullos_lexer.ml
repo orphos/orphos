@@ -27,6 +27,7 @@ let is_expression_start = function
   | LPAREN
   | NUMBER _
   | PLUS
+  | QUESTION
   | RAISE
   | TEXT _
   | TILDE -> true
@@ -188,6 +189,7 @@ let new_reader () =
     | '<' -> LESS
     | '=' -> EQ
     | '>' -> GREATER
+    | '?' -> QUESTION
     | '@' -> AT
     | '^' -> CIRCUMFLEX
     | '_' -> LOWLINE
