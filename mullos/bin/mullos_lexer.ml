@@ -127,6 +127,8 @@ let new_reader () =
       else
         read_raw lexbuf
     | "!=" -> EXCLAMATION_EQ
+    | "#![" -> NUMBERSIGN_EXCLAMATION_LBRACKET
+    | "#[" -> NUMBERSIGN_LBRACKET
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
     | "+=" -> PLUS_EQ
@@ -142,6 +144,7 @@ let new_reader () =
     | "=>" ->
       pop_newline_region false;
       EQ_GREATER
+    | "]" -> RBRACKET
     | "case" ->
       push_newline_region false;
       CASE

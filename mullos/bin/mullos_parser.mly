@@ -60,10 +60,13 @@ open Mullos_syntax
 %token <int> NL
 %token <Q.t * Mullos_syntax.number_literal_type> NUMBER
 %token NUMBERSIGN
+%token NUMBERSIGN_EXCLAMATION_LBRACKET
+%token NUMBERSIGN_LBRACKET
 %token PERCENT
 %token PLUS
 %token PLUS_EQ
 %token RAISE
+%token RBRACKET
 %token RCBRACKET
 %token RPAREN
 %token SEMI
@@ -100,15 +103,15 @@ linkage:
   INTERNAL { () }
   | EXTERNAL { () }
 
-annotation: AT IDENTIFIER LPAREN argument_list? RPAREN { () }
+attribute: NUMBERSIGN_LBRACKET expression RBRACKET { () }
 
-annotation_list:
-  annotation { () }
-  | annotation annotation_list { () }
+attribute_list:
+  attribute { () }
+  | attribute attribute_list { () }
 
 definition:
-  | annotation_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
-  | annotation_list? linkage? UNSAFE? DEF pattern parameter_list? { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern parameter_list? EQ expression where_clause? { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern parameter_list? { () }
 
 value_name:
   IDENTIFIER DOT value_name { $1 :: $3 }
