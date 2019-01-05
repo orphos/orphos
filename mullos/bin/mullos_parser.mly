@@ -50,6 +50,7 @@ open Mullos_syntax
 %token INTERNAL
 %token LAZY
 %token LCBRACKET
+%token LBRACKET
 %token LESS
 %token LET
 %token LOWLINE
@@ -102,6 +103,7 @@ open Mullos_syntax
 %nonassoc MATCH
 %right LAZY
 %left NUMBERSIGN
+%nonassoc LBRACKET
 %left AT
 
 %start<unit> compilation_unit
@@ -275,7 +277,7 @@ type_expression:
       }
   | ASTERISK type_expression { TPointer $2 }
   | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
-  | type_expression AT effect_expression { TEff ($1, $3) }
+  | type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
   | NUMBER { let v, s = $1 in TNumber (v, s) }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }

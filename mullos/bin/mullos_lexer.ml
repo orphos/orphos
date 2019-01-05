@@ -145,6 +145,7 @@ let new_reader () =
     | "=>" ->
       pop_newline_region false;
       EQ_GREATER
+    | "[" -> LBRACKET
     | "]" -> RBRACKET
     | "case" ->
       push_newline_region false;
