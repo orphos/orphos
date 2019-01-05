@@ -291,8 +291,8 @@ type_expression:
   | LAZY type_expression { TLazy $2 }
 
 type_argument_list:
-  type_expression { [$1] }
-  | type_expression type_argument_list { $1 :: $2 }
+  simple_type_expression { [$1] }
+  | simple_type_expression type_argument_list { $1 :: $2 }
 
 type_tuple_tail:
   | type_expression COMMA type_tuple_tail { $1 :: $3 }
@@ -354,6 +354,7 @@ top_level_definition:
   | type_class { () }
   | type_definition { () }
   | extensible_variant_definition { () }
+  | instance { () }
 
 top_level_definition_list:
   top_level_definition { () }
