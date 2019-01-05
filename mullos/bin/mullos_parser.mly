@@ -317,6 +317,7 @@ variant_parameter_list:
 variant_constructor_list:
   variant_constructor { () }
   | variant_constructor VERTICAL variant_constructor_list { () }
+  | BIG_DOT { () }
 
 variant_constructor:
   TYPE_IDENTIFIER variant_constructor_parameter_and_result { () }
@@ -346,15 +347,12 @@ type_class_body: top_level_definition_list { () }
 
 instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LCBRACKET definition_list RCBRACKET { () }
 
-extensible_variant_declaration: TYPE TYPE_IDENTIFIER EQ BIG_DOT { () }
-
 extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
 
 top_level_definition:
   definition { () }
   | type_class { () }
   | type_definition { () }
-  | extensible_variant_declaration { () }
   | extensible_variant_definition { () }
 
 top_level_definition_list:
