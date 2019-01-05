@@ -81,6 +81,8 @@ open Mullos_syntax
 
 %nonassoc NL SEMI
 %nonassoc LET
+%nonassoc THEN
+%nonassoc ELSE
 %right DOLLAR
 %right COLON
 %right RAISE
