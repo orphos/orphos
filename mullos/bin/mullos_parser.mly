@@ -225,7 +225,7 @@ pattern:
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
   | IDENTIFIER AT pattern { PBind ($1, $3) }
-  | IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
+  | TYPE_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
         begin match rhs with
