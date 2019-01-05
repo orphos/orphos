@@ -171,7 +171,13 @@ expression:
   | expression BIG_AMPERSAND expression { Apply(Identifier "&&", Tuple [$1; $3]) }
   | expression VERTICAL expression { Apply(Identifier "|", Tuple [$1; $3]) }
   | expression BIG_VERTICAL expression { Apply(Identifier "||", Tuple [$1; $3]) }
-  | expression COMMA tuple_tail { Tuple ($1 :: $3) }
+  | expression COMMA expression {
+        let rhs = $3 in
+        begin match rhs with
+        | Tuple xs -> Tuple ($1 :: xs)
+        | x -> Tuple ($1 :: [x])
+        end
+      }
   | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { failwith "not implemented" }
   | expression PLUS_EQ expression { failwith "not implemented" }
   | expression HYPHEN_EQ expression { failwith "not implemented" }
@@ -192,10 +198,6 @@ expression:
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
   | label_clause expression { failwith "not implemented" }
   | LAZY expression { Lazy $2 }
-
-tuple_tail:
-  | expression COMMA tuple_tail { $1 :: $3 }
-  | expression { [$1] }
 
 label_clause: LABEL IDENTIFIER COLON { () }
 
