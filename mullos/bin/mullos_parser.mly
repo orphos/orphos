@@ -81,6 +81,7 @@ open Mullos_syntax
 
 %nonassoc NL SEMI
 %nonassoc LET
+%nonassoc FN
 %nonassoc THEN
 %nonassoc ELSE
 %right DOLLAR
@@ -185,7 +186,7 @@ expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression { failwith "not implemented" }
-  | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
+  | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
   | IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
