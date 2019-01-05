@@ -101,6 +101,7 @@ open Mullos_syntax
 %nonassoc MATCH
 %right LAZY
 %left NUMBERSIGN
+%left AT
 
 %start<unit> compilation_unit
 
