@@ -77,7 +77,6 @@ open Mullos_syntax
 %token VERTICAL
 %token WHERE
 
-%left Application
 %right DOLLAR
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
@@ -88,6 +87,7 @@ open Mullos_syntax
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOLIDUS PERCENT
 %nonassoc MATCH
+%left Application
 %left NUMBERSIGN
 
 %start<unit> compilation_unit
