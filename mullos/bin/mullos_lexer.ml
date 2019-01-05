@@ -28,7 +28,8 @@ let is_expression_start = function
   | NUMBER _
   | PLUS
   | RAISE
-  | TEXT _ -> true
+  | TEXT _
+  | TILDE -> true
   | _ -> false
 
 let is_expression_end = function
@@ -197,6 +198,7 @@ let new_reader () =
     | '}' ->
       pop_newline_region true;
       RCBRACKET
+    | '~' -> TILDE
     | ('a' .. 'z'), Star (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '_' , Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '_' -> LOWLINE

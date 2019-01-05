@@ -71,6 +71,7 @@ open Mullos_syntax
 %token SOLIDUS
 %token <string> TEXT
 %token THEN
+%token TILDE
 %token TYPE
 %token <string> TYPEVAR_IDENTIFIER
 %token <string> TYPE_IDENTIFIER
@@ -196,7 +197,7 @@ expression:
   | expression COLON type_expression { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
-  | IDENTIFIER COLON expression { failwith "not implemented" }
+  | TILDE IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
   | LAZY expression { Lazy $2 }
 
