@@ -264,10 +264,19 @@ where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 definition_list: definition { () }
   | definition definition_list { () }
 
-type_expression:
+simple_type_expression:
   | type_name { $1 }
+  | NUMBER { let v, s = $1 in TNumber (v, s) }
+  | TEXT { TText $1 }
+  | BOOL { TBool $1 }
   | LPAREN type_expression RPAREN { $2 }
-  | type_name type_argument_list { TApply ($1, $2) }
+
+application_type_expression:
+  | application_type_expression simple_type_expression { TApply ($1, $2) }
+  | simple_type_expression { $1 }
+
+type_expression:
+  | application_type_expression { $1 }
   | type_expression COMMA type_expression {
         let x = $3 in
         begin match x with
@@ -278,9 +287,6 @@ type_expression:
   | ASTERISK type_expression { TPointer $2 }
   | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
   | type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
-  | NUMBER { let v, s = $1 in TNumber (v, s) }
-  | TEXT { TText $1 }
-  | BOOL { TBool $1 }
   | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
   | LAZY type_expression { TLazy $2 }
 

@@ -37,7 +37,7 @@ and pat =
 type ty =
   | TIdent of string list
   | TVar of string
-  | TApply of ty * ty list
+  | TApply of ty * ty
   | TTuple of ty list
   | TPointer of ty
   | TNumber of Q.t * number_literal_type
