@@ -187,7 +187,7 @@ expression:
   | expression COLON type_expression { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
-  | IDENTIFIER HYPHEN_GREATER expression { failwith "not implemented" }
+  | IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
   | label_clause expression { failwith "not implemented" }
   | LAZY expression { Lazy $2 }
