@@ -227,8 +227,6 @@ simple_pattern:
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
   | IDENTIFIER AT pattern { PBind ($1, $3) }
-  | simple_pattern BIG_COLON simple_pattern { PCons ($1, $3) }
-  | simple_pattern COLON type_expression { failwith "not implemented" }
   | LOWLINE { PWildcard }
   | TEXT { PText $1 }
   | NUMBER {
@@ -248,6 +246,8 @@ pattern:
         | x -> PTuple ($1 :: [x])
         end
       }
+  | pattern COLON type_expression { failwith "not implemented" }
+  | pattern BIG_COLON pattern { PCons ($1, $3) }
   | simple_pattern { $1 }
 
 tuple_pat_tail:
