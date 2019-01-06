@@ -58,6 +58,7 @@ type exp =
   | Seq of exp list
   | Lambda of pat * exp
   | Let of pat * pat list * exp * exp
+  | Label of string * exp
 and pat =
   | PIdent of string list
   | PUnit
@@ -70,6 +71,7 @@ and pat =
   | PNumber of number
   | PBool of bool
   | PLazy of pat
+  | PLabel of string * pat
 
 type ty =
   | TIdent of string list

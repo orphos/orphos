@@ -218,7 +218,7 @@ expression:
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression BIG_COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
-  | IDENTIFIER COLON expression { failwith "not implemented" }
+  | IDENTIFIER COLON expression { Label ($1, $3) }
   | expression DOT IDENTIFIER { failwith "not implemented" }
 
 pattern_clause_list:
@@ -240,7 +240,7 @@ pattern:
   | TEXT { PText $1 }
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
-  | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
+  | IDENTIFIER COLON pattern { PLabel ($1, $3) }
   | LAZY pattern { PLazy $2 }
   | TYPE_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
