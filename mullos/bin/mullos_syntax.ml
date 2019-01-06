@@ -33,6 +33,7 @@ type bin_op =
   | Asign
   | Combine
   | Remove
+  | Cons
 
 type unary_op =
   | Positive

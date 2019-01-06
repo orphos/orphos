@@ -11,6 +11,7 @@ open Mullos_syntax
 %token AMPERSAND
 %token ASTERISK
 %token AT
+%token BIGBIG_COLON
 %token BIG_AMPERSAND
 %token BIG_COLON
 %token BIG_DOT
@@ -92,7 +93,6 @@ open Mullos_syntax
 %right DOLLAR
 %right COLON
 %right RAISE
-%right TILDE QUESTION
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
 %right HYPHEN_GREATER
@@ -100,18 +100,18 @@ open Mullos_syntax
 %right AMPERSAND BIG_AMPERSAND
 %left BIG_EQ LESS GREATER EXCLAMATION_EQ
 %left BIG_LESS BIG_GREATER
-%right BIG_COLON
+%right BIGBIG_COLON
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOLIDUS PERCENT
 %right unary EXCLAMATION CIRCUMFLEX
 %nonassoc MATCH
 %right LAZY
-%left NUMBERSIGN
 %nonassoc LBRACKET LCBRACKET
 %left AT
 %nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN TYPE_IDENTIFIER TYPEVAR_IDENTIFIER TEXTTYPE BOOLTYPE NUMBERTYPE
 %nonassoc type_constraint
 %nonassoc application
+%left DOT BIG_COLON
 
 
 %start<unit> compilation_unit
@@ -140,7 +140,7 @@ definition:
   | attribute_list? linkage? UNSAFE? DEF pattern_list { () }
 
 value_name:
-  IDENTIFIER DOT value_name { $1 :: $3 }
+  IDENTIFIER BIG_COLON value_name { $1 :: $3 }
   | IDENTIFIER { [$1] }
 
 type_ident:
@@ -178,6 +178,7 @@ bin_op:
    | COLON_EQ { Asign }
    | BIG_PLUS { Combine }
    | BIG_HYPHEN { Remove }
+   | BIGBIG_COLON { Cons }
 
 unary_op:
    | EXCLAMATION { Not }
@@ -215,11 +216,10 @@ expression:
   | unary_op expression %prec unary { UnaryOp ($1, $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
-  | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
+  | expression BIG_COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
-  | TILDE IDENTIFIER COLON expression { failwith "not implemented" }
-  | QUESTION IDENTIFIER COLON expression { failwith "not implemented" }
-  | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
+  | IDENTIFIER COLON expression { failwith "not implemented" }
+  | expression DOT IDENTIFIER { failwith "not implemented" }
 
 pattern_clause_list:
   pattern_clause { () }
@@ -251,7 +251,7 @@ pattern:
         end
       }
   | pattern COLON type_expression { failwith "not implemented" }
-  | pattern BIG_COLON pattern { PCons ($1, $3) }
+  | pattern BIGBIG_COLON pattern { PCons ($1, $3) }
 
 pattern_list:
   pattern { [$1] }
