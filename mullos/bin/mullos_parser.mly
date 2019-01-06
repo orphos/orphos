@@ -286,16 +286,19 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause? EQ variant_constructor_list { () }
+  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause? EQ type_definition_body { () }
+
+type_definition_body:
+  | variant_constructor_list { () }
+  | BIG_DOT { () }
 
 variant_parameter_list:
   TYPEVAR_IDENTIFIER { () }
   | TYPEVAR_IDENTIFIER variant_parameter_list { () }
 
 variant_constructor_list:
-  variant_constructor { () }
-  | variant_constructor VERTICAL variant_constructor_list { () }
-  | BIG_DOT { () }
+  | VERTICAL variant_constructor { () }
+  | VERTICAL variant_constructor VERTICAL variant_constructor_list { () }
 
 variant_constructor:
   TYPE_IDENTIFIER variant_constructor_parameter_and_result { () }
