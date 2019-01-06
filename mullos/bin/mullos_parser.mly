@@ -30,6 +30,7 @@ open Mullos_syntax
 %token COLON
 %token COLON_EQ
 %token COMMA
+%token <string> CTOR_IDENTIFIER
 %token DEF
 %token DERIVING
 %token DOLLAR
@@ -242,7 +243,7 @@ pattern:
   | BOOL { PBool $1 }
   | IDENTIFIER COLON pattern { PLabel ($1, $3) }
   | LAZY pattern { PLazy $2 }
-  | TYPE_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
+  | CTOR_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
         begin match rhs with
@@ -303,8 +304,8 @@ variant_constructor_list:
   | VERTICAL variant_constructor VERTICAL variant_constructor_list { () }
 
 variant_constructor:
-  TYPE_IDENTIFIER variant_constructor_parameter_and_result { () }
-  | TYPE_IDENTIFIER { () }
+  | CTOR_IDENTIFIER variant_constructor_parameter_and_result { () }
+  | CTOR_IDENTIFIER { () }
 
 variant_constructor_parameter_and_result:
   COLON type_expression { () }

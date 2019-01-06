@@ -211,6 +211,8 @@ let new_reader () =
     | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | '\'' -> TYPE_IDENTIFIER (read_quoted_identifier lexbuf '\'')
+    | Star '_', ('A' .. 'Z'), Plus ('A' .. 'Z' | '_') -> CTOR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | "#(" -> CTOR_IDENTIFIER (read_quoted_identifier lexbuf ')')
     | '"' -> TEXT (read_text lexbuf)
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;
