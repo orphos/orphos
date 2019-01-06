@@ -11,6 +11,19 @@ type number_literal_type =
 
 type number = Q.t * number_literal_type
 
+type bin_op =
+  | Add
+  | Substract
+  | Multiply
+  | Division
+  | Combine
+  | Remove
+
+type unary_op =
+  | Positive
+  | Negative
+  | Not
+
 type exp =
   | Bool of bool
   | Number of number
@@ -18,6 +31,8 @@ type exp =
   | Identifier of string
   | Unit
   | Apply of exp * exp
+  | BinOp of exp * bin_op * exp
+  | UnaryOp of unary_op * exp
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
   | Seq of exp list

@@ -158,6 +158,15 @@ unary_asterisk: ASTERISK %prec unary_op { () }
 unary_hyphen: HYPHEN %prec unary_op { () }
 unary_plus: PLUS %prec unary_op { () }
 
+%inline
+bin_op:
+   | PLUS { Add }
+   | HYPHEN { Substract }
+   | ASTERISK { Multiply }
+   | SOLIDUS { Division }
+   | BIG_PLUS { Combine }
+   | BIG_HYPHEN { Remove }
+
 expression:
   | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { Unit }
@@ -171,13 +180,8 @@ expression:
   | LET IDENTIFIER parameter_list EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern EQ expression SEMI expression { failwith "not implemented" }
   | LET IDENTIFIER parameter_list EQ expression NL expression { failwith "not implemented" }
-  | expression PLUS expression { Apply(Identifier "+", Tuple [$1; $3]) }
-  | expression HYPHEN expression { Apply(Identifier "-", Tuple [$1; $3]) }
-  | expression ASTERISK expression { Apply(Identifier "*", Tuple [$1; $3]) }
-  | expression SOLIDUS expression { Apply(Identifier "/", Tuple [$1; $3]) }
+  | expression bin_op expression { BinOp ($1, $2, $3) }
   | expression PERCENT expression { Apply(Identifier "%", Tuple [$1; $3]) }
-  | expression BIG_PLUS expression { Apply(Identifier "++", Tuple [$1; $3]) }
-  | expression BIG_HYPHEN expression { Apply(Identifier "--", Tuple [$1; $3]) }
   | expression BIG_LESS expression { Apply(Identifier "<<", Tuple [$1; $3]) }
   | expression BIG_GREATER expression { Apply(Identifier ">>", Tuple [$1; $3]) }
   | expression LESS expression { Apply(Identifier "<", Tuple [$1; $3]) }
