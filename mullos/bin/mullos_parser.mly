@@ -250,7 +250,7 @@ pattern:
         | x -> PTuple ($1 :: [x])
         end
       }
-  | pattern COLON type_expression { failwith "not implemented" }
+  | pattern BIG_COLON type_expression { failwith "not implemented" }
   | pattern BIGBIG_COLON pattern { PCons ($1, $3) }
 
 pattern_list:
