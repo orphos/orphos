@@ -197,7 +197,11 @@ expression:
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
   | expression expression %prec application { Apply($1, $2) }
-  | LET pattern_list EQ expression semi expression { failwith "not implemented" }
+  | LET pattern_list EQ expression semi expression {
+        match $2 with
+        | hd :: tl -> Let (hd, tl, $4, $6)
+        | _ -> failwith "unreachable"
+      }
   | expression bin_op expression { BinOp ($1, $2, $3) }
   | expression COMMA expression {
         let rhs = $3 in
@@ -250,8 +254,8 @@ pattern:
   | pattern BIG_COLON pattern { PCons ($1, $3) }
 
 pattern_list:
-  pattern { () }
-  | pattern pattern_list { () }
+  pattern { [$1] }
+  | pattern pattern_list { $1 :: $2 }
 
 where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 
