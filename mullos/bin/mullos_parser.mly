@@ -226,8 +226,8 @@ pattern_clause_list:
   | pattern_clause pattern_clause_list { () }
 
 pattern_clause:
-  CASE pattern pattern_condition? EQ_GREATER expression { () }
-  | CATCH type_name pattern pattern_condition? EQ_GREATER expression { () }
+  | VERTICAL pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  (*| CATCH type_name pattern pattern_condition? EQ_GREATER expression { () }*)
 
 pattern_condition: IF expression { () }
 
