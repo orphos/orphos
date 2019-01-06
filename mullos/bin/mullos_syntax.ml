@@ -16,6 +16,21 @@ type bin_op =
   | Substract
   | Multiply
   | Division
+  | Xor
+  | Reminder
+  | BitwiseLeftShift
+  | BitwiseRightShift
+  | Less
+  | Greater
+  | Equal
+  | NotEqual
+  | BitwiseAnd
+  | And
+  | BitwiseOr
+  | Or
+  | AddAsign
+  | SubstractAsign
+  | Asign
   | Combine
   | Remove
 

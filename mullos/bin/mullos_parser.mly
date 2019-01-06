@@ -159,6 +159,21 @@ bin_op:
    | HYPHEN { Substract }
    | ASTERISK { Multiply }
    | SOLIDUS { Division }
+   | CIRCUMFLEX { Xor }
+   | PERCENT { Reminder }
+   | BIG_LESS { BitwiseLeftShift }
+   | BIG_GREATER { BitwiseRightShift }
+   | LESS { Less }
+   | GREATER { Greater }
+   | EXCLAMATION_EQ { NotEqual }
+   | AMPERSAND { BitwiseAnd }
+   | BIG_AMPERSAND { And }
+   | VERTICAL { BitwiseOr }
+   | BIG_VERTICAL { Or }
+   | BIG_EQ { Equal }
+   | PLUS_EQ { AddAsign }
+   | HYPHEN_EQ { SubstractAsign }
+   | COLON_EQ { Asign }
    | BIG_PLUS { Combine }
    | BIG_HYPHEN { Remove }
 
@@ -185,17 +200,6 @@ expression:
   | LET pattern EQ expression SEMI expression { failwith "not implemented" }
   | LET IDENTIFIER parameter_list EQ expression NL expression { failwith "not implemented" }
   | expression bin_op expression { BinOp ($1, $2, $3) }
-  | expression PERCENT expression { Apply(Identifier "%", Tuple [$1; $3]) }
-  | expression BIG_LESS expression { Apply(Identifier "<<", Tuple [$1; $3]) }
-  | expression BIG_GREATER expression { Apply(Identifier ">>", Tuple [$1; $3]) }
-  | expression LESS expression { Apply(Identifier "<", Tuple [$1; $3]) }
-  | expression GREATER expression { Apply(Identifier ">", Tuple [$1; $3]) }
-  | expression BIG_EQ expression { Apply(Identifier "==", Tuple [$1; $3]) }
-  | expression EXCLAMATION_EQ expression { Apply(Identifier "!=", Tuple [$1; $3]) }
-  | expression AMPERSAND expression { Apply(Identifier "&", Tuple [$1; $3]) }
-  | expression BIG_AMPERSAND expression { Apply(Identifier "&&", Tuple [$1; $3]) }
-  | expression VERTICAL expression { Apply(Identifier "|", Tuple [$1; $3]) }
-  | expression BIG_VERTICAL expression { Apply(Identifier "||", Tuple [$1; $3]) }
   | expression COMMA expression {
         let rhs = $3 in
         begin match rhs with
@@ -204,12 +208,8 @@ expression:
         end
       }
   | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { failwith "not implemented" }
-  | expression PLUS_EQ expression { failwith "not implemented" }
-  | expression HYPHEN_EQ expression { failwith "not implemented" }
-  | expression COLON_EQ expression { failwith "not implemented" }
-  | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
+  | expression DOLLAR expression { Apply($1, $3) }
   | unary_op expression %prec unary { UnaryOp ($1, $2) }
-  | CIRCUMFLEX expression { Apply(Identifier "^", $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
