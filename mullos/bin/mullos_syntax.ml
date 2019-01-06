@@ -84,6 +84,7 @@ type ty =
   | TBool of bool
   | TLambda of ty * ty
   | TLazy of ty
+  | TLabel of string * ty
   | TEff of ty * eff
 and eff =
   | ETy of ty

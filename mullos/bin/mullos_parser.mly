@@ -278,7 +278,7 @@ type_expression:
         end
       }
   | ASTERISK type_expression { TPointer $2 }
-  | IDENTIFIER HYPHEN_GREATER type_expression { failwith "not implemented" }
+  | IDENTIFIER COLON type_expression { TLabel ($1, $3) }
   | type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
   | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
   | LAZY type_expression { TLazy $2 }
