@@ -86,11 +86,13 @@ open Mullos_syntax
 
 %nonassoc NL SEMI
 %nonassoc FN
-%nonassoc THEN
+%nonassoc IF THEN
 %nonassoc ELSE
+%nonassoc LET
 %right DOLLAR
 %right COLON
 %right RAISE
+%right TILDE QUESTION
 %right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
 %right HYPHEN_GREATER
@@ -101,12 +103,16 @@ open Mullos_syntax
 %right BIG_COLON
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOLIDUS PERCENT
-%right unary_op
+%right unary_op EXCLAMATION CIRCUMFLEX
 %nonassoc MATCH
 %right LAZY
 %left NUMBERSIGN
-%nonassoc LBRACKET
+%nonassoc LBRACKET LCBRACKET
 %left AT
+%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN TYPE_IDENTIFIER TYPEVAR_IDENTIFIER TEXTTYPE BOOLTYPE NUMBERTYPE
+%nonassoc type_constraint
+%nonassoc application
+
 
 %start<unit> compilation_unit
 
@@ -142,7 +148,17 @@ type_name:
   | type_ident { TIdent $1 }
   | TYPEVAR_IDENTIFIER { TVar $1 }
 
-simple_expression:
+seq:
+  | expression SEMI seq { $1 :: $3 }
+  | expression NL seq  { $1 :: $3 }
+  | expression { [$1] }
+
+unary_amp: AMPERSAND %prec unary_op { () }
+unary_asterisk: ASTERISK %prec unary_op { () }
+unary_hyphen: HYPHEN %prec unary_op { () }
+unary_plus: PLUS %prec unary_op { () }
+
+expression:
   | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { $2 }
@@ -150,18 +166,7 @@ simple_expression:
   | TEXT { Text $1 }
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
-
-seq:
-  | expression SEMI seq { $1 :: $3 }
-  | expression NL seq  { $1 :: $3 }
-  | expression { [$1] }
-
-application_expression:
-  | simple_expression { $1 }
-  | application_expression simple_expression { Apply($1, $2) }
-
-expression:
-  | application_expression { $1 }
+  | expression expression %prec application { Apply($1, $2) }
   | LET pattern EQ expression NL expression { failwith "not implemented" }
   | LET IDENTIFIER parameter_list EQ expression SEMI expression { failwith "not implemented" }
   | LET pattern EQ expression SEMI expression { failwith "not implemented" }
@@ -196,14 +201,14 @@ expression:
   | expression COLON_EQ expression { failwith "not implemented" }
   | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
   | EXCLAMATION expression %prec unary_op { Apply(Identifier "!", $2) }
-  | PLUS expression %prec unary_op { Apply(Identifier "+", $2) }
-  | HYPHEN expression %prec unary_op { Apply(Identifier "-", $2) }
+  | unary_plus expression %prec unary_op { Apply(Identifier "+", $2) }
+  | unary_hyphen expression %prec unary_op { Apply(Identifier "-", $2) }
   | CIRCUMFLEX expression %prec unary_op { Apply(Identifier "^", $2) }
-  | AMPERSAND expression %prec unary_op { Apply(Identifier "&", $2) }
-  | ASTERISK expression %prec unary_op { Apply(Identifier "*", $2) }
+  | unary_amp expression %prec unary_op { Apply(Identifier "&", $2) }
+  | unary_asterisk expression %prec unary_op { Apply(Identifier "*", $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
-  | expression COLON type_expression { failwith "not implemented" }
+  | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
   | RAISE expression { failwith "not implemented" }
   | TILDE IDENTIFIER COLON expression { failwith "not implemented" }
@@ -242,7 +247,7 @@ pattern:
         | x -> PTuple ($1 :: [x])
         end
       }
-  | pattern COLON simple_type_expression { failwith "not implemented" }
+  | pattern COLON type_expression { failwith "not implemented" }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
   | simple_pattern { $1 }
 
@@ -255,19 +260,13 @@ where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 definition_list: definition { () }
   | definition definition_list { () }
 
-simple_type_expression:
+type_expression:
   | type_name { $1 }
   | NUMBERTYPE { TNumber $1 }
   | TEXTTYPE { TText $1 }
   | BOOLTYPE { TBool $1 }
   | LPAREN type_expression RPAREN { $2 }
-
-application_type_expression:
-  | application_type_expression simple_type_expression { TApply ($1, $2) }
-  | simple_type_expression { $1 }
-
-type_expression:
-  | application_type_expression { $1 }
+  | type_expression type_expression %prec application { TApply ($1, $2) }
   | type_expression COMMA type_expression {
         let x = $3 in
         begin match x with
@@ -280,10 +279,6 @@ type_expression:
   | type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
   | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
   | LAZY type_expression { TLazy $2 }
-
-type_argument_list:
-  simple_type_expression { [$1] }
-  | simple_type_expression type_argument_list { $1 :: $2 }
 
 effect_expression:
   type_expression { ETy $1 }
@@ -328,7 +323,7 @@ type_parameter_list:
 
 type_class_body: top_level_definition_list { () }
 
-instance: INSTANCE TYPE_IDENTIFIER type_argument_list EQ LCBRACKET definition_list RCBRACKET { () }
+instance: INSTANCE type_expression EQ LCBRACKET definition_list RCBRACKET { () }
 
 extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
 
