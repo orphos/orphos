@@ -289,35 +289,35 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE TYPE_IDENTIFIER variant_parameter_list? deriving_clause? EQ type_definition_body { () }
+  | TYPE name=TYPE_IDENTIFIER params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
 
 type_definition_body:
-  | variant_constructor_list { () }
-  | BIG_DOT { () }
+  | variant_constructor_list { Variant $1 }
+  | BIG_DOT { ExtensibleVariant }
 
 variant_parameter_list:
-  TYPEVAR_IDENTIFIER { () }
-  | TYPEVAR_IDENTIFIER variant_parameter_list { () }
+  | hd=TYPEVAR_IDENTIFIER { [hd] }
+  | hd=TYPEVAR_IDENTIFIER tl=variant_parameter_list { hd :: tl }
 
 variant_constructor_list:
-  | VERTICAL variant_constructor { () }
-  | VERTICAL variant_constructor VERTICAL variant_constructor_list { () }
+  | VERTICAL hd=variant_constructor { [hd] }
+  | VERTICAL hd=variant_constructor VERTICAL tl=variant_constructor_list { hd :: tl }
 
 variant_constructor:
-  | CTOR_IDENTIFIER variant_constructor_parameter_and_result { () }
-  | CTOR_IDENTIFIER { () }
+  | name=CTOR_IDENTIFIER param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
+  | name=CTOR_IDENTIFIER { name, None }
 
 variant_constructor_parameter_and_result:
-  COLON type_expression { () }
-  | COLON type_expression variant_constructor_result { () }
+  | COLON param=type_expression { param, None }
+  | COLON param=type_expression ret=variant_constructor_result { param, Some ret }
 
-variant_constructor_result: EQ_GREATER type_expression { () }
+variant_constructor_result: EQ_GREATER ret=type_expression { ret }
 
-deriving_clause: DERIVING deriving_clause_body { () }
+deriving_clause: DERIVING deriving_clause_body { $1 }
 
 deriving_clause_body:
-  type_name { () }
-  | type_name COMMA deriving_clause_body { () }
+  type_name { [$1] }
+  | type_name COMMA deriving_clause_body { $1 :: $3 }
 
 type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LCBRACKET type_class_body RCBRACKET { () }
 

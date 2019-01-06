@@ -91,3 +91,9 @@ and eff =
   | ECombine of eff * eff
   | EWildcard
 
+type typedef = string * ty list * deriving option * typedef_body
+and typedef_body =
+  | Variant of ctor list
+  | ExtensibleVariant
+and ctor = string * (ty * ty option) option
+and deriving = ty list
