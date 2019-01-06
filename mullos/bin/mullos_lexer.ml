@@ -222,17 +222,6 @@ let new_reader () =
     | "0" ->
       Sedlexing.rollback lexbuf;
       NUMBER (read_number lexbuf 8)
-    | "#\"" -> TEXTTYPE (read_text lexbuf)
-    | "#true" -> BOOLTYPE true
-    | "#false" -> BOOLTYPE false
-    | '#', ('1' .. '9') ->
-      Sedlexing.rollback lexbuf;
-      NUMBERTYPE (read_number lexbuf 10)
-    | "#0x" -> NUMBERTYPE (read_number lexbuf 16)
-    | "#0b" -> NUMBERTYPE (read_number lexbuf 2)
-    | "#0" ->
-      Sedlexing.rollback lexbuf;
-      NUMBERTYPE (read_number lexbuf 8)
     | _ -> failwith ""
   and read_text lexbuf =
     let buf = CamomileLibrary.UTF8.Buf.create 1024 in

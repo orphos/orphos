@@ -22,7 +22,6 @@ open Mullos_syntax
 %token BIG_PLUS
 %token BIG_VERTICAL
 %token <bool> BOOL
-%token <bool> BOOLTYPE
 %token CASE
 %token CATCH
 %token CIRCUMFLEX
@@ -61,7 +60,6 @@ open Mullos_syntax
 %token MATCH
 %token <int> NL
 %token <Mullos_syntax.number> NUMBER
-%token <Mullos_syntax.number> NUMBERTYPE
 %token NUMBERSIGN
 %token NUMBERSIGN_EXCLAMATION_LBRACKET
 %token NUMBERSIGN_LBRACKET
@@ -76,7 +74,6 @@ open Mullos_syntax
 %token SEMI
 %token SOLIDUS
 %token <string> TEXT
-%token <string> TEXTTYPE
 %token THEN
 %token TILDE
 %token TYPE
@@ -109,7 +106,7 @@ open Mullos_syntax
 %right LAZY
 %nonassoc LBRACKET LCBRACKET
 %left AT
-%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN TYPE_IDENTIFIER TYPEVAR_IDENTIFIER TEXTTYPE BOOLTYPE NUMBERTYPE
+%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN TYPE_IDENTIFIER TYPEVAR_IDENTIFIER
 %nonassoc type_constraint
 %nonassoc application
 %left DOT BIG_COLON
@@ -265,9 +262,9 @@ definition_list: definition { () }
 
 type_expression:
   | type_name { $1 }
-  | NUMBERTYPE { TNumber $1 }
-  | TEXTTYPE { TText $1 }
-  | BOOLTYPE { TBool $1 }
+  | NUMBER { TNumber $1 }
+  | TEXT { TText $1 }
+  | BOOL { TBool $1 }
   | LPAREN type_expression RPAREN { $2 }
   | type_expression type_expression %prec application { TApply ($1, $2) }
   | type_expression COMMA type_expression {
