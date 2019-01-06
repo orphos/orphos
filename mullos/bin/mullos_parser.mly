@@ -120,6 +120,11 @@ open Mullos_syntax
 
 compilation_unit: top_level_definition_list  EOF { () }
 
+%inline
+semi:
+  | NL { () }
+  | SEMI { () }
+
 linkage:
   INTERNAL { () }
   | EXTERNAL { () }
@@ -147,8 +152,7 @@ type_name:
   | TYPEVAR_IDENTIFIER { TVar $1 }
 
 seq:
-  | expression SEMI seq { $1 :: $3 }
-  | expression NL seq  { $1 :: $3 }
+  | expression semi seq { $1 :: $3 }
   | expression { [$1] }
 
 %inline
@@ -193,8 +197,7 @@ expression:
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
   | expression expression %prec application { Apply($1, $2) }
-  | LET pattern_list EQ expression NL expression { failwith "not implemented" }
-  | LET pattern_list EQ expression SEMI expression { failwith "not implemented" }
+  | LET pattern_list EQ expression semi expression { failwith "not implemented" }
   | expression bin_op expression { BinOp ($1, $2, $3) }
   | expression COMMA expression {
         let rhs = $3 in
