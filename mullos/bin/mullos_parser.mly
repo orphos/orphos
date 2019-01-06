@@ -131,10 +131,8 @@ attribute_list:
   | attribute attribute_list { () }
 
 definition:
-  | attribute_list? linkage? UNSAFE? DEF pattern EQ expression where_clause? { () }
-  | attribute_list? linkage? UNSAFE? DEF IDENTIFIER parameter_list EQ expression where_clause? { () }
-  | attribute_list? linkage? UNSAFE? DEF pattern { () }
-  | attribute_list? linkage? UNSAFE? DEF IDENTIFIER parameter_list { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern_list EQ expression where_clause? { () }
+  | attribute_list? linkage? UNSAFE? DEF pattern_list { () }
 
 value_name:
   IDENTIFIER DOT value_name { $1 :: $3 }
@@ -195,10 +193,8 @@ expression:
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
   | expression expression %prec application { Apply($1, $2) }
-  | LET pattern EQ expression NL expression { failwith "not implemented" }
-  | LET IDENTIFIER parameter_list EQ expression SEMI expression { failwith "not implemented" }
-  | LET pattern EQ expression SEMI expression { failwith "not implemented" }
-  | LET IDENTIFIER parameter_list EQ expression NL expression { failwith "not implemented" }
+  | LET pattern_list EQ expression NL expression { failwith "not implemented" }
+  | LET pattern_list EQ expression SEMI expression { failwith "not implemented" }
   | expression bin_op expression { BinOp ($1, $2, $3) }
   | expression COMMA expression {
         let rhs = $3 in
@@ -228,7 +224,7 @@ pattern_clause:
 
 pattern_condition: IF expression { () }
 
-simple_pattern:
+pattern:
   | value_name { PIdent $1 }
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
@@ -239,8 +235,6 @@ simple_pattern:
   | BOOL { PBool $1 }
   | TILDE IDENTIFIER COLON pattern { failwith "not implemented" }
   | LAZY pattern { PLazy $2 }
-
-pattern:
   | TYPE_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
@@ -251,11 +245,10 @@ pattern:
       }
   | pattern COLON type_expression { failwith "not implemented" }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
-  | simple_pattern { $1 }
 
-parameter_list:
-  simple_pattern { () }
-  | simple_pattern parameter_list { () }
+pattern_list:
+  pattern { () }
+  | pattern pattern_list { () }
 
 where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 

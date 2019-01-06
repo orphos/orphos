@@ -56,6 +56,7 @@ type exp =
   | IfThenElse of exp * exp * exp option
   | Seq of exp list
   | Lambda of pat * exp
+  | Let of pat * pat list * exp * exp
 and pat =
   | PIdent of string list
   | PUnit
