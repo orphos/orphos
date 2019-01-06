@@ -103,7 +103,7 @@ open Mullos_syntax
 %right BIG_COLON
 %left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
 %left ASTERISK SOLIDUS PERCENT
-%right unary_op EXCLAMATION CIRCUMFLEX
+%right unary EXCLAMATION CIRCUMFLEX
 %nonassoc MATCH
 %right LAZY
 %left NUMBERSIGN
@@ -153,11 +153,6 @@ seq:
   | expression NL seq  { $1 :: $3 }
   | expression { [$1] }
 
-unary_amp: AMPERSAND %prec unary_op { () }
-unary_asterisk: ASTERISK %prec unary_op { () }
-unary_hyphen: HYPHEN %prec unary_op { () }
-unary_plus: PLUS %prec unary_op { () }
-
 %inline
 bin_op:
    | PLUS { Add }
@@ -166,6 +161,15 @@ bin_op:
    | SOLIDUS { Division }
    | BIG_PLUS { Combine }
    | BIG_HYPHEN { Remove }
+
+unary_op:
+   | EXCLAMATION { Not }
+   | PLUS { Positive }
+   | HYPHEN { Negative }
+   | ASTERISK { Deref }
+   | AMPERSAND { Ref }
+   | RAISE { Raise }
+   | LAZY { Lazy }
 
 expression:
   | IDENTIFIER { Identifier $1 }
@@ -204,21 +208,15 @@ expression:
   | expression HYPHEN_EQ expression { failwith "not implemented" }
   | expression COLON_EQ expression { failwith "not implemented" }
   | expression DOLLAR expression { Apply(Identifier "$", Tuple [$1; $3]) }
-  | EXCLAMATION expression %prec unary_op { Apply(Identifier "!", $2) }
-  | unary_plus expression %prec unary_op { Apply(Identifier "+", $2) }
-  | unary_hyphen expression %prec unary_op { Apply(Identifier "-", $2) }
-  | CIRCUMFLEX expression %prec unary_op { Apply(Identifier "^", $2) }
-  | unary_amp expression %prec unary_op { Apply(Identifier "&", $2) }
-  | unary_asterisk expression %prec unary_op { Apply(Identifier "*", $2) }
+  | unary_op expression %prec unary { UnaryOp ($1, $2) }
+  | CIRCUMFLEX expression { Apply(Identifier "^", $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
-  | RAISE expression { failwith "not implemented" }
   | TILDE IDENTIFIER COLON expression { failwith "not implemented" }
   | QUESTION IDENTIFIER COLON expression { failwith "not implemented" }
   | expression NUMBERSIGN IDENTIFIER { failwith "not implemented" }
-  | LAZY expression { Lazy $2 }
 
 pattern_clause_list:
   pattern_clause { () }

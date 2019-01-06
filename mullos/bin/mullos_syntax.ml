@@ -23,6 +23,10 @@ type unary_op =
   | Positive
   | Negative
   | Not
+  | Deref
+  | Ref
+  | Raise
+  | Lazy
 
 type exp =
   | Bool of bool
@@ -36,7 +40,6 @@ type exp =
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
   | Seq of exp list
-  | Lazy of exp
   | Lambda of pat * exp
 and pat =
   | PIdent of string list
