@@ -19,11 +19,11 @@ let is_expression_start = function
   | EXCLAMATION
   | FN
   | HYPHEN
-  | IDENTIFIER _
   | IF
   | LAZY
   | LCBRACKET
   | LET
+  | LOWER_SNAKECASE _
   | LPAREN
   | NUMBER _
   | PLUS
@@ -35,13 +35,12 @@ let is_expression_start = function
 
 let is_expression_end = function
   | BOOL _
-  | IDENTIFIER _
+  | LOWER_SNAKECASE _
   | NUMBER _
   | RCBRACKET
   | RPAREN
   | TEXT _
-  | TYPEVAR_IDENTIFIER _
-  | TYPE_IDENTIFIER _ -> true
+  | TYPEVAR_IDENTIFIER _ -> true
   | _ -> false
 
 let new_reader () =
@@ -202,17 +201,17 @@ let new_reader () =
       pop_newline_region true;
       RCBRACKET
     | '~' -> TILDE
-    | ('a' .. 'z'), Star (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
-    | '_' , Plus (('a' .. 'z') | '_') -> IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
+    | ('a' .. 'z'), Star (('a' .. 'z') | '_') -> LOWER_SNAKECASE (Sedlexing.Utf8.lexeme lexbuf)
+    | '_' , Plus (('a' .. 'z') | '_') -> LOWER_SNAKECASE (Sedlexing.Utf8.lexeme lexbuf)
     | '_' -> LOWLINE
     | "``" -> failwith "empty identifier"
-    | '`' -> IDENTIFIER (read_quoted_identifier lexbuf '`')
+    | '`' -> LOWER_SNAKECASE (read_quoted_identifier lexbuf '`')
     | "\'\'", Plus (('a' .. 'z') | '_') -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
     | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
-    | ('A' .. 'Z'), Star ('a' .. 'z') -> TYPE_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
-    | '\'' -> TYPE_IDENTIFIER (read_quoted_identifier lexbuf '\'')
-    | Star '_', ('A' .. 'Z'), Plus ('A' .. 'Z' | '_') -> CTOR_IDENTIFIER (Sedlexing.Utf8.lexeme lexbuf)
-    | "#(" -> CTOR_IDENTIFIER (read_quoted_identifier lexbuf ')')
+    | ('A' .. 'Z'), Star ('a' .. 'z') -> UPPER_CAMELCASE (Sedlexing.Utf8.lexeme lexbuf)
+    | '\'' -> UPPER_CAMELCASE (read_quoted_identifier lexbuf '\'')
+    | Star '_', ('A' .. 'Z'), Plus ('A' .. 'Z' | '_') -> UPPER_SNAKECASE (Sedlexing.Utf8.lexeme lexbuf)
+    | "#(" -> UPPER_SNAKECASE (read_quoted_identifier lexbuf ')')
     | '"' -> TEXT (read_text lexbuf)
     | ('1' .. '9') ->
       Sedlexing.rollback lexbuf;

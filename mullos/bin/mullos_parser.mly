@@ -29,7 +29,6 @@ open Mullos_syntax
 %token COLON
 %token COLON_EQ
 %token COMMA
-%token <string> CTOR_IDENTIFIER
 %token DEF
 %token DERIVING
 %token DOLLAR
@@ -46,7 +45,6 @@ open Mullos_syntax
 %token HYPHEN
 %token HYPHEN_EQ
 %token HYPHEN_GREATER
-%token <string> IDENTIFIER
 %token IF
 %token INSTANCE
 %token INTERNAL
@@ -55,6 +53,7 @@ open Mullos_syntax
 %token LBRACKET
 %token LESS
 %token LET
+%token <string> LOWER_SNAKECASE
 %token LOWLINE
 %token LPAREN
 %token MATCH
@@ -78,8 +77,9 @@ open Mullos_syntax
 %token TILDE
 %token TYPE
 %token <string> TYPEVAR_IDENTIFIER
-%token <string> TYPE_IDENTIFIER
 %token UNSAFE
+%token <string> UPPER_CAMELCASE
+%token <string> UPPER_SNAKECASE
 %token VERTICAL
 %token WHERE
 
@@ -106,7 +106,7 @@ open Mullos_syntax
 %right LAZY
 %nonassoc LBRACKET LCBRACKET
 %left AT
-%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN TYPE_IDENTIFIER TYPEVAR_IDENTIFIER
+%nonassoc LOWER_SNAKECASE TEXT NUMBER BOOL LPAREN TYPEVAR_IDENTIFIER
 %nonassoc type_constraint
 %nonassoc application
 %left DOT
@@ -138,12 +138,12 @@ value_definition:
   | attribute_list? linkage? UNSAFE? DEF pattern_list { () }
 
 value_name:
-  IDENTIFIER DOT value_name { $1 :: $3 }
-  | IDENTIFIER { [$1] }
+  LOWER_SNAKECASE DOT value_name { $1 :: $3 }
+  | LOWER_SNAKECASE { [$1] }
 
 type_ident:
-  | IDENTIFIER DOT type_ident { $1 :: $3 }
-  | IDENTIFIER { [$1] }
+  | LOWER_SNAKECASE DOT type_ident { $1 :: $3 }
+  | LOWER_SNAKECASE { [$1] }
 
 type_name:
   | type_ident { TIdent $1 }
@@ -188,7 +188,7 @@ unary_op:
    | LAZY { Lazy }
 
 expression:
-  | IDENTIFIER { Identifier $1 }
+  | LOWER_SNAKECASE { Identifier $1 }
   | LPAREN RPAREN { Unit }
   | LPAREN expression RPAREN { $2 }
   | LCBRACKET seq RCBRACKET { Seq $2 }
@@ -216,7 +216,7 @@ expression:
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
   | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
-  | expression DOT IDENTIFIER { failwith "not implemented" }
+  | expression DOT LOWER_SNAKECASE { failwith "not implemented" }
 
 pattern_clause_list:
   pattern_clause { () }
@@ -232,13 +232,13 @@ pattern:
   | value_name { PIdent $1 }
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
-  | IDENTIFIER AT pattern { PBind ($1, $3) }
+  | LOWER_SNAKECASE AT pattern { PBind ($1, $3) }
   | LOWLINE { PWildcard }
   | TEXT { PText $1 }
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
   | LAZY pattern { PLazy $2 }
-  | CTOR_IDENTIFIER LPAREN pattern RPAREN { PCtor ($1, $3) }
+  | UPPER_SNAKECASE LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
         begin match rhs with
@@ -280,7 +280,7 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=IDENTIFIER params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
+  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
 
 type_definition_body:
   | variant_constructor_list { Variant $1 }
@@ -296,8 +296,8 @@ variant_constructor_list:
   | VERTICAL hd=variant_constructor VERTICAL tl=variant_constructor_list { hd :: tl }
 
 variant_constructor:
-  | name=CTOR_IDENTIFIER param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
-  | name=CTOR_IDENTIFIER { name, None }
+  | name=UPPER_SNAKECASE param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
+  | name=UPPER_SNAKECASE { name, None }
 
 variant_constructor_parameter_and_result:
   | COLON param=type_expression { param, None }
@@ -327,7 +327,7 @@ type_parameter_list:
 
 instance: INSTANCE type_expression where_clause { () }
 
-extensible_variant_definition: TYPE IDENTIFIER PLUS_EQ variant_constructor { () }
+extensible_variant_definition: TYPE LOWER_SNAKECASE PLUS_EQ variant_constructor { () }
 
 definition:
   | value_definition { () }
