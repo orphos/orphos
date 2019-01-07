@@ -142,8 +142,8 @@ value_name:
   | IDENTIFIER { [$1] }
 
 type_ident:
-  | TYPE_IDENTIFIER BIG_COLON type_ident { $1 :: $3 }
-  | TYPE_IDENTIFIER { [$1] }
+  | IDENTIFIER BIG_COLON type_ident { $1 :: $3 }
+  | IDENTIFIER { [$1] }
 
 type_name:
   | type_ident { TIdent $1 }
@@ -283,7 +283,7 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=TYPE_IDENTIFIER params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
+  | TYPE name=IDENTIFIER params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
 
 type_definition_body:
   | variant_constructor_list { Variant $1 }
@@ -330,7 +330,7 @@ type_parameter_list:
 
 instance: INSTANCE type_expression where_clause { () }
 
-extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
+extensible_variant_definition: TYPE IDENTIFIER PLUS_EQ variant_constructor { () }
 
 definition:
   | value_definition { () }
