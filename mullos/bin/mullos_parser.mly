@@ -328,7 +328,7 @@ type_parameter_list:
   type_name { () }
   | type_name type_parameter_list { () }
 
-instance: INSTANCE type_expression WHERE LCBRACKET definition_list RCBRACKET { () }
+instance: INSTANCE type_expression where_clause { () }
 
 extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
 
