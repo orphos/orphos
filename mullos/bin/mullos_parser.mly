@@ -327,15 +327,9 @@ class_parameter:
   | TYPEVAR_IDENTIFIER { () }
   | type_name type_parameter_list { () }
 
-type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LCBRACKET type_class_body RCBRACKET { () }
-
-type_class_parameter: type_name type_parameter_list? EQ_GREATER { () }
-
 type_parameter_list:
   type_name { () }
   | type_name type_parameter_list { () }
-
-type_class_body: top_level_definition_list { () }
 
 instance: INSTANCE type_expression EQ LCBRACKET definition_list RCBRACKET { () }
 
@@ -343,7 +337,6 @@ extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor 
 
 top_level_definition:
   definition { () }
-  | type_class { () }
   | type_definition { () }
   | extensible_variant_definition { () }
   | instance { () }
