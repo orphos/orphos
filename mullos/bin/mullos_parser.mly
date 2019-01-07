@@ -116,7 +116,7 @@ open Mullos_syntax
 
 %%
 
-compilation_unit: top_level_definition_list  EOF { () }
+compilation_unit: definition_list  EOF { () }
 
 %inline
 semi:
@@ -133,7 +133,7 @@ attribute_list:
   attribute { () }
   | attribute attribute_list { () }
 
-definition:
+value_definition:
   | attribute_list? linkage? UNSAFE? DEF pattern_list EQ expression where_clause? { () }
   | attribute_list? linkage? UNSAFE? DEF pattern_list { () }
 
@@ -257,9 +257,6 @@ pattern_list:
 
 where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
 
-definition_list: definition { () }
-  | definition definition_list { () }
-
 type_expression:
   | type_name { $1 }
   | NUMBER { TNumber $1 }
@@ -317,7 +314,7 @@ deriving_clause_body:
   type_name { [$1] }
   | type_name COMMA deriving_clause_body { $1 :: $3 }
 
-class_definition: CLASS params=class_parameter_list? WHERE LBRACKET body=top_level_definition_list RBRACKET { () }
+class_definition: CLASS params=class_parameter_list? where_clause { () }
 
 class_parameter_list:
   | class_parameter { () }
@@ -335,12 +332,12 @@ instance: INSTANCE type_expression EQ LCBRACKET definition_list RCBRACKET { () }
 
 extensible_variant_definition: TYPE TYPE_IDENTIFIER PLUS_EQ variant_constructor { () }
 
-top_level_definition:
-  definition { () }
+definition:
+  | value_definition { () }
   | type_definition { () }
   | extensible_variant_definition { () }
   | instance { () }
 
-top_level_definition_list:
-  top_level_definition { () }
-  | top_level_definition top_level_definition_list { () }
+definition_list:
+  | definition { () }
+  | definition definition_list { () }
