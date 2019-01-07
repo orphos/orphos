@@ -142,7 +142,7 @@ value_name:
   | IDENTIFIER { [$1] }
 
 type_ident:
-  | TYPE_IDENTIFIER DOT type_ident { $1 :: $3 }
+  | TYPE_IDENTIFIER BIG_COLON type_ident { $1 :: $3 }
   | TYPE_IDENTIFIER { [$1] }
 
 type_name:
@@ -291,6 +291,7 @@ type_definition:
 type_definition_body:
   | variant_constructor_list { Variant $1 }
   | BIG_DOT { ExtensibleVariant }
+  | class_definition { failwith "not implemented" }
 
 variant_parameter_list:
   | hd=TYPEVAR_IDENTIFIER { [hd] }
@@ -315,6 +316,16 @@ deriving_clause: DERIVING deriving_clause_body { $1 }
 deriving_clause_body:
   type_name { [$1] }
   | type_name COMMA deriving_clause_body { $1 :: $3 }
+
+class_definition: CLASS params=class_parameter_list? WHERE LBRACKET body=top_level_definition_list RBRACKET { () }
+
+class_parameter_list:
+  | class_parameter { () }
+  | class_parameter COMMA class_parameter_list { () }
+
+class_parameter:
+  | TYPEVAR_IDENTIFIER { () }
+  | type_name type_parameter_list { () }
 
 type_class: CLASS TYPE_IDENTIFIER type_parameter_list? EQ type_class_parameter? LCBRACKET type_class_body RCBRACKET { () }
 
