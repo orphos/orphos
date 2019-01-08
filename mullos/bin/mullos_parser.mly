@@ -285,7 +285,6 @@ type_definition:
 type_definition_body:
   | variant_constructor_list { Variant $1 }
   | BIG_DOT { ExtensibleVariant }
-  | class_definition { failwith "not implemented" }
 
 variant_parameter_list:
   | hd=TYPEVAR_IDENTIFIER { [hd] }
@@ -311,7 +310,7 @@ deriving_clause_body:
   type_name { [$1] }
   | type_name COMMA deriving_clause_body { $1 :: $3 }
 
-class_definition: CLASS params=class_parameter_list? where_clause { () }
+class_definition: CLASS UPPER_CAMELCASE params=class_parameter_list? where_clause { () }
 
 class_parameter_list:
   | class_parameter { () }
@@ -333,6 +332,7 @@ definition:
   | value_definition { () }
   | type_definition { () }
   | extensible_variant_definition { () }
+  | class_definition { () }
   | instance { () }
 
 definition_list:
