@@ -33,10 +33,12 @@ open Mullos_syntax
 %token DERIVING
 %token DOLLAR
 %token DOT
+%token EFFECT
 %token ELSE
 %token EOF
 %token EQ
 %token EQ_GREATER
+%token EXCEPTION
 %token EXCLAMATION
 %token EXCLAMATION_EQ
 %token EXTERNAL
@@ -224,7 +226,8 @@ pattern_clause_list:
 
 pattern_clause:
   | VERTICAL pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
-  (*| CATCH type_name pattern pattern_condition? EQ_GREATER expression { () }*)
+  | VERTICAL EXCEPTION pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  | VERTICAL EFFECT pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
 
 pattern_condition: IF expression { () }
 

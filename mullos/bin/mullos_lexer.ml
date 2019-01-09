@@ -153,7 +153,9 @@ let new_reader () =
     | "class" -> CLASS
     | "def" -> DEF
     | "deriving" -> DERIVING
+    | "effect" -> EFFECT
     | "else" -> ELSE
+    | "exception" -> EXCEPTION
     | "external" -> EXTERNAL
     | "false" -> BOOL false
     | "fn" -> FN
