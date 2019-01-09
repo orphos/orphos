@@ -238,7 +238,7 @@ pattern:
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
   | LAZY pattern { PLazy $2 }
-  | UPPER_SNAKECASE LPAREN pattern RPAREN { PCtor ($1, $3) }
+  | UPPER_CAMELCASE LPAREN pattern RPAREN { PCtor ($1, $3) }
   | pattern COMMA pattern {
         let rhs = $3 in
         begin match rhs with
@@ -295,8 +295,8 @@ variant_constructor_list:
   | VERTICAL hd=variant_constructor VERTICAL tl=variant_constructor_list { hd :: tl }
 
 variant_constructor:
-  | name=UPPER_SNAKECASE param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
-  | name=UPPER_SNAKECASE { name, None }
+  | name=UPPER_CAMELCASE param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
+  | name=UPPER_CAMELCASE { name, None }
 
 variant_constructor_parameter_and_result:
   | COLON param=type_expression { param, None }
