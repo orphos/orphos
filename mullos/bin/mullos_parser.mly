@@ -225,9 +225,13 @@ pattern_clause_list:
   | pattern_clause pattern_clause_list { () }
 
 pattern_clause:
-  | VERTICAL pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
-  | VERTICAL EXCEPTION pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
-  | VERTICAL EFFECT pattern pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  | VERTICAL pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  | VERTICAL EXCEPTION pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  | VERTICAL EFFECT pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+
+pattern_or_clause:
+  | VERTICAL pattern { () }
+  | VERTICAL pattern pattern_or_clause { () }
 
 pattern_condition: IF expression { () }
 
