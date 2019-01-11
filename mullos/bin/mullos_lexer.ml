@@ -15,7 +15,6 @@ let is_expression_start = function
   | AMPERSAND
   | ASTERISK
   | BOOL _
-  | CIRCUMFLEX
   | EXCLAMATION
   | FN
   | HYPHEN
@@ -27,10 +26,8 @@ let is_expression_start = function
   | LPAREN
   | NUMBER _
   | PLUS
-  | QUESTION
   | RAISE
-  | TEXT _
-  | TILDE -> true
+  | TEXT _ -> true
   | _ -> false
 
 let is_expression_end = function
