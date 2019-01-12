@@ -3,11 +3,7 @@
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
 
-type number_literal_type =
-  | ZType
-  | QType
-  | IntType of int
-  | FloatType of int
+type number_literal_type = ZType | QType | IntType of int | FloatType of int
 
 type number = Q.t * number_literal_type
 
@@ -35,14 +31,7 @@ type bin_op =
   | Remove
   | Cons
 
-type unary_op =
-  | Positive
-  | Negative
-  | Not
-  | Deref
-  | Ref
-  | Raise
-  | Lazy
+type unary_op = Positive | Negative | Not | Deref | Ref | Raise | Lazy
 
 type exp =
   | Bool of bool
@@ -59,6 +48,7 @@ type exp =
   | Lambda of pat * exp
   | Let of pat * pat list * exp * exp
   | Label of string * exp
+
 and pat =
   | PIdent of string list
   | PUnit
@@ -86,14 +76,13 @@ type ty =
   | TLazy of ty
   | TLabel of string * ty
   | TEff of ty * eff
-and eff =
-  | ETy of ty
-  | ECombine of eff * eff
-  | EWildcard
+
+and eff = ETy of ty | ECombine of eff * eff | EWildcard
 
 type typedef = string * ty list * deriving option * typedef_body
-and typedef_body =
-  | Variant of ctor list
-  | ExtensibleVariant
+
+and typedef_body = Variant of ctor list | ExtensibleVariant
+
 and ctor = string * (ty * ty option) option
+
 and deriving = ty list
