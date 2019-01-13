@@ -83,6 +83,6 @@ type typedef = string * ty list * deriving option * typedef_body
 
 and typedef_body = Variant of ctor list | ExtensibleVariant
 
-and ctor = string * (ty * ty option) option
+and ctor = string * ty option
 
 and deriving = ty list

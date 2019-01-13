@@ -302,14 +302,8 @@ variant_constructor_list:
   | VERTICAL hd=variant_constructor VERTICAL tl=variant_constructor_list { hd :: tl }
 
 variant_constructor:
-  | name=UPPER_CAMELCASE param_ret=variant_constructor_parameter_and_result { name, Some param_ret }
+  | name=UPPER_CAMELCASE COLON param=type_expression { name, Some param }
   | name=UPPER_CAMELCASE { name, None }
-
-variant_constructor_parameter_and_result:
-  | COLON param=type_expression { param, None }
-  | COLON param=type_expression ret=variant_constructor_result { param, Some ret }
-
-variant_constructor_result: EQ_GREATER ret=type_expression { ret }
 
 deriving_clause: DERIVING deriving_clause_body { $1 }
 
