@@ -4,6 +4,7 @@
  *)
 %{
 
+open Mullos_aux
 open Mullos_syntax
 
 %}
@@ -287,15 +288,15 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, params, deriving, body }
+  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, Mullos_aux.concat_list_option params, deriving, body }
 
 type_definition_body:
   | variant_constructor_list { Variant $1 }
   | BIG_DOT { ExtensibleVariant }
 
 variant_parameter_list:
-  | hd=TYPEVAR_IDENTIFIER { [hd] }
-  | hd=TYPEVAR_IDENTIFIER tl=variant_parameter_list { hd :: tl }
+  | hd=TYPEVAR_IDENTIFIER { [TVar hd] }
+  | hd=TYPEVAR_IDENTIFIER tl=variant_parameter_list { (TVar hd) :: tl }
 
 variant_constructor_list:
   | VERTICAL hd=variant_constructor { [hd] }
@@ -305,7 +306,7 @@ variant_constructor:
   | name=UPPER_CAMELCASE COLON param=type_expression { name, Some param }
   | name=UPPER_CAMELCASE { name, None }
 
-deriving_clause: DERIVING deriving_clause_body { $1 }
+deriving_clause: DERIVING deriving_clause_body { $2 }
 
 deriving_clause_body:
   type_name { [$1] }
