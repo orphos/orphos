@@ -288,7 +288,7 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { name, Mullos_aux.concat_list_option params, deriving, body }
+  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, Mullos_aux.concat_list_option params, deriving, body) }
 
 type_definition_body:
   | variant_constructor_list { Variant $1 }
@@ -328,7 +328,7 @@ type_parameter_list:
 
 instance: INSTANCE type_expression where_clause { () }
 
-extensible_variant_definition: TYPE LOWER_SNAKECASE PLUS_EQ variant_constructor { () }
+extensible_variant_definition: TYPE name=LOWER_SNAKECASE PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
 definition:
   | value_definition { () }
