@@ -48,6 +48,9 @@ type exp =
   | Lambda of pat * exp
   | Let of pat * pat list * exp * exp
   | Label of string * exp
+  | Match of exp * pat_clause list
+
+and pat_clause = pat * exp option * exp
 
 and pat =
   | PIdent of string list
@@ -62,6 +65,7 @@ and pat =
   | PBool of bool
   | PLazy of pat
   | PLabel of string * pat
+  | POr of pat * pat
 
 type ty =
   | TIdent of string list

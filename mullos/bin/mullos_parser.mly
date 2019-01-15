@@ -212,7 +212,7 @@ expression:
         | x -> Tuple ($1 :: [x])
         end
       }
-  | expression MATCH LCBRACKET pattern_clause_list RCBRACKET { failwith "not implemented" }
+  | lhs=expression MATCH LCBRACKET rhs=pattern_clause_list RCBRACKET { Match (lhs, rhs) }
   | expression DOLLAR expression { Apply($1, $3) }
   | unary_op expression %prec unary { UnaryOp ($1, $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
@@ -222,19 +222,19 @@ expression:
   | expression DOT LOWER_SNAKECASE { failwith "not implemented" }
 
 pattern_clause_list:
-  pattern_clause { () }
-  | pattern_clause pattern_clause_list { () }
+  pattern_clause { [$1] }
+  | pattern_clause pattern_clause_list { $1 :: $2 }
 
 pattern_clause:
-  | VERTICAL pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
-  | VERTICAL EXCEPTION pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
-  | VERTICAL EFFECT pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { () }
+  | VERTICAL pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { pat, cond, exp }
+  | VERTICAL EXCEPTION pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { failwith "not implemented" }
+  | VERTICAL EFFECT pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { failwith "not implemented" }
 
 pattern_or_clause:
-  | VERTICAL pattern { () }
-  | VERTICAL pattern pattern_or_clause { () }
+  | VERTICAL pattern { $2 }
+  | VERTICAL pattern pattern_or_clause { POr ($2, $3) }
 
-pattern_condition: IF expression { () }
+pattern_condition: IF expression { $2 }
 
 pattern:
   | value_name { PIdent $1 }
