@@ -50,7 +50,10 @@ type exp =
   | Label of string * exp
   | Match of exp * pat_clause list
 
-and pat_clause = pat * exp option * exp
+and pat_clause =
+  | MatchPat of pat * exp option * exp
+  | MatchException of pat * exp option * exp
+  | MatchEffect of pat * exp option * exp
 
 and pat =
   | PIdent of string list

@@ -226,9 +226,9 @@ pattern_clause_list:
   | pattern_clause pattern_clause_list { $1 :: $2 }
 
 pattern_clause:
-  | VERTICAL pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { pat, cond, exp }
-  | VERTICAL EXCEPTION pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { failwith "not implemented" }
-  | VERTICAL EFFECT pattern_or_clause pattern_condition? EQ_GREATER LBRACKET expression RBRACKET { failwith "not implemented" }
+  | VERTICAL pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
+  | VERTICAL EXCEPTION pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchException (pat, cond, exp) }
+  | VERTICAL EFFECT pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchEffect (pat, cond, exp) }
 
 pattern_or_clause:
   | VERTICAL pattern { $2 }
