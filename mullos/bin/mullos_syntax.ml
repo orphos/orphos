@@ -95,3 +95,6 @@ and typedef_body = Variant of ctor list | ExtensibleVariant
 and ctor = string * ty option
 
 and deriving = ty list
+
+and definition =
+  | ValDef of pat list * exp

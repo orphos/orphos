@@ -137,8 +137,8 @@ attribute_list:
   | attribute attribute_list { () }
 
 value_definition:
-  | attribute_list? linkage? UNSAFE? DEF pattern_list EQ expression where_clause? { () }
-  | attribute_list? linkage? UNSAFE? DEF pattern_list { () }
+  | attribute_list? linkage? UNSAFE? DEF pat=pattern_list EQ exp=expression where_clause? { ValDef (pat, exp) }
+  | attribute_list? linkage? UNSAFE? DEF pattern_list { failwith "not implemented" }
 
 value_name:
   LOWER_SNAKECASE DOT value_name { $1 :: $3 }
