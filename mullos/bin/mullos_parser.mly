@@ -312,30 +312,12 @@ deriving_clause_body:
   type_name { [$1] }
   | type_name COMMA deriving_clause_body { $1 :: $3 }
 
-class_definition: CLASS UPPER_CAMELCASE params=class_parameter_list? where_clause { () }
-
-class_parameter_list:
-  | class_parameter { () }
-  | class_parameter COMMA class_parameter_list { () }
-
-class_parameter:
-  | TYPEVAR_IDENTIFIER { () }
-  | type_name type_parameter_list { () }
-
-type_parameter_list:
-  type_name { () }
-  | type_name type_parameter_list { () }
-
-instance: INSTANCE type_expression where_clause { () }
-
 extensible_variant_definition: TYPE name=LOWER_SNAKECASE PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
 definition:
   | value_definition { () }
   | type_definition { () }
   | extensible_variant_definition { () }
-  | class_definition { () }
-  | instance { () }
 
 definition_list:
   | definition { () }
