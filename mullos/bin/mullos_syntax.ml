@@ -96,5 +96,4 @@ and ctor = string * ty option
 
 and deriving = ty list
 
-and definition =
-  | ValDef of pat list * exp
+and definition = ValDef of pat list * exp
