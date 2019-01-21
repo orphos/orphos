@@ -119,7 +119,7 @@ open Mullos_syntax
 
 %%
 
-compilation_unit: definition_list  EOF { () }
+compilation_unit: definition+  EOF { () }
 
 %inline
 semi:
@@ -132,13 +132,9 @@ linkage:
 
 attribute: NUMBERSIGN_LBRACKET expression RBRACKET { () }
 
-attribute_list:
-  attribute { () }
-  | attribute attribute_list { () }
-
 value_definition:
-  | attribute_list? linkage? UNSAFE? DEF pat=pattern_list EQ exp=expression where_clause? { ValDef (pat, exp) }
-  | attribute_list? linkage? UNSAFE? DEF pattern_list { failwith "not implemented" }
+  | attribute+ linkage? UNSAFE? DEF pat=pattern+ EQ exp=expression where_clause? { ValDef (pat, exp) }
+  | attribute+ linkage? UNSAFE? DEF pattern+ { failwith "not implemented" }
 
 value_name:
   LOWER_SNAKECASE DOT value_name { $1 :: $3 }
@@ -199,7 +195,7 @@ expression:
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
   | expression expression %prec application { Apply($1, $2) }
-  | LET pattern_list EQ expression semi expression {
+  | LET pattern+ EQ expression semi expression {
         match $2 with
         | hd :: tl -> Let (hd, tl, $4, $6)
         | _ -> failwith "unreachable"
@@ -212,7 +208,7 @@ expression:
         | x -> Tuple ($1 :: [x])
         end
       }
-  | lhs=expression MATCH LCBRACKET rhs=pattern_clause_list RCBRACKET { Match (lhs, rhs) }
+  | lhs=expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
   | expression DOLLAR expression { Apply($1, $3) }
   | unary_op expression %prec unary { UnaryOp ($1, $2) }
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
@@ -220,10 +216,6 @@ expression:
   | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
   | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
   | expression DOT LOWER_SNAKECASE { failwith "not implemented" }
-
-pattern_clause_list:
-  pattern_clause { [$1] }
-  | pattern_clause pattern_clause_list { $1 :: $2 }
 
 pattern_clause:
   | VERTICAL pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
@@ -257,11 +249,8 @@ pattern:
   | pattern COLON type_expression { failwith "not implemented" }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
 
-pattern_list:
-  pattern { [$1] }
-  | pattern pattern_list { $1 :: $2 }
 
-where_clause: WHERE LCBRACKET definition_list RCBRACKET { () }
+where_clause: WHERE LCBRACKET definition+ RCBRACKET { () }
 
 type_expression:
   | type_name { $1 }
@@ -288,19 +277,11 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=LOWER_SNAKECASE params=variant_parameter_list? deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, Mullos_aux.concat_list_option params, deriving, body) }
+  | TYPE name=LOWER_SNAKECASE params=TYPEVAR_IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }
 
 type_definition_body:
-  | variant_constructor_list { Variant $1 }
+  | nonempty_list(VERTICAL variant_constructor { $2 }) { Variant $1 }
   | BIG_DOT { ExtensibleVariant }
-
-variant_parameter_list:
-  | hd=TYPEVAR_IDENTIFIER { [TVar hd] }
-  | hd=TYPEVAR_IDENTIFIER tl=variant_parameter_list { (TVar hd) :: tl }
-
-variant_constructor_list:
-  | VERTICAL hd=variant_constructor { [hd] }
-  | VERTICAL hd=variant_constructor VERTICAL tl=variant_constructor_list { hd :: tl }
 
 variant_constructor:
   | name=UPPER_CAMELCASE COLON param=type_expression { name, Some param }
@@ -319,6 +300,3 @@ definition:
   | type_definition { () }
   | extensible_variant_definition { () }
 
-definition_list:
-  | definition { () }
-  | definition definition_list { () }
