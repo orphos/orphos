@@ -60,7 +60,7 @@ open Mullos_syntax
 %token LOWLINE
 %token LPAREN
 %token MATCH
-%token <int> NL
+%token NL
 %token <Mullos_syntax.number> NUMBER
 %token NUMBERSIGN
 %token NUMBERSIGN_EXCLAMATION_LBRACKET

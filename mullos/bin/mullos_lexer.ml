@@ -25,16 +25,11 @@ let new_reader () =
   let rollback = Sedlexing.rollback in
   let lexeme = Sedlexing.Utf8.lexeme in
   let lexeme_char = Sedlexing.lexeme_char in
-  let rec read_indentation lexbuf i =
-    match%sedlex lexbuf with
-    | ' ' -> read_indentation lexbuf (i + 1)
-    | '\t' -> read_indentation lexbuf (i + 4)
-    | _ -> rollback lexbuf ; NL i
-  in
   let rec read_newline lexbuf =
     match%sedlex lexbuf with
     | '\n' -> Sedlexing.new_line lexbuf ; read_newline lexbuf
-    | _ -> rollback lexbuf ; read_indentation lexbuf 0
+    | ' ' | '\t' -> read_newline lexbuf
+    | _ -> rollback lexbuf ; NL
   in
   let read_quoted_identifier lexbuf mark =
     let buf = Buf.create 1024 in
@@ -241,27 +236,13 @@ let new_reader () =
     in
     aux []
   in
-  let autoinsert_cbracket tokens =
-    let rec aux stack acc = function
-      | WHERE :: NL offset :: LCBRACKET :: tl ->
-          aux stack (LCBRACKET :: WHERE :: acc) tl
-      | WHERE :: NL offset :: tl ->
-          aux (offset :: stack) (LCBRACKET :: WHERE :: acc) tl
-      | NL offset :: tl when offset < List.hd stack ->
-          aux (List.tl stack) (RCBRACKET :: acc) tl
-      | hd :: tl -> aux stack (hd :: acc) tl
-      | [] when stack <> [] -> aux (List.tl stack) (RCBRACKET :: acc) []
-      | [] -> List.rev acc
-    in
-    aux [] [] tokens
-  in
   let filter_nl tokens =
     let rec aux stack acc = function
       | LCBRACKET :: tl -> aux (true :: stack) (LCBRACKET :: acc) tl
       | (LPAREN | LBRACKET) :: tl -> aux (false :: stack) (LCBRACKET :: acc) tl
       | (RCBRACKET | RPAREN | RBRACKET) :: tl ->
           aux (List.tl stack) (LCBRACKET :: acc) tl
-      | NL _ :: tl when not (List.hd stack) -> aux stack acc tl
+      | NL :: tl when not (List.hd stack) -> aux stack acc tl
       | hd :: tl -> aux stack (hd :: acc) tl
       | [] -> List.rev acc
     in
@@ -269,16 +250,14 @@ let new_reader () =
   in
   let autoinsert_semicolon tokens =
     let rec aux acc = function
-      | t1 :: (NL _ as t2) :: t3 :: tl
+      | t1 :: (NL as t2) :: t3 :: tl
         when is_expression_end t1 && is_expression_start t3 ->
           aux (t3 :: t2 :: t1 :: acc) tl
-      | t1 :: NL _ :: t3 :: tl -> aux (t3 :: t1 :: acc) tl
-      | NL _ :: tl -> aux acc tl
+      | t1 :: NL :: t3 :: tl -> aux (t3 :: t1 :: acc) tl
+      | NL :: tl -> aux acc tl
       | hd :: tl -> aux (hd :: acc) tl
       | [] -> List.rev acc
     in
     aux [] tokens
   in
-  fun lexbuf ->
-    read_raw_tokens lexbuf |> autoinsert_cbracket |> filter_nl
-    |> autoinsert_semicolon
+  fun lexbuf -> read_raw_tokens lexbuf |> filter_nl |> autoinsert_semicolon
