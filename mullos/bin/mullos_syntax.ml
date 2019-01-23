@@ -40,7 +40,7 @@ type exp =
   | Identifier of string
   | Unit
   | Apply of exp * exp
-  | BinOp of exp * bin_op * exp
+  | BinOp of exp * bin_op * exp * (bin_op * exp) list
   | UnaryOp of unary_op * exp
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option

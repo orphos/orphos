@@ -86,34 +86,20 @@ open Mullos_syntax
 %token VERTICAL
 %token WHERE
 
-%nonassoc NL SEMI
-%nonassoc FN
-%nonassoc IF THEN
-%nonassoc ELSE
-%nonassoc LET
-%right DOLLAR
 %right COLON
 %right RAISE
-%right COLON_EQ PLUS_EQ HYPHEN_EQ
 %left COMMA
 %right HYPHEN_GREATER
-%right VERTICAL BIG_VERTICAL
-%right AMPERSAND BIG_AMPERSAND
-%left BIG_EQ LESS GREATER EXCLAMATION_EQ
-%left BIG_LESS BIG_GREATER
+%right AMPERSAND
 %right BIG_COLON
-%left PLUS HYPHEN BIG_PLUS BIG_HYPHEN
-%left ASTERISK SOLIDUS PERCENT
-%right unary EXCLAMATION CIRCUMFLEX
-%nonassoc MATCH
+%left PLUS HYPHEN BIG_PLUS
+%left ASTERISK
+%right EXCLAMATION
 %right LAZY
 %nonassoc LBRACKET LCBRACKET
 %left AT
 %nonassoc LOWER_SNAKECASE TEXT NUMBER BOOL LPAREN TYPEVAR_IDENTIFIER
-%nonassoc type_constraint
 %nonassoc application
-%left DOT
-
 
 %start<unit> compilation_unit
 
@@ -187,35 +173,46 @@ unary_op:
    | LAZY { Lazy }
 
 expression:
+  | nonshoftif_expression { $1 }
+  | shoftif_expression { $1 }
+
+nonshoftif_expression:
+  | most_expression { $1 }
+  | paren_expression { $1 }
+
+paren_expression:
+  | LPAREN expression RPAREN { $2 }
+
+shoftif_expression:
+  | IF expression THEN expression { IfThenElse ($2, $4, None) }
+
+most_expression:
+  | simple_expression bin_op most_expression {
+        match $3 with
+        | BinOp (lhs, op, rhs, tail) -> BinOp ($1, $2, lhs, (op, rhs) :: tail)
+        | _ -> BinOp($1, $2, $3, [])
+      }
+  | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
+  | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
+  | FN pattern HYPHEN_GREATER nonshoftif_expression { Lambda ($2, $4) }
+  | LET pattern+ EQ expression semi nonshoftif_expression {
+                     match $2 with
+                     | hd :: tl -> Let (hd, tl, $4, $6)
+                     | _ -> failwith "unreachable"
+                   }
+  | simple_expression simple_expression { Apply ($1, $2) }
+  | simple_expression { $1 }
+  | IF expression THEN nonshoftif_expression ELSE nonshoftif_expression { IfThenElse ($2, $4, Some $6) }
+
+simple_expression:
   | LOWER_SNAKECASE { Identifier $1 }
   | LPAREN RPAREN { Unit }
-  | LPAREN expression RPAREN { $2 }
   | LCBRACKET seq RCBRACKET { Seq $2 }
   | TEXT { Text $1 }
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
-  | expression expression %prec application { Apply($1, $2) }
-  | LET pattern+ EQ expression semi expression {
-        match $2 with
-        | hd :: tl -> Let (hd, tl, $4, $6)
-        | _ -> failwith "unreachable"
-      }
-  | expression bin_op expression { BinOp ($1, $2, $3) }
-  | expression COMMA expression {
-        let rhs = $3 in
-        begin match rhs with
-        | Tuple xs -> Tuple ($1 :: xs)
-        | x -> Tuple ($1 :: [x])
-        end
-      }
-  | lhs=expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
-  | expression DOLLAR expression { Apply($1, $3) }
-  | unary_op expression %prec unary { UnaryOp ($1, $2) }
-  | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
-  | IF expression THEN expression { IfThenElse ($2, $4, None) }
-  | expression COLON type_expression %prec type_constraint { failwith "not implemented" }
-  | FN pattern HYPHEN_GREATER expression %prec FN { Lambda ($2, $4) }
-  | expression DOT LOWER_SNAKECASE { failwith "not implemented" }
+  | unary_op simple_expression { UnaryOp ($1, $2) }
+  | unary_op paren_expression { UnaryOp ($1, $2) }
 
 pattern_clause:
   | CASE pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
