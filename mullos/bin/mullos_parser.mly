@@ -89,17 +89,15 @@ open Mullos_syntax
 %right COLON
 %right RAISE
 %left COMMA
-%right HYPHEN_GREATER
 %right AMPERSAND
 %right BIG_COLON
 %left PLUS HYPHEN BIG_PLUS
 %left ASTERISK
 %right EXCLAMATION
 %right LAZY
-%nonassoc LBRACKET LCBRACKET
+%nonassoc LCBRACKET
 %left AT
-%nonassoc LOWER_SNAKECASE TEXT NUMBER BOOL LPAREN TYPEVAR_IDENTIFIER
-%nonassoc application
+%nonassoc LOWER_SNAKECASE TEXT NUMBER BOOL LPAREN
 
 %start<unit> compilation_unit
 
@@ -243,30 +241,49 @@ pattern:
         | x -> PTuple ($1 :: [x])
         end
       }
-  | pattern COLON type_expression { failwith "not implemented" }
+  | pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
 
 
 where_clause: WHERE LCBRACKET definition+ RCBRACKET { () }
 
+type_binary_op:
+  | COMMA { TComma }
+  | HYPHEN_GREATER { TArrow }
+
 type_expression:
+  | most_type_expression { $1 }
+  | paren_type_expression { $1 }
+
+paren_type_expression:
+  | LPAREN type_expression RPAREN { $2 }
+
+ simple_or_paren_type_expression:
+  | LPAREN type_expression RPAREN { $2 }
+  | simple_type_expression { $1 }
+
+most_type_expression:
+  | simple_type_expression { $1 }
+  | simple_or_paren_type_expression type_binary_op most_type_expression {
+        match $3 with
+        | TBinOp (lhs, op, rhs, tail) -> TBinOp ($1, $2, lhs, (op, rhs) :: tail)
+        | _ -> TBinOp ($1, $2, $3, [])
+      }
+  | simple_or_paren_type_expression most_type_expression {
+        match $2 with
+        | TBinOp (lhs, op, rhs, tail) -> TBinOp ($1, TApply, lhs, (op, rhs) :: tail)
+        | _ -> TBinOp ($1, TApply, $2, [])
+      }
+  | simple_or_paren_type_expression type_binary_op paren_type_expression { TBinOp ($1, $2, $3, []) }
+  | simple_or_paren_type_expression paren_type_expression { TBinOp ($1, TApply, $2, []) }
+  | simple_or_paren_type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
+  | LAZY type_expression { TLazy $2 }
+
+simple_type_expression:
   | type_name { $1 }
   | NUMBER { TNumber $1 }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
-  | LPAREN type_expression RPAREN { $2 }
-  | type_expression type_expression %prec application { TApply ($1, $2) }
-  | type_expression COMMA type_expression {
-        let x = $3 in
-        begin match x with
-        | TTuple xs -> TTuple ($1 :: xs)
-        | x -> TTuple ($1 :: [x])
-        end
-      }
-  | ASTERISK type_expression { TPointer $2 }
-  | type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
-  | type_expression HYPHEN_GREATER type_expression { TLambda ($1, $3) }
-  | LAZY type_expression { TLazy $2 }
 
 effect_expression:
   type_expression { ETy $1 }
@@ -281,7 +298,7 @@ type_definition_body:
   | BIG_DOT { ExtensibleVariant }
 
 variant_constructor:
-  | name=UPPER_CAMELCASE COLON param=type_expression { name, Some param }
+  | name=UPPER_CAMELCASE COLON param=simple_or_paren_type_expression { name, Some param }
   | name=UPPER_CAMELCASE { name, None }
 
 deriving_clause: DERIVING deriving_clause_body { $2 }

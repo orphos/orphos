@@ -70,19 +70,19 @@ and pat =
   | PLabel of string * pat
   | POr of pat * pat
 
+type ty_bin_op = TComma | TArrow | TApply
+
 type ty =
   | TIdent of string list
   | TVar of string
-  | TApply of ty * ty
-  | TTuple of ty list
   | TPointer of ty
   | TNumber of number
   | TText of string
   | TBool of bool
-  | TLambda of ty * ty
   | TLazy of ty
   | TLabel of string * ty
   | TEff of ty * eff
+  | TBinOp of ty * ty_bin_op * ty * (ty_bin_op * ty) list
 
 and eff = ETy of ty | ECombine of eff * eff | EWildcard
 
