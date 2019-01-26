@@ -171,17 +171,17 @@ unary_op:
    | LAZY { Lazy }
 
 expression:
-  | nonshoftif_expression { $1 }
-  | shoftif_expression { $1 }
+  | nonshortif_expression { $1 }
+  | shortif_expression { $1 }
 
-nonshoftif_expression:
+nonshortif_expression:
   | most_expression { $1 }
   | paren_expression { $1 }
 
 paren_expression:
   | LPAREN expression RPAREN { $2 }
 
-shoftif_expression:
+shortif_expression:
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
 
 most_expression:
@@ -192,15 +192,15 @@ most_expression:
       }
   | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
   | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
-  | FN pattern HYPHEN_GREATER nonshoftif_expression { Lambda ($2, $4) }
-  | LET pattern+ EQ expression semi nonshoftif_expression {
+  | FN pattern HYPHEN_GREATER nonshortif_expression { Lambda ($2, $4) }
+  | LET pattern+ EQ expression semi nonshortif_expression {
                      match $2 with
                      | hd :: tl -> Let (hd, tl, $4, $6)
                      | _ -> failwith "unreachable"
                    }
   | simple_expression simple_expression { Apply ($1, $2) }
   | simple_expression { $1 }
-  | IF expression THEN nonshoftif_expression ELSE nonshoftif_expression { IfThenElse ($2, $4, Some $6) }
+  | IF expression THEN nonshortif_expression ELSE nonshortif_expression { IfThenElse ($2, $4, Some $6) }
 
 simple_expression:
   | LOWER_SNAKECASE { Identifier $1 }
