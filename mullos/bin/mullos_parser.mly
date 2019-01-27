@@ -161,39 +161,34 @@ unary_op:
    | LAZY { Lazy }
 
 expression:
-  | nonshortif_expression { $1 }
-  | shortif_expression { $1 }
+   | non_paren_expression { $1 }
+   | paren_expression { $1 }
 
-nonshortif_expression:
-  | most_expression { $1 }
-  | paren_expression { $1 }
+let_expression:
+   | LET pattern+ EQ expression semi expression {
+      match $2 with
+      | hd :: tl -> Let (hd, tl, $4, $6)
+      | _ -> failwith "unreachable"
+    }
+
+non_paren_expression:
+   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
+   | simple_expression bin_op non_paren_expression {
+       match $3 with
+       | BinOp (lhs, op, rhs, tail) -> BinOp ($1, $2, lhs, (op, rhs) :: tail)
+       | _ -> BinOp($1, $2, $3, [])
+     }
+   | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
+   | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
+   | lhs=paren_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
+   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
+   | let_expression { $1 }
+   | simple_expression simple_expression { Apply ($1, $2) }
+   | simple_expression paren_expression { Apply ($1, $2) }
+   | simple_expression { $1 }
 
 paren_expression:
   | LPAREN expression RPAREN { $2 }
-
-shortif_expression:
-  | IF expression THEN expression { IfThenElse ($2, $4, None) }
-
-let_expression:
-   | LET pattern+ EQ expression semi nonshortif_expression {
-                      match $2 with
-                      | hd :: tl -> Let (hd, tl, $4, $6)
-                      | _ -> failwith "unreachable"
-                    }
-
-most_expression:
-  | simple_expression bin_op most_expression {
-        match $3 with
-        | BinOp (lhs, op, rhs, tail) -> BinOp ($1, $2, lhs, (op, rhs) :: tail)
-        | _ -> BinOp($1, $2, $3, [])
-      }
-  | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
-  | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
-  | FN pattern HYPHEN_GREATER nonshortif_expression { Lambda ($2, $4) }
-  | let_expression { $1 }
-  | simple_expression simple_expression { Apply ($1, $2) }
-  | simple_expression { $1 }
-  | IF expression THEN nonshortif_expression ELSE nonshortif_expression { IfThenElse ($2, $4, Some $6) }
 
 simple_expression:
   | LOWER_SNAKECASE { Identifier $1 }
