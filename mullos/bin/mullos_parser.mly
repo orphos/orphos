@@ -103,22 +103,12 @@ open Mullos_syntax
 
 %%
 
-compilation_unit: definition+  EOF { () }
+compilation_unit: definition_list  EOF { () }
 
 %inline
 semi:
   | NL { () }
   | SEMI { () }
-
-linkage:
-  INTERNAL { () }
-  | EXTERNAL { () }
-
-attribute: NUMBERSIGN_LBRACKET expression RBRACKET { () }
-
-value_definition:
-  | attribute+ linkage? UNSAFE? DEF pat=pattern+ EQ exp=expression where_clause? { ValDef (pat, exp) }
-  | attribute+ linkage? UNSAFE? DEF pattern+ { failwith "not implemented" }
 
 value_name:
   LOWER_SNAKECASE DOT value_name { $1 :: $3 }
@@ -184,6 +174,13 @@ paren_expression:
 shortif_expression:
   | IF expression THEN expression { IfThenElse ($2, $4, None) }
 
+let_expression:
+   | LET pattern+ EQ expression semi nonshortif_expression {
+                      match $2 with
+                      | hd :: tl -> Let (hd, tl, $4, $6)
+                      | _ -> failwith "unreachable"
+                    }
+
 most_expression:
   | simple_expression bin_op most_expression {
         match $3 with
@@ -193,11 +190,7 @@ most_expression:
   | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
   | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
   | FN pattern HYPHEN_GREATER nonshortif_expression { Lambda ($2, $4) }
-  | LET pattern+ EQ expression semi nonshortif_expression {
-                     match $2 with
-                     | hd :: tl -> Let (hd, tl, $4, $6)
-                     | _ -> failwith "unreachable"
-                   }
+  | let_expression { $1 }
   | simple_expression simple_expression { Apply ($1, $2) }
   | simple_expression { $1 }
   | IF expression THEN nonshortif_expression ELSE nonshortif_expression { IfThenElse ($2, $4, Some $6) }
@@ -243,9 +236,6 @@ pattern:
       }
   | pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
   | pattern BIG_COLON pattern { PCons ($1, $3) }
-
-
-where_clause: WHERE LCBRACKET definition+ RCBRACKET { () }
 
 type_binary_op:
   | COMMA { TComma }
@@ -310,7 +300,11 @@ deriving_clause_body:
 extensible_variant_definition: TYPE name=LOWER_SNAKECASE PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
 definition:
-  | value_definition { () }
+  | let_expression { () }
   | type_definition { () }
   | extensible_variant_definition { () }
+
+definition_list:
+  | definition semi definition_list { $1 :: $3 }
+  | definition { [$1] }
 
