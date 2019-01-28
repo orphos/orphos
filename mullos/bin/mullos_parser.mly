@@ -206,8 +206,8 @@ pattern_clause:
   | CASE EFFECT pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchEffect (pat, cond, exp) }
 
 pattern_or_clause:
-  | VERTICAL pattern { $2 }
-  | VERTICAL pattern pattern_or_clause { POr ($2, $3) }
+  | pattern { $1 }
+  | pattern VERTICAL pattern_or_clause { POr ($1, $3) }
 
 pattern_condition: IF expression { $2 }
 
