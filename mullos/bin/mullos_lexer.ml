@@ -7,15 +7,13 @@ open Mullos_syntax
 
 let is_expression_start = function
   | AMPERSAND | ASTERISK | BOOL _ | EXCLAMATION | FN | HYPHEN | IF | LAZY
-   |LCBRACKET | LET | LOWER_SNAKECASE _ | LPAREN | NUMBER _ | PLUS | RAISE
-   |TEXT _ ->
+   |LCBRACKET | LET | IDENTIFIER _ | LPAREN | NUMBER _ | PLUS | RAISE | TEXT _
+    ->
       true
   | _ -> false
 
 let is_expression_end = function
-  | BOOL _ | LOWER_SNAKECASE _ | NUMBER _ | RCBRACKET | RPAREN | TEXT _
-   |TYPEVAR_IDENTIFIER _ ->
-      true
+  | BOOL _ | IDENTIFIER _ | NUMBER _ | RCBRACKET | RPAREN | TEXT _ -> true
   | _ -> false
 
 module Buf = CamomileLibrary.UTF8.Buf
@@ -205,18 +203,14 @@ let new_reader () =
     | '|' -> VERTICAL
     | '}' -> RCBRACKET
     | '~' -> TILDE
-    | 'a' .. 'z', Star ('a' .. 'z' | '_') -> LOWER_SNAKECASE (lexeme lexbuf)
-    | '_', Plus ('a' .. 'z' | '_') -> LOWER_SNAKECASE (lexeme lexbuf)
+    | ( ( 'a' .. 'z'
+        | 'A' .. 'Z'
+        | '_', ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') )
+      , Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ) ->
+        IDENTIFIER (lexeme lexbuf)
     | '_' -> LOWLINE
     | "``" -> failwith "empty identifier"
-    | '`' -> LOWER_SNAKECASE (read_quoted_identifier lexbuf '`')
-    | "\'\'", Plus ('a' .. 'z' | '_') -> TYPEVAR_IDENTIFIER (lexeme lexbuf)
-    | 0x03b1 .. 0x03c9 (* α .. ω *) -> TYPEVAR_IDENTIFIER (lexeme lexbuf)
-    | 'A' .. 'Z', Star 'a' .. 'z' -> UPPER_CAMELCASE (lexeme lexbuf)
-    | '\'' -> UPPER_CAMELCASE (read_quoted_identifier lexbuf '\'')
-    | Star '_', 'A' .. 'Z', Plus ('A' .. 'Z' | '_') ->
-        UPPER_SNAKECASE (lexeme lexbuf)
-    | "#(" -> UPPER_SNAKECASE (read_quoted_identifier lexbuf ')')
+    | '`' -> IDENTIFIER (read_quoted_identifier lexbuf '`')
     | '"' -> TEXT (read_text lexbuf)
     | "0", '0' .. '7' ->
         rollback lexbuf ;

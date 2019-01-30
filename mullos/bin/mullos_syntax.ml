@@ -30,6 +30,9 @@ type bin_op =
   | Combine
   | Remove
   | Cons
+  | Colon
+  | Comma
+  | At
 
 type unary_op = Positive | Negative | Not | Deref | Ref | Raise | Lazy
 
@@ -56,7 +59,7 @@ and pat_clause =
   | MatchEffect of pat * exp option * exp
 
 and pat =
-  | PIdent of string list
+  | PIdent of string
   | PUnit
   | PBind of string * pat
   | PCtor of string * pat

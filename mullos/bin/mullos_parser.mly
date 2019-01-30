@@ -48,6 +48,7 @@ open Mullos_syntax
 %token HYPHEN
 %token HYPHEN_EQ
 %token HYPHEN_GREATER
+%token <string> IDENTIFIER
 %token IF
 %token INSTANCE
 %token INTERNAL
@@ -56,7 +57,6 @@ open Mullos_syntax
 %token LBRACKET
 %token LESS
 %token LET
-%token <string> LOWER_SNAKECASE
 %token LOWLINE
 %token LPAREN
 %token MATCH
@@ -79,25 +79,18 @@ open Mullos_syntax
 %token THEN
 %token TILDE
 %token TYPE
-%token <string> TYPEVAR_IDENTIFIER
 %token UNSAFE
-%token <string> UPPER_CAMELCASE
-%token <string> UPPER_SNAKECASE
 %token VERTICAL
 %token WHERE
 
-%right COLON
 %right RAISE
-%left COMMA
 %right AMPERSAND
-%right BIG_COLON
 %left PLUS HYPHEN BIG_PLUS
 %left ASTERISK
 %right EXCLAMATION
 %right LAZY
 %nonassoc LCBRACKET
-%left AT
-%nonassoc LOWER_SNAKECASE TEXT NUMBER BOOL LPAREN
+%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN
 
 %start<unit> compilation_unit
 
@@ -110,17 +103,9 @@ semi:
   | NL { () }
   | SEMI { () }
 
-value_name:
-  LOWER_SNAKECASE DOT value_name { $1 :: $3 }
-  | LOWER_SNAKECASE { [$1] }
-
-type_ident:
-  | LOWER_SNAKECASE DOT type_ident { $1 :: $3 }
-  | LOWER_SNAKECASE { [$1] }
-
-type_name:
-  | type_ident { TIdent $1 }
-  | TYPEVAR_IDENTIFIER { TVar $1 }
+qual_ident:
+  IDENTIFIER DOT qual_ident { $1 :: $3 }
+  | IDENTIFIER { [$1] }
 
 seq:
   | expression semi seq { $1 :: $3 }
@@ -165,11 +150,8 @@ expression:
    | paren_expression { $1 }
 
 let_expression:
-   | LET pattern+ EQ expression semi expression {
-      match $2 with
-      | hd :: tl -> Let (hd, tl, $4, $6)
-      | _ -> failwith "unreachable"
-    }
+   | LET ident_pattern ident_pattern+ EQ expression semi expression { Let ($2, $3, $5, $7) }
+   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
 
 non_paren_expression:
    | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
@@ -191,7 +173,7 @@ paren_expression:
   | LPAREN expression RPAREN { $2 }
 
 simple_expression:
-  | LOWER_SNAKECASE { Identifier $1 }
+  | IDENTIFIER { Identifier $1 }
   | LPAREN RPAREN { Unit }
   | LCBRACKET seq RCBRACKET { Seq $2 }
   | TEXT { Text $1 }
@@ -211,26 +193,30 @@ pattern_or_clause:
 
 pattern_condition: IF expression { $2 }
 
+%inline
+pattern_op:
+  | COMMA { Comma }
+  | BIG_COLON { Cons }
+  | AT { At }
+
 pattern:
-  | value_name { PIdent $1 }
+  | IDENTIFIER pattern { PCtor ($1, $2) }
+  | simple_pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
+  | simple_pattern pattern_op pattern { failwith "not implemented" }
+  | simple_pattern { $1 }
+
+ident_pattern:
+  | IDENTIFIER { PIdent $1 }
+
+simple_pattern:
+  | ident_pattern { $1 }
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
-  | LOWER_SNAKECASE AT pattern { PBind ($1, $3) }
   | LOWLINE { PWildcard }
   | TEXT { PText $1 }
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
-  | LAZY pattern { PLazy $2 }
-  | UPPER_CAMELCASE LPAREN pattern RPAREN { PCtor ($1, $3) }
-  | pattern COMMA pattern {
-        let rhs = $3 in
-        begin match rhs with
-        | PTuple xs -> PTuple ($1 :: xs)
-        | x -> PTuple ($1 :: [x])
-        end
-      }
-  | pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
-  | pattern BIG_COLON pattern { PCons ($1, $3) }
+  | LAZY simple_pattern { PLazy $2 }
 
 type_binary_op:
   | COMMA { TComma }
@@ -265,7 +251,7 @@ most_type_expression:
   | LAZY type_expression { TLazy $2 }
 
 simple_type_expression:
-  | type_name { $1 }
+  | qual_ident { TIdent $1 }
   | NUMBER { TNumber $1 }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
@@ -276,23 +262,23 @@ effect_expression:
   | LOWLINE { EWildcard }
 
 type_definition:
-  | TYPE name=LOWER_SNAKECASE params=TYPEVAR_IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }
+  | TYPE name=IDENTIFIER params=IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }
 
 type_definition_body:
   | nonempty_list(VERTICAL variant_constructor { $2 }) { Variant $1 }
   | BIG_DOT { ExtensibleVariant }
 
 variant_constructor:
-  | name=UPPER_CAMELCASE COLON param=simple_or_paren_type_expression { name, Some param }
-  | name=UPPER_CAMELCASE { name, None }
+  | name=IDENTIFIER COLON param=simple_or_paren_type_expression { name, Some param }
+  | name=IDENTIFIER { name, None }
 
-deriving_clause: DERIVING deriving_clause_body { $2 }
+deriving_clause: DERIVING deriving_clause_body { $2 : ty list }
 
 deriving_clause_body:
-  type_name { [$1] }
-  | type_name COMMA deriving_clause_body { $1 :: $3 }
+  qual_ident { [TIdent $1] }
+  | qual_ident COMMA deriving_clause_body { TIdent $1 :: $3 }
 
-extensible_variant_definition: TYPE name=LOWER_SNAKECASE PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
+extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
 definition:
   | let_expression { () }
