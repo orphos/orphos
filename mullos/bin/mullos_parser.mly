@@ -85,7 +85,7 @@ open Mullos_syntax
 
 %right RAISE
 %right AMPERSAND
-%left PLUS HYPHEN BIG_PLUS
+%left PLUS HYPHEN
 %left ASTERISK
 %right EXCLAMATION
 %right LAZY
@@ -251,15 +251,21 @@ most_type_expression:
   | LAZY type_expression { TLazy $2 }
 
 simple_type_expression:
-  | qual_ident { TIdent $1 }
+  | ident_type { $1 }
   | NUMBER { TNumber $1 }
   | TEXT { TText $1 }
   | BOOL { TBool $1 }
 
+ident_type:
+  | qual_ident { TIdent $1 }
+
 effect_expression:
-  type_expression { ETy $1 }
-  | effect_expression BIG_PLUS effect_expression { ECombine ($1, $3) }
+  ident_effect { ETy $1 }
   | LOWLINE { EWildcard }
+
+ident_effect:
+  ident_type { [$1] }
+  | ident_type BIG_PLUS ident_effect { $1 :: $3 }
 
 type_definition:
   | TYPE name=IDENTIFIER params=IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }

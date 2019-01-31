@@ -86,7 +86,7 @@ type ty =
   | TEff of ty * eff
   | TBinOp of ty * ty_bin_op * ty * (ty_bin_op * ty) list
 
-and eff = ETy of ty | ECombine of eff * eff | EWildcard
+and eff = ETy of ty list | EWildcard
 
 type typedef =
   | VariantDef of string * ty list * deriving option * typedef_body
