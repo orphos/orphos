@@ -113,28 +113,28 @@ seq:
 
 %inline
 bin_op:
-   | PLUS { Add }
-   | HYPHEN { Substract }
-   | ASTERISK { Multiply }
-   | SOLIDUS { Division }
-   | CIRCUMFLEX { Xor }
-   | PERCENT { Reminder }
-   | BIG_LESS { BitwiseLeftShift }
-   | BIG_GREATER { BitwiseRightShift }
-   | LESS { Less }
-   | GREATER { Greater }
-   | EXCLAMATION_EQ { NotEqual }
-   | AMPERSAND { BitwiseAnd }
-   | BIG_AMPERSAND { And }
-   | VERTICAL { BitwiseOr }
-   | BIG_VERTICAL { Or }
-   | BIG_EQ { Equal }
-   | PLUS_EQ { AddAsign }
-   | HYPHEN_EQ { SubstractAsign }
-   | COLON_EQ { Asign }
-   | BIG_PLUS { Combine }
-   | BIG_HYPHEN { Remove }
-   | BIG_COLON { Cons }
+   | PLUS { `Add }
+   | HYPHEN { `Substract }
+   | ASTERISK { `Multiply }
+   | SOLIDUS { `Division }
+   | CIRCUMFLEX { `Xor }
+   | PERCENT { `Reminder }
+   | BIG_LESS { `BitwiseLeftShift }
+   | BIG_GREATER { `BitwiseRightShift }
+   | LESS { `Less }
+   | GREATER { `Greater }
+   | EXCLAMATION_EQ { `NotEqual }
+   | AMPERSAND { `BitwiseAnd }
+   | BIG_AMPERSAND { `And }
+   | VERTICAL { `BitwiseOr }
+   | BIG_VERTICAL { `Or }
+   | BIG_EQ { `Equal }
+   | PLUS_EQ { `AddAsign }
+   | HYPHEN_EQ { `SubstractAsign }
+   | COLON_EQ { `Asign }
+   | BIG_PLUS { `Combine }
+   | BIG_HYPHEN { `Remove }
+   | BIG_COLON { `Cons }
 
 unary_op:
    | EXCLAMATION { Not }
@@ -195,9 +195,9 @@ pattern_condition: IF expression { $2 }
 
 %inline
 pattern_op:
-  | COMMA { Comma }
-  | BIG_COLON { Cons }
-  | AT { At }
+  | COMMA { `Comma }
+  | BIG_COLON { `Cons }
+  | AT { `At }
 
 pattern:
   | IDENTIFIER pattern { PCtor ($1, $2) }

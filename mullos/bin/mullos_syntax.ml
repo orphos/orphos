@@ -8,33 +8,32 @@ type number_literal_type = ZType | QType | IntType of int | FloatType of int
 type number = Q.t * number_literal_type
 
 type bin_op =
-  | Add
-  | Substract
-  | Multiply
-  | Division
-  | Xor
-  | Reminder
-  | BitwiseLeftShift
-  | BitwiseRightShift
-  | Less
-  | Greater
-  | Equal
-  | NotEqual
-  | BitwiseAnd
-  | And
-  | BitwiseOr
-  | Or
-  | AddAsign
-  | SubstractAsign
-  | Asign
-  | Combine
-  | Remove
-  | Cons
-  | Colon
-  | Comma
-  | At
+  [ `Add
+  | `Substract
+  | `Multiply
+  | `Division
+  | `Xor
+  | `Reminder
+  | `BitwiseLeftShift
+  | `BitwiseRightShift
+  | `Less
+  | `Greater
+  | `Equal
+  | `NotEqual
+  | `BitwiseAnd
+  | `And
+  | `BitwiseOr
+  | `Or
+  | `AddAsign
+  | `SubstractAsign
+  | `Asign
+  | `Combine
+  | `Remove
+  | `Cons ]
 
 type unary_op = Positive | Negative | Not | Deref | Ref | Raise | Lazy
+
+type pat_bin_op = [`Colon | `Comma | `At]
 
 type exp =
   | Bool of bool
