@@ -29,7 +29,8 @@ type bin_op =
   | `Asign
   | `Combine
   | `Remove
-  | `Cons ]
+  | `Cons
+  | `Dot ]
 
 type unary_op = Positive | Negative | Not | Deref | Ref | Raise | Lazy
 

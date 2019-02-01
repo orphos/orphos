@@ -135,6 +135,7 @@ bin_op:
    | BIG_PLUS { `Combine }
    | BIG_HYPHEN { `Remove }
    | BIG_COLON { `Cons }
+   | DOT { `Dot }
 
 unary_op:
    | EXCLAMATION { Not }
