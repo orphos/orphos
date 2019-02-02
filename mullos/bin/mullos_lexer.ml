@@ -7,8 +7,8 @@ open Mullos_syntax
 
 let is_expression_start = function
   | AMPERSAND | ASTERISK | BOOL _ | EXCLAMATION | FN | HYPHEN | IF | LAZY
-   |LCBRACKET | LET | IDENTIFIER _ | LPAREN | NUMBER _ | PLUS | RAISE | TEXT _
-    ->
+   |LCBRACKET | LET | IDENTIFIER _ | LPAREN | NUMBER _ | PLUS | RAISE
+   |TEXT _ | MODULE | SINGLETON ->
       true
   | _ -> false
 
@@ -173,8 +173,11 @@ let new_reader () =
     | "lazy" -> LAZY
     | "let" -> LET
     | "match" -> MATCH
+    | "module" -> MODULE
     | "raise" -> RAISE
+    | "singleton" -> SINGLETON
     | "then" -> THEN
+    | "trait" -> TRAIT
     | "true" -> BOOL true
     | "type" -> TYPE
     | "unsafe" -> UNSAFE

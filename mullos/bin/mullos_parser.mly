@@ -60,6 +60,7 @@ open Mullos_syntax
 %token LOWLINE
 %token LPAREN
 %token MATCH
+%token MODULE
 %token NL
 %token <Mullos_syntax.number> NUMBER
 %token NUMBERSIGN
@@ -74,10 +75,12 @@ open Mullos_syntax
 %token RCBRACKET
 %token RPAREN
 %token SEMI
+%token SINGLETON
 %token SOLIDUS
 %token <string> TEXT
 %token THEN
 %token TILDE
+%token TRAIT
 %token TYPE
 %token UNSAFE
 %token VERTICAL
@@ -287,10 +290,27 @@ deriving_clause_body:
 
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
+module_definition: MODULE name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (name, impl, defs) }
+
+singleton_definition: SINGLETON name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (name, impl, defs) }
+
+trait_definition: TRAIT name=IDENTIFIER params=IDENTIFIER* impl=impl_clause LBRACKET defs=definition_list RBRACKET { TraitDef (name, params, impl, defs) }
+
+impl_clause:
+  | { [] }
+  | COLON impl { $2 }
+
+impl:
+  | ident_type+ { [$1] }
+  | ident_type+ COMMA impl { $1 :: $3 }
+
 definition:
-  | let_expression { () }
-  | type_definition { () }
-  | extensible_variant_definition { () }
+  | let_expression { failwith "not implemented" }
+  | type_definition { failwith "not implemented" }
+  | extensible_variant_definition { failwith "not implemented" }
+  | module_definition { failwith "not implemented" }
+  | singleton_definition { failwith "not implemented" }
+  | trait_definition { failwith "not implemented" }
 
 definition_list:
   | definition semi definition_list { $1 :: $3 }

@@ -92,6 +92,8 @@ and eff = ETy of ty list | EWildcard
 type typedef =
   | VariantDef of string * ty list * deriving option * typedef_body
   | ExtensibleVariantDef of string * ctor
+  | ModuleDef of string * ty list list * definition list
+  | TraitDef of string * string list * ty list list * definition list
 
 and typedef_body = Variant of ctor list | ExtensibleVariant
 
