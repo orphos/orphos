@@ -83,6 +83,7 @@ open Mullos_syntax
 %token TRAIT
 %token TYPE
 %token UNSAFE
+%token VAL
 %token VERTICAL
 %token WHERE
 
@@ -304,13 +305,16 @@ impl:
   | ident_type+ { [$1] }
   | ident_type+ COMMA impl { $1 :: $3 }
 
+val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
+
 definition:
-  | let_expression { failwith "not implemented" }
-  | type_definition { failwith "not implemented" }
-  | extensible_variant_definition { failwith "not implemented" }
-  | module_definition { failwith "not implemented" }
-  | singleton_definition { failwith "not implemented" }
-  | trait_definition { failwith "not implemented" }
+  | let_expression { LetDef $1 }
+  | val_definition { $1 }
+  | type_definition { $1 }
+  | extensible_variant_definition { $1 }
+  | module_definition { $1 }
+  | singleton_definition { $1 }
+  | trait_definition { $1 }
 
 definition_list:
   | definition semi definition_list { $1 :: $3 }

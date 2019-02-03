@@ -89,16 +89,16 @@ type ty =
 
 and eff = ETy of ty list | EWildcard
 
-type typedef =
+type definition =
   | VariantDef of string * ty list * deriving option * typedef_body
   | ExtensibleVariantDef of string * ctor
   | ModuleDef of string * ty list list * definition list
   | TraitDef of string * string list * ty list list * definition list
+  | LetDef of exp
+  | ValDef of string * ty
 
 and typedef_body = Variant of ctor list | ExtensibleVariant
 
 and ctor = string * ty option
 
 and deriving = ty list
-
-and definition = ValDef of pat list * exp
