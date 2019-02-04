@@ -92,7 +92,7 @@ and eff = ETy of ty list | EWildcard
 type definition =
   | VariantDef of string * ty list * deriving option * typedef_body
   | ExtensibleVariantDef of string * ctor
-  | ModuleDef of string * ty list list * definition list
+  | ModuleDef of bool * string * ty list list * definition list
   | TraitDef of string * string list * ty list list * definition list
   | LetDef of exp
   | ValDef of string * ty

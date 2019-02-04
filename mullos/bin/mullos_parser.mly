@@ -291,9 +291,9 @@ deriving_clause_body:
 
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
-module_definition: MODULE name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (name, impl, defs) }
+module_definition: MODULE name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (false, name, impl, defs) }
 
-singleton_definition: SINGLETON name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (name, impl, defs) }
+singleton_definition: SINGLETON name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (true, name, impl, defs) }
 
 trait_definition: TRAIT name=IDENTIFIER params=IDENTIFIER* impl=impl_clause LBRACKET defs=definition_list RBRACKET { TraitDef (name, params, impl, defs) }
 
