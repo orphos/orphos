@@ -36,6 +36,7 @@ open Mullos_syntax
 %token DOT
 %token EFFECT
 %token ELSE
+%token END
 %token EOF
 %token EQ
 %token EQ_GREATER
@@ -86,8 +87,11 @@ open Mullos_syntax
 %token VAL
 %token VERTICAL
 %token WHERE
+%token WITH
 
+(*
 %right RAISE
+ *)
 %right AMPERSAND
 %left PLUS HYPHEN
 %left ASTERISK
@@ -141,41 +145,18 @@ bin_op:
    | BIG_COLON { `Cons }
    | DOT { `Dot }
 
-unary_op:
-   | EXCLAMATION { Not }
-   | PLUS { Positive }
-   | HYPHEN { Negative }
-   | ASTERISK { Deref }
-   | AMPERSAND { Ref }
-   | RAISE { Raise }
-   | LAZY { Lazy }
-
 expression:
-   | non_paren_expression { $1 }
-   | paren_expression { $1 }
+  | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
+  | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
+  | FN pattern HYPHEN_GREATER expression { lAMBDA ($2, $4) }
+  | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
+  | binop_expression { $1 }
 
-let_expression:
-   | LET ident_pattern ident_pattern+ EQ expression semi expression { Let ($2, $3, $5, $7) }
-   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
+binop_expression:
+  | application_expression bin_op application_expression { BinOp ($1, $2, $3, []) }
 
-non_paren_expression:
-   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
-   | simple_expression bin_op non_paren_expression {
-       match $3 with
-       | BinOp (lhs, op, rhs, tail) -> BinOp ($1, $2, lhs, (op, rhs) :: tail)
-       | _ -> BinOp($1, $2, $3, [])
-     }
-   | simple_expression bin_op paren_expression { BinOp ($1, $2, $3, []) }
-   | lhs=simple_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
-   | lhs=paren_expression MATCH LCBRACKET rhs=pattern_clause+ RCBRACKET { Match (lhs, rhs) }
-   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
-   | let_expression { $1 }
-   | simple_expression simple_expression { Apply ($1, $2) }
-   | simple_expression paren_expression { Apply ($1, $2) }
-   | simple_expression { $1 }
-
-paren_expression:
-  | LPAREN expression RPAREN { $2 }
+application_expression:
+  | simple_expression expression { Apply ($1, $2) }
 
 simple_expression:
   | IDENTIFIER { Identifier $1 }
@@ -184,8 +165,7 @@ simple_expression:
   | TEXT { Text $1 }
   | NUMBER { Number $1 }
   | BOOL { Bool $1 }
-  | unary_op simple_expression { UnaryOp ($1, $2) }
-  | unary_op paren_expression { UnaryOp ($1, $2) }
+  | LPAREN expression RPAREN { $2 }
 
 pattern_clause:
   | CASE pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
@@ -308,7 +288,6 @@ impl:
 val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
 
 definition:
-  | let_expression { LetDef $1 }
   | val_definition { $1 }
   | type_definition { $1 }
   | extensible_variant_definition { $1 }
