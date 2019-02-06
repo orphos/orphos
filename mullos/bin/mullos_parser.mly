@@ -143,7 +143,6 @@ bin_op:
    | BIG_PLUS { `Combine }
    | BIG_HYPHEN { `Remove }
    | BIG_COLON { `Cons }
-   | DOT { `Dot }
 
 expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
@@ -156,7 +155,10 @@ binop_expression:
   | application_expression bin_op application_expression { BinOp ($1, $2, $3, []) }
 
 application_expression:
-  | simple_expression expression { Apply ($1, $2) }
+  | dot_expression expression { Apply ($1, $2) }
+
+dot_expression:
+  | simple_expression DOT expression { BinOP ($1, `Dot, $3, []) }
 
 simple_expression:
   | IDENTIFIER { Identifier $1 }
