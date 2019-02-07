@@ -170,9 +170,9 @@ simple_expression:
   | LPAREN expression RPAREN { $2 }
 
 pattern_clause:
-  | CASE pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
-  | CASE EXCEPTION pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchException (pat, cond, exp) }
-  | CASE EFFECT pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchEffect (pat, cond, exp) }
+  | VERTICAL pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchPat (pat, cond, exp) }
+  | VERTICAL EXCEPTION pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchException (pat, cond, exp) }
+  | VERTICAL EFFECT pat=pattern_or_clause cond=pattern_condition? EQ_GREATER LBRACKET exp=expression RBRACKET { MatchEffect (pat, cond, exp) }
 
 pattern_or_clause:
   | pattern { $1 }
