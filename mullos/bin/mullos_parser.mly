@@ -86,6 +86,7 @@ open Mullos_syntax
 %token UNSAFE
 %token VAL
 %token VERTICAL
+%token WHEN
 %token WHERE
 %token WITH
 
@@ -178,7 +179,7 @@ pattern_or_clause:
   | pattern { $1 }
   | pattern VERTICAL pattern_or_clause { POr ($1, $3) }
 
-pattern_condition: IF expression { $2 }
+pattern_condition: WHEN expression { $2 }
 
 %inline
 pattern_op:
