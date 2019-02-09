@@ -147,6 +147,7 @@ bin_op:
 
 expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
+  | IF expression THEN expression END { IfThenElse ($2, $4, None) }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
   | FN pattern HYPHEN_GREATER expression { lAMBDA ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
