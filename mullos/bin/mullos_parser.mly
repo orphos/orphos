@@ -149,7 +149,7 @@ expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression END { IfThenElse ($2, $4, None) }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
-  | FN pattern HYPHEN_GREATER expression { lAMBDA ($2, $4) }
+  | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
   | binop_expression { $1 }
 
@@ -160,7 +160,7 @@ application_expression:
   | dot_expression expression { Apply ($1, $2) }
 
 dot_expression:
-  | simple_expression DOT expression { BinOP ($1, `Dot, $3, []) }
+  | simple_expression DOT expression { BinOp ($1, `Dot, $3, []) }
 
 simple_expression:
   | IDENTIFIER { Identifier $1 }
