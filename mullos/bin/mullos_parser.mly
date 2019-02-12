@@ -303,6 +303,6 @@ definition:
   | def_definition { $1 }
 
 definition_list:
-  | definition semi definition_list { $1 :: $3 }
+  | definition definition_list { $1 :: $2 }
   | definition { [$1] }
 
