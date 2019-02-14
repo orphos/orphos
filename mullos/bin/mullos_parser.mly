@@ -275,7 +275,12 @@ deriving_clause_body:
 
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
-module_definition: MODULE name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (false, name, impl, defs) }
+module_parameter:
+  | IDENTIFIER { failwith "not implemented" }
+  | LPAREN IDENTIFIER COLON IDENTIFIER { failwith "not implemented" }
+
+module_definition: MODULE name=IDENTIFIER separated_list(COMMA, module_parameter)
+  impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (false, name, impl, defs) }
 
 singleton_definition: SINGLETON name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (true, name, impl, defs) }
 
