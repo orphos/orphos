@@ -152,6 +152,7 @@ expression:
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
   | binop_expression { $1 }
+  | LBRACKET separated_list(SEMI, expression) RBRACKET { failwith "not implemented" }
 
 binop_expression:
   | application_expression bin_op application_expression { BinOp ($1, $2, $3, []) }
@@ -185,13 +186,13 @@ pattern_condition: WHEN expression { $2 }
 %inline
 pattern_op:
   | COMMA { `Comma }
-  | BIG_COLON { `Cons }
   | AT { `At }
 
 pattern:
   | IDENTIFIER pattern { PCtor ($1, $2) }
   | simple_pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
   | simple_pattern pattern_op pattern { failwith "not implemented" }
+  | LBRACKET separated_list(SEMI, pattern) RBRACKET { failwith "not implemented" }
   | simple_pattern { $1 }
 
 ident_pattern:
