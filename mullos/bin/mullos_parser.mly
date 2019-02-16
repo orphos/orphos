@@ -19,8 +19,10 @@ open Mullos_syntax
 %token BIG_EQ
 %token BIG_GREATER
 %token BIG_HYPHEN
+%token BIG_LBRACKET
 %token BIG_LESS
 %token BIG_PLUS
+%token BIG_RBRACKET
 %token BIG_VERTICAL
 %token <bool> BOOL
 %token CASE
@@ -62,6 +64,7 @@ open Mullos_syntax
 %token LPAREN
 %token MATCH
 %token MODULE
+%token MUTABLE
 %token NL
 %token <Mullos_syntax.number> NUMBER
 %token NUMBERSIGN
@@ -153,6 +156,8 @@ expression:
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
   | binop_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { failwith "not implemented" }
+  | BIG_LBRACKET separated_list(SEMI, expression) BIG_RBRACKET { failwith "not implemented" }
+  | MUTABLE BIG_LBRACKET separated_list(SEMI, expression) BIG_RBRACKET { failwith "not implemented" }
 
 binop_expression:
   | application_expression bin_op application_expression { BinOp ($1, $2, $3, []) }
@@ -193,6 +198,8 @@ pattern:
   | simple_pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
   | simple_pattern pattern_op pattern { failwith "not implemented" }
   | LBRACKET separated_list(SEMI, pattern) RBRACKET { failwith "not implemented" }
+  | BIG_LBRACKET separated_list(SEMI, pattern) BIG_RBRACKET { failwith "not implemented" }
+  | MUTABLE BIG_LBRACKET separated_list(SEMI, pattern) BIG_RBRACKET { failwith "not implemented" }
   | simple_pattern { $1 }
 
 ident_pattern:
