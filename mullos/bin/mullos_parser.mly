@@ -304,7 +304,7 @@ impl:
 
 val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
 
-def_definition: DEF IDENTIFIER simple_pattern* EQ expression option(WHERE definition_list END { failwith "not implemented" }) { failwith "not implemented" }
+toplevel_let: LET IDENTIFIER simple_pattern* EQ expression option(WHERE definition_list END { failwith "not implemented" }) { failwith "not implemented" }
 
 definition:
   | val_definition { $1 }
@@ -313,7 +313,7 @@ definition:
   | module_definition { $1 }
   | singleton_definition { $1 }
   | trait_definition { $1 }
-  | def_definition { $1 }
+  | toplevel_let { $1 }
 
 definition_list:
   | definition definition_list { $1 :: $2 }
