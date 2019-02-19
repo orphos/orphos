@@ -10,6 +10,7 @@ open Mullos_syntax
 %}
 
 %token AMPERSAND
+%token AND
 %token ASTERISK
 %token AT
 %token BIGBIG_COLON
@@ -76,6 +77,7 @@ open Mullos_syntax
 %token RAISE
 %token RBRACKET
 %token RCBRACKET
+%token REC
 %token RPAREN
 %token SEMI
 %token SINGLETON
@@ -154,6 +156,7 @@ expression:
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
+  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ failwith "not implemented" }) semi expression { failwith "not implemented" }
   | binop_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { failwith "not implemented" }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
@@ -304,7 +307,10 @@ impl:
 
 val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
 
-toplevel_let: LET IDENTIFIER simple_pattern* EQ expression option(WHERE definition_list END { failwith "not implemented" }) { failwith "not implemented" }
+top_level_let_body: IDENTIFIER simple_pattern* EQ expression { failwith "not implemented" }
+top_level_let: LET top_level_let_body { failwith "not implemented" }
+top_level_letrec: LET REC top_level_let_body top_level_and* { failwith "not implemented" }
+top_level_and: AND top_level_let_body { failwith "not implemented" }
 
 definition:
   | val_definition { $1 }
@@ -313,7 +319,8 @@ definition:
   | module_definition { $1 }
   | singleton_definition { $1 }
   | trait_definition { $1 }
-  | toplevel_let { $1 }
+  | top_level_let { $1 }
+  | top_level_letrec { $1 }
 
 definition_list:
   | definition definition_list { $1 :: $2 }
