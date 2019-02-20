@@ -95,17 +95,6 @@ open Mullos_syntax
 %token WHERE
 %token WITH
 
-(*
-%right RAISE
- *)
-%right AMPERSAND
-%left PLUS HYPHEN
-%left ASTERISK
-%right EXCLAMATION
-%right LAZY
-%nonassoc LCBRACKET
-%nonassoc IDENTIFIER TEXT NUMBER BOOL LPAREN
-
 %start<unit> compilation_unit
 
 %%
