@@ -95,6 +95,11 @@ open Mullos_syntax
 %token WHERE
 %token WITH
 
+(* binary operator precedence *)
+%left prec_other_exp
+%left prec_ASTERISK
+%left prec_PLUS
+
 %start<unit> compilation_unit
 
 %%
@@ -119,8 +124,8 @@ bin_op:
    | PLUS { `Add }
    | HYPHEN { `Substract }
    | ASTERISK { `Multiply }
-   | SOLIDUS { `Division }
-   | CIRCUMFLEX { `Xor }
+   | SOLIDUS  { `Division }
+   | CIRCUMFLEX  { `Xor }
    | PERCENT { `Reminder }
    | BIG_LESS { `BitwiseLeftShift }
    | BIG_GREATER { `BitwiseRightShift }
@@ -146,19 +151,70 @@ expression:
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
   | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ failwith "not implemented" }) semi expression { failwith "not implemented" }
-  | binop_expression { $1 }
+  | assignment_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { failwith "not implemented" }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
 
-binop_expression:
-  | application_expression bin_op application_expression { BinOp ($1, $2, $3, []) }
+assignment_expression: assignment_expression binop_assignment dollar_expression { failwith "not implemented" } | dollar_expression { $1 }
+%inline
+binop_assignment:
+  | PLUS_EQ { `AddAsign }
+  | HYPHEN_EQ { `SubstractAsign }
+  | COLON_EQ { `Asign }
 
-application_expression:
-  | dot_expression expression { Apply ($1, $2) }
+dollar_expression: dollar_expression DOLLAR tuple_expression { failwith "not implemented" } | tuple_expression { $1 }
 
-dot_expression:
-  | simple_expression DOT expression { BinOp ($1, `Dot, $3, []) }
+tuple_expression: lor_expression nonempty_list(COMMA lor_expression { failwith "not implemented" }) { failwith "not implemented" } | lor_expression { $1 }
+
+lor_expression: lor_expression BIG_VERTICAL land_expression { failwith "not implemented" } | land_expression { $1 }
+
+land_expression: land_expression BIG_AMPERSAND bitwise_or_expression { failwith "not implemented" } | bitwise_or_expression { $1 }
+
+bitwise_or_expression: bitwise_or_expression VERTICAL xor_expression { failwith "not implemented" } | xor_expression { $1 }
+
+xor_expression: xor_expression CIRCUMFLEX bitwise_and_expression { failwith "not implemented" } | bitwise_and_expression { $1 }
+
+bitwise_and_expression: bitwise_and_expression AMPERSAND equal_expression { failwith "not implemented" } | equal_expression { $1 }
+
+equal_expression: equal_expression binop_equal greater_expression { failwith "not implemented" } | greater_expression { $1 }
+%inline
+binop_equal:
+  | EXCLAMATION_EQ { `NotEqual }
+  | BIG_EQ { `Equal }
+
+greater_expression: greater_expression binop_greater shift_expression { failwith "not implemented" } | shift_expression { $1 }
+%inline
+binop_greater:
+  | LESS { `Less }
+  | GREATER { `Greater }
+
+shift_expression: shift_expression binop_shift add_expression { failwith "not implemented" } | add_expression { $1 }
+%inline
+binop_shift:
+  | BIG_LESS { `BitwiseLeftShift }
+  | BIG_GREATER { `BitwiseRightShift }
+
+add_expression: add_expression binop_add multiply_expression { failwith "not implemented" } | multiply_expression { $1 }
+%inline
+binop_add:
+  | PLUS { `Add }
+  | HYPHEN { `Substract }
+
+multiply_expression: multiply_expression binop_multiply unaryop_expression { failwith "not implemented" } | unaryop_expression { $1 }
+%inline
+binop_multiply:
+  | ASTERISK { `Multiply }
+  | SOLIDUS  { `Division }
+  | PERCENT { `Reminder }
+unaryop_expression: unaryop application_expression { failwith "not implemented" } | application_expression { $1 }
+%inline
+unaryop:
+  | PLUS { failwith "not implemented" }
+
+application_expression: application_expression dot_expression { Apply ($1, $2) } | dot_expression { $1 }
+
+dot_expression: dot_expression DOT simple_expression { BinOp ($1, `Dot, $3, []) } | simple_expression { $1 }
 
 simple_expression:
   | IDENTIFIER { Identifier $1 }
