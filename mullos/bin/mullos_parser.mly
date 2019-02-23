@@ -207,7 +207,6 @@ binop_shift:
 cons_expression: add_expression binop_cons cons_expression { failwith "not implemented" } | add_expression { $1 }
 %inline
 binop_cons:
-   | BIG_COLON { failwith "not implemented" }
    | COLON_PLUS { failwith "not implemented" }
    | COLON_HYPHEN { failwith "not implemented" }
    | COLON_PLUS_COLON { failwith "not implemented" }
