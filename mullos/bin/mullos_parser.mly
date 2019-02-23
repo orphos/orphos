@@ -30,6 +30,10 @@ open Mullos_syntax
 %token CLASS
 %token COLON
 %token COLON_EQ
+%token COLON_HYPHEN
+%token COLON_HYPHEN_COLON
+%token COLON_PLUS
+%token COLON_PLUS_COLON
 %token COMMA
 %token DEF
 %token DERIVING
@@ -48,6 +52,7 @@ open Mullos_syntax
 %token FN
 %token GREATER
 %token HYPHEN
+%token HYPHEN_COLON
 %token HYPHEN_EQ
 %token HYPHEN_GREATER
 %token <string> IDENTIFIER
@@ -72,6 +77,7 @@ open Mullos_syntax
 %token NUMBERSIGN_LBRACKET
 %token PERCENT
 %token PLUS
+%token PLUS_COLON
 %token PLUS_EQ
 %token QUESTION
 %token RAISE
@@ -90,6 +96,7 @@ open Mullos_syntax
 %token UNSAFE
 %token VAL
 %token VERTICAL
+%token VERTICAL_GREATER
 %token VERTICAL_RBRACKET
 %token WHEN
 %token WHERE
@@ -156,12 +163,14 @@ expression:
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
 
-assignment_expression: assignment_expression binop_assignment dollar_expression { failwith "not implemented" } | dollar_expression { $1 }
+assignment_expression: assignment_expression binop_assignment pipeline_expression { failwith "not implemented" } | pipeline_expression { $1 }
 %inline
 binop_assignment:
   | PLUS_EQ { `AddAsign }
   | HYPHEN_EQ { `SubstractAsign }
   | COLON_EQ { `Asign }
+
+pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { failwith "not implemented" } | dollar_expression { $1 }
 
 dollar_expression: dollar_expression DOLLAR tuple_expression { failwith "not implemented" } | tuple_expression { $1 }
 
@@ -189,17 +198,28 @@ binop_greater:
   | LESS { `Less }
   | GREATER { `Greater }
 
-shift_expression: shift_expression binop_shift add_expression { failwith "not implemented" } | add_expression { $1 }
+shift_expression: shift_expression binop_shift cons_expression { failwith "not implemented" } | cons_expression { $1 }
 %inline
 binop_shift:
   | BIG_LESS { `BitwiseLeftShift }
   | BIG_GREATER { `BitwiseRightShift }
+
+cons_expression: add_expression binop_cons cons_expression { failwith "not implemented" } | add_expression { $1 }
+%inline
+binop_cons:
+   | BIG_COLON { failwith "not implemented" }
+   | COLON_PLUS { failwith "not implemented" }
+   | COLON_HYPHEN { failwith "not implemented" }
+   | COLON_PLUS_COLON { failwith "not implemented" }
+   | COLON_HYPHEN_COLON { failwith "not implemented" }
 
 add_expression: add_expression binop_add multiply_expression { failwith "not implemented" } | multiply_expression { $1 }
 %inline
 binop_add:
   | PLUS { `Add }
   | HYPHEN { `Substract }
+  | PLUS_COLON { failwith "not implemented" }
+  | HYPHEN_COLON { failwith "not implemented" }
 
 multiply_expression: multiply_expression binop_multiply unaryop_expression { failwith "not implemented" } | unaryop_expression { $1 }
 %inline
