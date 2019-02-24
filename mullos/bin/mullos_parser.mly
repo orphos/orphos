@@ -118,8 +118,8 @@ semi:
   | NL { () }
   | SEMI { () }
 
-qual_ident:
-  IDENTIFIER DOT qual_ident { $1 :: $3 }
+long_id:
+  IDENTIFIER BIG_COLON long_id { $1 :: $3 }
   | IDENTIFIER { [$1] }
 
 seq:
@@ -321,7 +321,7 @@ simple_type_expression:
   | BOOL { TBool $1 }
 
 ident_type:
-  | qual_ident { TIdent $1 }
+  | long_id { TIdent $1 }
 
 effect_expression:
   ident_effect { ETy $1 }
@@ -345,8 +345,8 @@ variant_constructor:
 deriving_clause: DERIVING deriving_clause_body { $2 : ty list }
 
 deriving_clause_body:
-  qual_ident { [TIdent $1] }
-  | qual_ident COMMA deriving_clause_body { TIdent $1 :: $3 }
+  | long_id { [TIdent $1] }
+  | long_id COMMA deriving_clause_body { TIdent $1 :: $3 }
 
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
