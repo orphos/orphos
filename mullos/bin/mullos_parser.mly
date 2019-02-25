@@ -102,11 +102,6 @@ open Mullos_syntax
 %token WHERE
 %token WITH
 
-(* binary operator precedence *)
-%left prec_other_exp
-%left prec_ASTERISK
-%left prec_PLUS
-
 %start<unit> compilation_unit
 
 %%
