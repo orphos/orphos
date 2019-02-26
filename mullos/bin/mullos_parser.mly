@@ -215,16 +215,29 @@ binop_add:
   | PLUS_COLON { failwith "not implemented" }
   | HYPHEN_COLON { failwith "not implemented" }
 
-multiply_expression: multiply_expression binop_multiply unaryop_expression { failwith "not implemented" } | unaryop_expression { $1 }
+multiply_expression: multiply_expression binop_multiply prefix_expression { failwith "not implemented" } | prefix_expression { $1 }
 %inline
 binop_multiply:
   | ASTERISK { `Multiply }
   | SOLIDUS  { `Division }
   | PERCENT { `Reminder }
-unaryop_expression: unaryop application_expression { failwith "not implemented" } | application_expression { $1 }
+
+prefix_expression: prefix_op postfix_expression { failwith "not implemented" } | postfix_expression { $1 }
 %inline
-unaryop:
+prefix_op:
   | PLUS { failwith "not implemented" }
+  | HYPHEN { failwith "not implemented" }
+  | EXCLAMATION { failwith "not implemented" }
+  | AMPERSAND { failwith "not implemented" }
+  | ASTERISK { failwith "not implemented" }
+  | BIG_PLUS { failwith "not implemented" }
+  | BIG_HYPHEN { failwith "not implemented" }
+
+postfix_expression: application_expression postfix_op { failwith "not implemented" } | application_expression { $1 }
+%inline
+postfix_op:
+  | BIG_PLUS { failwith "not implemented" }
+  | BIG_HYPHEN { failwith "not implemented" }
 
 application_expression: application_expression dot_expression { Apply ($1, $2) } | dot_expression { $1 }
 
