@@ -50,6 +50,7 @@ open Mullos_syntax
 %token EXCLAMATION_EQ
 %token EXTERNAL
 %token FN
+%token FUNCTOR
 %token GREATER
 %token HYPHEN
 %token HYPHEN_COLON
@@ -86,8 +87,11 @@ open Mullos_syntax
 %token REC
 %token RPAREN
 %token SEMI
+%token SIG
+%token SIGNATURE
 %token SINGLETON
 %token SOLIDUS
+%token STRUCT
 %token <string> TEXT
 %token THEN
 %token TILDE
@@ -398,3 +402,33 @@ definition_list:
   | definition definition_list { $1 :: $2 }
   | definition { [$1] }
 
+let_definition:
+  | LET simple_pattern EQ expression { failwith "not implemented" }
+  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ failwith "not implemented" }) { failwith "not implemented" }
+
+signature_body_part:
+  | val_definition { failwith "not implemented" }
+  | type_definition { failwith "not implemented" }
+
+signature_body: separated_list(semi, signature_body_part) { $1 }
+
+signature:
+  | SIG signature_body END { failwith "not implemented" }
+
+signature_decl:
+  | SIGNATURE IDENTIFIER EQ signature { failwith "not implemented" }
+
+signature_ref: | signature  { failwith "not implemented" } | long_id { failwith "not implemented" }
+
+structure_body_part:
+  | type_definition { failwith "not implemented" }
+  | let_definition { failwith "not implemented" }
+
+structure:
+  | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { failwith "not implemented" }) { failwith "not implemented" }
+
+structure_decl:
+  | MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { failwith "not implemented" }) EQ structure { failwith "not implemented" }
+
+functor_decl:
+  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { failwith "not implemented" }) EQ structure { failwith "not implemented" }
