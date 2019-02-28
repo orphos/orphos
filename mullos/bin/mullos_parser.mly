@@ -7,6 +7,8 @@
 open Mullos_aux
 open Mullos_syntax
 
+let noimpl () = failwith "not implemented"
+
 %}
 
 %token AMPERSAND
@@ -156,92 +158,92 @@ expression:
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
-  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ failwith "not implemented" }) semi expression { failwith "not implemented" }
+  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) semi expression { noimpl () }
   | assignment_expression { $1 }
-  | LBRACKET separated_list(SEMI, expression) RBRACKET { failwith "not implemented" }
-  | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
-  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { failwith "not implemented" }
+  | LBRACKET separated_list(SEMI, expression) RBRACKET { noimpl () }
+  | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
+  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
 
-assignment_expression: assignment_expression binop_assignment pipeline_expression { failwith "not implemented" } | pipeline_expression { $1 }
+assignment_expression: assignment_expression binop_assignment pipeline_expression { noimpl () } | pipeline_expression { $1 }
 %inline
 binop_assignment:
   | PLUS_EQ { `AddAsign }
   | HYPHEN_EQ { `SubstractAsign }
   | COLON_EQ { `Asign }
 
-pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { failwith "not implemented" } | dollar_expression { $1 }
+pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { noimpl () } | dollar_expression { $1 }
 
-dollar_expression: dollar_expression DOLLAR tuple_expression { failwith "not implemented" } | tuple_expression { $1 }
+dollar_expression: dollar_expression DOLLAR tuple_expression { noimpl () } | tuple_expression { $1 }
 
-tuple_expression: lor_expression nonempty_list(COMMA lor_expression { failwith "not implemented" }) { failwith "not implemented" } | lor_expression { $1 }
+tuple_expression: lor_expression nonempty_list(COMMA lor_expression { noimpl () }) { noimpl () } | lor_expression { $1 }
 
-lor_expression: lor_expression BIG_VERTICAL land_expression { failwith "not implemented" } | land_expression { $1 }
+lor_expression: lor_expression BIG_VERTICAL land_expression { noimpl () } | land_expression { $1 }
 
-land_expression: land_expression BIG_AMPERSAND bitwise_or_expression { failwith "not implemented" } | bitwise_or_expression { $1 }
+land_expression: land_expression BIG_AMPERSAND bitwise_or_expression { noimpl () } | bitwise_or_expression { $1 }
 
-bitwise_or_expression: bitwise_or_expression VERTICAL xor_expression { failwith "not implemented" } | xor_expression { $1 }
+bitwise_or_expression: bitwise_or_expression VERTICAL xor_expression { noimpl () } | xor_expression { $1 }
 
-xor_expression: xor_expression CIRCUMFLEX bitwise_and_expression { failwith "not implemented" } | bitwise_and_expression { $1 }
+xor_expression: xor_expression CIRCUMFLEX bitwise_and_expression { noimpl () } | bitwise_and_expression { $1 }
 
-bitwise_and_expression: bitwise_and_expression AMPERSAND equal_expression { failwith "not implemented" } | equal_expression { $1 }
+bitwise_and_expression: bitwise_and_expression AMPERSAND equal_expression { noimpl () } | equal_expression { $1 }
 
-equal_expression: equal_expression binop_equal greater_expression { failwith "not implemented" } | greater_expression { $1 }
+equal_expression: equal_expression binop_equal greater_expression { noimpl () } | greater_expression { $1 }
 %inline
 binop_equal:
   | EXCLAMATION_EQ { `NotEqual }
   | BIG_EQ { `Equal }
 
-greater_expression: greater_expression binop_greater shift_expression { failwith "not implemented" } | shift_expression { $1 }
+greater_expression: greater_expression binop_greater shift_expression { noimpl () } | shift_expression { $1 }
 %inline
 binop_greater:
   | LESS { `Less }
   | GREATER { `Greater }
 
-shift_expression: shift_expression binop_shift cons_expression { failwith "not implemented" } | cons_expression { $1 }
+shift_expression: shift_expression binop_shift cons_expression { noimpl () } | cons_expression { $1 }
 %inline
 binop_shift:
   | BIG_LESS { `BitwiseLeftShift }
   | BIG_GREATER { `BitwiseRightShift }
 
-cons_expression: add_expression binop_cons cons_expression { failwith "not implemented" } | add_expression { $1 }
+cons_expression: add_expression binop_cons cons_expression { noimpl () } | add_expression { $1 }
 %inline
 binop_cons:
-   | COLON_PLUS { failwith "not implemented" }
-   | COLON_HYPHEN { failwith "not implemented" }
-   | COLON_PLUS_COLON { failwith "not implemented" }
-   | COLON_HYPHEN_COLON { failwith "not implemented" }
+   | COLON_PLUS { noimpl () }
+   | COLON_HYPHEN { noimpl () }
+   | COLON_PLUS_COLON { noimpl () }
+   | COLON_HYPHEN_COLON { noimpl () }
 
-add_expression: add_expression binop_add multiply_expression { failwith "not implemented" } | multiply_expression { $1 }
+add_expression: add_expression binop_add multiply_expression { noimpl () } | multiply_expression { $1 }
 %inline
 binop_add:
   | PLUS { `Add }
   | HYPHEN { `Substract }
-  | PLUS_COLON { failwith "not implemented" }
-  | HYPHEN_COLON { failwith "not implemented" }
+  | PLUS_COLON { noimpl () }
+  | HYPHEN_COLON { noimpl () }
 
-multiply_expression: multiply_expression binop_multiply prefix_expression { failwith "not implemented" } | prefix_expression { $1 }
+multiply_expression: multiply_expression binop_multiply prefix_expression { noimpl () } | prefix_expression { $1 }
 %inline
 binop_multiply:
   | ASTERISK { `Multiply }
   | SOLIDUS  { `Division }
   | PERCENT { `Reminder }
 
-prefix_expression: prefix_op postfix_expression { failwith "not implemented" } | postfix_expression { $1 }
+prefix_expression: prefix_op postfix_expression { noimpl () } | postfix_expression { $1 }
 %inline
 prefix_op:
-  | PLUS { failwith "not implemented" }
-  | HYPHEN { failwith "not implemented" }
-  | EXCLAMATION { failwith "not implemented" }
-  | AMPERSAND { failwith "not implemented" }
-  | ASTERISK { failwith "not implemented" }
-  | BIG_PLUS { failwith "not implemented" }
-  | BIG_HYPHEN { failwith "not implemented" }
+  | PLUS { noimpl () }
+  | HYPHEN { noimpl () }
+  | EXCLAMATION { noimpl () }
+  | AMPERSAND { noimpl () }
+  | ASTERISK { noimpl () }
+  | BIG_PLUS { noimpl () }
+  | BIG_HYPHEN { noimpl () }
 
-postfix_expression: application_expression postfix_op { failwith "not implemented" } | application_expression { $1 }
+postfix_expression: application_expression postfix_op { noimpl () } | application_expression { $1 }
 %inline
 postfix_op:
-  | BIG_PLUS { failwith "not implemented" }
-  | BIG_HYPHEN { failwith "not implemented" }
+  | BIG_PLUS { noimpl () }
+  | BIG_HYPHEN { noimpl () }
 
 application_expression: application_expression dot_expression { Apply ($1, $2) } | dot_expression { $1 }
 
@@ -274,11 +276,11 @@ pattern_op:
 
 pattern:
   | IDENTIFIER pattern { PCtor ($1, $2) }
-  | simple_pattern COLON simple_or_paren_type_expression { failwith "not implemented" }
-  | simple_pattern pattern_op pattern { failwith "not implemented" }
-  | LBRACKET separated_list(SEMI, pattern) RBRACKET { failwith "not implemented" }
-  | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { failwith "not implemented" }
-  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { failwith "not implemented" }
+  | simple_pattern COLON simple_or_paren_type_expression { noimpl () }
+  | simple_pattern pattern_op pattern { noimpl () }
+  | LBRACKET separated_list(SEMI, pattern) RBRACKET { noimpl () }
+  | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
+  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
   | simple_pattern { $1 }
 
 ident_pattern:
@@ -363,8 +365,8 @@ deriving_clause_body:
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
 module_parameter:
-  | IDENTIFIER { failwith "not implemented" }
-  | LPAREN IDENTIFIER COLON IDENTIFIER { failwith "not implemented" }
+  | IDENTIFIER { noimpl () }
+  | LPAREN IDENTIFIER COLON IDENTIFIER { noimpl () }
 
 module_definition: MODULE name=IDENTIFIER separated_list(COMMA, module_parameter)
   impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (false, name, impl, defs) }
@@ -383,10 +385,10 @@ impl:
 
 val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
 
-top_level_let_body: IDENTIFIER simple_pattern* EQ expression { failwith "not implemented" }
-top_level_let: LET top_level_let_body { failwith "not implemented" }
-top_level_letrec: LET REC top_level_let_body top_level_and* { failwith "not implemented" }
-top_level_and: AND top_level_let_body { failwith "not implemented" }
+top_level_let_body: IDENTIFIER simple_pattern* EQ expression { noimpl () }
+top_level_let: LET top_level_let_body { noimpl () }
+top_level_letrec: LET REC top_level_let_body top_level_and* { noimpl () }
+top_level_and: AND top_level_let_body { noimpl () }
 
 definition:
   | val_definition { $1 }
@@ -403,32 +405,32 @@ definition_list:
   | definition { [$1] }
 
 let_definition:
-  | LET simple_pattern EQ expression { failwith "not implemented" }
-  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ failwith "not implemented" }) { failwith "not implemented" }
+  | LET simple_pattern EQ expression { noimpl () }
+  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) { noimpl () }
 
 signature_body_part:
-  | val_definition { failwith "not implemented" }
-  | type_definition { failwith "not implemented" }
+  | val_definition { noimpl () }
+  | type_definition { noimpl () }
 
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
 signature:
-  | SIG signature_body END { failwith "not implemented" }
+  | SIG signature_body END { noimpl () }
 
 signature_decl:
-  | SIGNATURE IDENTIFIER EQ signature { failwith "not implemented" }
+  | SIGNATURE IDENTIFIER EQ signature { noimpl () }
 
-signature_ref: | signature  { failwith "not implemented" } | long_id { failwith "not implemented" }
+signature_ref: | signature  { noimpl () } | long_id { noimpl () }
 
 structure_body_part:
-  | type_definition { failwith "not implemented" }
-  | let_definition { failwith "not implemented" }
+  | type_definition { noimpl () }
+  | let_definition { noimpl () }
 
 structure:
-  | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { failwith "not implemented" }) { failwith "not implemented" }
+  | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { noimpl () }) { noimpl () }
 
 structure_decl:
-  | MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { failwith "not implemented" }) EQ structure { failwith "not implemented" }
+  | MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
 
 functor_decl:
-  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { failwith "not implemented" }) EQ structure { failwith "not implemented" }
+  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
