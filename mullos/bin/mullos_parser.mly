@@ -54,6 +54,7 @@ let noimpl () = failwith "not implemented"
 %token FN
 %token FUNCTOR
 %token GREATER
+%token HANDLE
 %token HYPHEN
 %token HYPHEN_COLON
 %token HYPHEN_EQ
@@ -159,6 +160,7 @@ expression:
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
   | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) semi expression { noimpl () }
+  | assignment_expression HANDLE pattern_clause+ END { noimpl () }
   | assignment_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { noimpl () }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
@@ -238,6 +240,7 @@ prefix_op:
   | ASTERISK { noimpl () }
   | BIG_PLUS { noimpl () }
   | BIG_HYPHEN { noimpl () }
+  | RAISE { noimpl() }
 
 postfix_expression: application_expression postfix_op { noimpl () } | application_expression { $1 }
 %inline
