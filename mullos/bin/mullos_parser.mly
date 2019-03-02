@@ -79,6 +79,7 @@ let noimpl () = failwith "not implemented"
 %token NUMBERSIGN
 %token NUMBERSIGN_EXCLAMATION_LBRACKET
 %token NUMBERSIGN_LBRACKET
+%token OF
 %token PERCENT
 %token PLUS
 %token PLUS_COLON
@@ -411,9 +412,13 @@ let_definition:
   | LET simple_pattern EQ expression { noimpl () }
   | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) { noimpl () }
 
+exception_decl:
+  | EXCEPTION IDENTIFIER option(OF type_expression { noimpl () }) { noimpl () }
+
 signature_body_part:
   | val_definition { noimpl () }
   | type_definition { noimpl () }
+  | exception_decl { noimpl () }
 
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
