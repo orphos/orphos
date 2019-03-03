@@ -129,31 +129,6 @@ seq:
   | expression semi seq { $1 :: $3 }
   | expression { [$1] }
 
-%inline
-bin_op:
-   | PLUS { `Add }
-   | HYPHEN { `Substract }
-   | ASTERISK { `Multiply }
-   | SOLIDUS  { `Division }
-   | CIRCUMFLEX  { `Xor }
-   | PERCENT { `Reminder }
-   | BIG_LESS { `BitwiseLeftShift }
-   | BIG_GREATER { `BitwiseRightShift }
-   | LESS { `Less }
-   | GREATER { `Greater }
-   | EXCLAMATION_EQ { `NotEqual }
-   | AMPERSAND { `BitwiseAnd }
-   | BIG_AMPERSAND { `And }
-   | VERTICAL { `BitwiseOr }
-   | BIG_VERTICAL { `Or }
-   | BIG_EQ { `Equal }
-   | PLUS_EQ { `AddAsign }
-   | HYPHEN_EQ { `SubstractAsign }
-   | COLON_EQ { `Asign }
-   | BIG_PLUS { `Combine }
-   | BIG_HYPHEN { `Remove }
-   | BIG_COLON { `Cons }
-
 expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression END { IfThenElse ($2, $4, None) }
