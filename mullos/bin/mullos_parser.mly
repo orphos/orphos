@@ -254,19 +254,35 @@ pattern_op:
   | AT { `At }
 
 pattern:
-  | IDENTIFIER pattern { PCtor ($1, $2) }
-  | simple_pattern COLON simple_or_paren_type_expression { noimpl () }
-  | simple_pattern pattern_op pattern { noimpl () }
   | LBRACKET separated_list(SEMI, pattern) RBRACKET { noimpl () }
   | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
-  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
-  | simple_pattern { $1 }
+  | tuple_pattern { $1 }
 
-ident_pattern:
-  | IDENTIFIER { PIdent $1 }
+tuple_pattern: cons_pattern list(COMMA cons_pattern { noimpl () }) { noimpl() }
+
+cons_pattern:
+  | append_pattern cons_pattern_op cons_pattern { noimpl () } | append_pattern { $1 }
+%inline
+cons_pattern_op:
+  | PLUS_COLON { noimpl () }
+  | HYPHEN_COLON { noimpl () }
+  | COLON_PLUS_COLON { noimpl () }
+  | COLON_HYPHEN_COLON { noimpl () }
+
+append_pattern: append_pattern append_pattern_op capture_pattern { noimpl () } | capture_pattern { $1 }
+%inline
+append_pattern_op:
+  | COLON_PLUS { noimpl () }
+  | COLON_HYPHEN { noimpl () }
+
+capture_pattern:
+  | IDENTIFIER EQ ctor_pattern { noimpl () } | ctor_pattern { $1 }
+
+ctor_pattern:
+  | IDENTIFIER simple_pattern { noimpl () } | simple_pattern { $1 }
 
 simple_pattern:
-  | ident_pattern { $1 }
+  | IDENTIFIER { PIdent $1 }
   | LPAREN RPAREN { PUnit }
   | LPAREN pattern RPAREN { $2 }
   | LOWLINE { PWildcard }
