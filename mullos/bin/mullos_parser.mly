@@ -217,6 +217,7 @@ prefix_op:
   | BIG_PLUS { noimpl () }
   | BIG_HYPHEN { noimpl () }
   | RAISE { noimpl() }
+  | LAZY { noimpl() }
 
 postfix_expression: application_expression postfix_op { noimpl () } | application_expression { $1 }
 %inline
@@ -269,11 +270,16 @@ cons_pattern_op:
   | COLON_PLUS_COLON { noimpl () }
   | COLON_HYPHEN_COLON { noimpl () }
 
-append_pattern: append_pattern append_pattern_op capture_pattern { noimpl () } | capture_pattern { $1 }
+append_pattern: append_pattern append_pattern_op prefix_pattern { noimpl () } | prefix_pattern { $1 }
 %inline
 append_pattern_op:
   | COLON_PLUS { noimpl () }
   | COLON_HYPHEN { noimpl () }
+
+prefix_pattern: prefix_pattern_op capture_pattern { noimpl () } | capture_pattern { $1 }
+%inline
+prefix_pattern_op:
+   | LAZY { noimpl () }
 
 capture_pattern:
   | IDENTIFIER EQ ctor_pattern { noimpl () } | ctor_pattern { $1 }
@@ -289,7 +295,6 @@ simple_pattern:
   | TEXT { PText $1 }
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
-  | LAZY simple_pattern { PLazy $2 }
 
 type_binary_op:
   | COMMA { TComma }
