@@ -101,6 +101,7 @@ let noimpl () = failwith "not implemented"
 %token TILDE
 %token TRAIT
 %token TYPE
+%token TYPE_VARIABLE_ID
 %token UNSAFE
 %token VAL
 %token VERTICAL
@@ -296,54 +297,25 @@ simple_pattern:
   | NUMBER { PNumber $1 }
   | BOOL { PBool $1 }
 
-type_binary_op:
-  | COMMA { TComma }
-  | HYPHEN_GREATER { TArrow }
+ty:
+  | fun_ty { $1 }
 
-type_expression:
-  | most_type_expression { $1 }
-  | paren_type_expression { $1 }
+fun_ty:
+  | fun_ty HYPHEN_GREATER tuple_ty { noimpl () } | tuple_ty { $1 }
 
-paren_type_expression:
-  | LPAREN type_expression RPAREN { $2 }
+tuple_ty:
+  | tuple_ty ASTERISK ty_with_effect { noimpl () } | ty_with_effect { $1 }
 
- simple_or_paren_type_expression:
-  | LPAREN type_expression RPAREN { $2 }
-  | simple_type_expression { $1 }
+ty_with_effect:
+  | application_ty AT long_id { noimpl () } | application_ty { $1 }
 
-most_type_expression:
-  | simple_type_expression { $1 }
-  | simple_or_paren_type_expression type_binary_op most_type_expression {
-        match $3 with
-        | TBinOp (lhs, op, rhs, tail) -> TBinOp ($1, $2, lhs, (op, rhs) :: tail)
-        | _ -> TBinOp ($1, $2, $3, [])
-      }
-  | simple_or_paren_type_expression most_type_expression {
-        match $2 with
-        | TBinOp (lhs, op, rhs, tail) -> TBinOp ($1, TApply, lhs, (op, rhs) :: tail)
-        | _ -> TBinOp ($1, TApply, $2, [])
-      }
-  | simple_or_paren_type_expression type_binary_op paren_type_expression { TBinOp ($1, $2, $3, []) }
-  | simple_or_paren_type_expression paren_type_expression { TBinOp ($1, TApply, $2, []) }
-  | simple_or_paren_type_expression LBRACKET effect_expression RBRACKET { TEff ($1, $3) }
-  | LAZY type_expression { TLazy $2 }
+application_ty:
+  | simple_ty+ { noimpl() }
 
-simple_type_expression:
-  | ident_type { $1 }
-  | NUMBER { TNumber $1 }
-  | TEXT { TText $1 }
-  | BOOL { TBool $1 }
-
-ident_type:
+simple_ty:
   | long_id { TIdent $1 }
-
-effect_expression:
-  ident_effect { ETy $1 }
-  | LOWLINE { EWildcard }
-
-ident_effect:
-  ident_type { [$1] }
-  | ident_type BIG_PLUS ident_effect { $1 :: $3 }
+  | TYPE_VARIABLE_ID { noimpl () }
+  | LPAREN ty RPAREN { $2 }
 
 type_definition:
   | TYPE name=IDENTIFIER params=IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }
@@ -353,7 +325,7 @@ type_definition_body:
   | BIG_DOT { ExtensibleVariant }
 
 variant_constructor:
-  | name=IDENTIFIER COLON param=simple_or_paren_type_expression { name, Some param }
+  | name=IDENTIFIER COLON param=ty { name, Some param }
   | name=IDENTIFIER { name, None }
 
 deriving_clause: DERIVING deriving_clause_body { $2 : ty list }
@@ -364,26 +336,7 @@ deriving_clause_body:
 
 extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
 
-module_parameter:
-  | IDENTIFIER { noimpl () }
-  | LPAREN IDENTIFIER COLON IDENTIFIER { noimpl () }
-
-module_definition: MODULE name=IDENTIFIER separated_list(COMMA, module_parameter)
-  impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (false, name, impl, defs) }
-
-singleton_definition: SINGLETON name=IDENTIFIER impl=impl_clause LBRACKET defs=definition_list RBRACKET { ModuleDef (true, name, impl, defs) }
-
-trait_definition: TRAIT name=IDENTIFIER params=IDENTIFIER* impl=impl_clause LBRACKET defs=definition_list RBRACKET { TraitDef (name, params, impl, defs) }
-
-impl_clause:
-  | { [] }
-  | COLON impl { $2 }
-
-impl:
-  | ident_type+ { [$1] }
-  | ident_type+ COMMA impl { $1 :: $3 }
-
-val_definition: VAL name=IDENTIFIER COLON ty=type_expression { ValDef (name, ty) }
+val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) }
 
 top_level_let_body: IDENTIFIER simple_pattern* EQ expression { noimpl () }
 top_level_let: LET top_level_let_body { noimpl () }
@@ -394,9 +347,6 @@ definition:
   | val_definition { $1 }
   | type_definition { $1 }
   | extensible_variant_definition { $1 }
-  | module_definition { $1 }
-  | singleton_definition { $1 }
-  | trait_definition { $1 }
   | top_level_let { $1 }
   | top_level_letrec { $1 }
 
@@ -409,7 +359,7 @@ let_definition:
   | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) { noimpl () }
 
 exception_decl:
-  | EXCEPTION IDENTIFIER option(OF type_expression { noimpl () }) { noimpl () }
+  | EXCEPTION IDENTIFIER option(OF ty { noimpl () }) { noimpl () }
 
 signature_body_part:
   | val_definition { noimpl () }
