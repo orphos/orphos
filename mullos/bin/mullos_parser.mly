@@ -142,6 +142,7 @@ expression:
   | LBRACKET separated_list(SEMI, expression) RBRACKET { noimpl () }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
+  | LCBRACKET separated_list(SEMI, DOT IDENTIFIER EQ expression { noimpl () }) RCBRACKET { noimpl () }
 
 assignment_expression: assignment_expression binop_assignment pipeline_expression { noimpl () } | pipeline_expression { $1 }
 %inline
