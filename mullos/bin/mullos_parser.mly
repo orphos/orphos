@@ -142,7 +142,8 @@ expression:
   | LBRACKET separated_list(SEMI, expression) RBRACKET { noimpl () }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
-  | LCBRACKET separated_list(SEMI, DOT IDENTIFIER EQ expression { noimpl () }) RCBRACKET { noimpl () }
+  | LCBRACKET ioption(expression WITH{}) separated_list(SEMI, DOT IDENTIFIER EQ expression { noimpl () }) RCBRACKET { noimpl () }
+  | LCBRACKET DOT IDENTIFIER HYPHEN expression RCBRACKET { noimpl () }
 
 assignment_expression: assignment_expression binop_assignment pipeline_expression { noimpl () } | pipeline_expression { $1 }
 %inline
@@ -300,6 +301,7 @@ simple_pattern:
 
 ty:
   | fun_ty { $1 }
+  | LBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RBRACKET { noimpl () }
 
 fun_ty:
   | fun_ty HYPHEN_GREATER tuple_ty { noimpl () } | tuple_ty { $1 }
