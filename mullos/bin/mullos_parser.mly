@@ -300,9 +300,16 @@ simple_pattern:
   | BOOL { PBool $1 }
 
 ty:
-  | fun_ty { $1 }
+  | refinement_ty { $1 }
   | LBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RBRACKET { noimpl () }
 
+refinement_ty:
+  | refinement_ty WHERE refinement_body END { noimpl () } | fun_ty { $1 }
+
+refinement_body:
+  | expression { [$1] }
+  | { [] }
+  | expression SEMI refinement_body { $1 :: $3 }
 fun_ty:
   | fun_ty HYPHEN_GREATER tuple_ty { noimpl () } | tuple_ty { $1 }
 
