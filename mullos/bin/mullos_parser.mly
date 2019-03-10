@@ -53,6 +53,7 @@ let noimpl () = failwith "not implemented"
 %token EXTERNAL
 %token FN
 %token FUNCTOR
+%token GRAVE_ACCENT
 %token GREATER
 %token HANDLE
 %token HYPHEN
@@ -144,6 +145,7 @@ expression:
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
   | LCBRACKET ioption(expression WITH{}) separated_list(SEMI, DOT IDENTIFIER EQ expression { noimpl () }) RCBRACKET { noimpl () }
   | LCBRACKET DOT IDENTIFIER HYPHEN expression RCBRACKET { noimpl () }
+  | GRAVE_ACCENT IDENTIFIER expression { noimpl () }
 
 assignment_expression: assignment_expression binop_assignment pipeline_expression { noimpl () } | pipeline_expression { $1 }
 %inline
@@ -261,6 +263,7 @@ pattern:
   | LBRACKET separated_list(SEMI, pattern) RBRACKET { noimpl () }
   | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
   | tuple_pattern { $1 }
+  | GRAVE_ACCENT IDENTIFIER pattern { noimpl () }
 
 tuple_pattern: cons_pattern list(COMMA cons_pattern { noimpl () }) { noimpl() }
 
