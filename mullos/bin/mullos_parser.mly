@@ -304,7 +304,7 @@ simple_pattern:
 
 ty:
   | refinement_ty { $1 }
-  | LBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RBRACKET { noimpl () }
+  | LCBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RCBRACKET { noimpl () }
 
 refinement_ty:
   | refinement_ty WHERE refinement_body END { noimpl () } | fun_ty { $1 }
