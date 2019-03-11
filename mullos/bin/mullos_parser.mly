@@ -305,6 +305,13 @@ simple_pattern:
 ty:
   | refinement_ty { $1 }
   | LCBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RCBRACKET { noimpl () }
+  | GRAVE_ACCENT IDENTIFIER OF ty { noimpl () }
+  | LBRACKET polymorphic_variant_variance separated_list(VERTICAL, ty { $1 }) RBRACKET { noimpl () }
+
+polymorphic_variant_variance:
+  | { noimpl () }
+  | GREATER { noimpl () }
+  | LESS { noimpl () }
 
 refinement_ty:
   | refinement_ty WHERE refinement_body END { noimpl () } | fun_ty { $1 }
