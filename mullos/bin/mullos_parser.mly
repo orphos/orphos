@@ -95,6 +95,7 @@ let noimpl () = failwith "not implemented"
 %token SIG
 %token SIGNATURE
 %token SINGLETON
+%token SINGLE_QUOTE
 %token SOLIDUS
 %token STRUCT
 %token <string> TEXT
@@ -115,8 +116,6 @@ let noimpl () = failwith "not implemented"
 %start<unit> compilation_unit
 
 %%
-
-compilation_unit: definition_list  EOF { () }
 
 %inline
 semi:
@@ -332,61 +331,35 @@ simple_ty:
   | TYPE_VARIABLE_ID { noimpl () }
   | LPAREN ty RPAREN { $2 }
 
+type_variable: SINGLE_QUOTE IDENTIFIER { noimpl () }
+
 type_definition:
-  | TYPE name=IDENTIFIER params=IDENTIFIER* deriving=deriving_clause? EQ body=type_definition_body { VariantDef (name, List.map (fun x -> TVar x) params, deriving, body) }
-
+  | TYPE params=type_variable* IDENTIFIER ioption(EQ type_definition_body { noimpl () }) { noimpl () }
+%inline
 type_definition_body:
-  | nonempty_list(VERTICAL variant_constructor { $2 }) { Variant $1 }
-  | BIG_DOT { ExtensibleVariant }
-
-variant_constructor:
-  | name=IDENTIFIER COLON param=ty { name, Some param }
-  | name=IDENTIFIER { name, None }
-
-deriving_clause: DERIVING deriving_clause_body { $2 : ty list }
-
-deriving_clause_body:
-  | long_id { [TIdent $1] }
-  | long_id COMMA deriving_clause_body { TIdent $1 :: $3 }
-
-extensible_variant_definition: TYPE name=IDENTIFIER PLUS_EQ ctor=variant_constructor { ExtensibleVariantDef (name, ctor) }
+    | ty { noimpl () }
+    | ioption(VERTICAL) IDENTIFIER OF ty list(VERTICAL IDENTIFIER OF ty { noimpl () }) { noimpl () }
 
 val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) }
-
-top_level_let_body: IDENTIFIER simple_pattern* EQ expression { noimpl () }
-top_level_let: LET top_level_let_body { noimpl () }
-top_level_letrec: LET REC top_level_let_body top_level_and* { noimpl () }
-top_level_and: AND top_level_let_body { noimpl () }
-
-definition:
-  | val_definition { $1 }
-  | type_definition { $1 }
-  | extensible_variant_definition { $1 }
-  | top_level_let { $1 }
-  | top_level_letrec { $1 }
-
-definition_list:
-  | definition definition_list { $1 :: $2 }
-  | definition { [$1] }
 
 let_definition:
   | LET simple_pattern EQ expression { noimpl () }
   | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) { noimpl () }
 
-exception_decl:
+exception_definition:
   | EXCEPTION IDENTIFIER option(OF ty { noimpl () }) { noimpl () }
 
 signature_body_part:
   | val_definition { noimpl () }
   | type_definition { noimpl () }
-  | exception_decl { noimpl () }
+  | exception_definition { noimpl () }
 
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
 signature:
   | SIG signature_body END { noimpl () }
 
-signature_decl:
+signature_definition:
   | SIGNATURE IDENTIFIER EQ signature { noimpl () }
 
 signature_ref: | signature  { noimpl () } | long_id { noimpl () }
@@ -398,8 +371,16 @@ structure_body_part:
 structure:
   | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { noimpl () }) { noimpl () }
 
-structure_decl:
+structure_definition:
   | MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
 
-functor_decl:
+functor_definition:
   | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
+
+definition_list:
+  | signature_definition { $1 }
+  | structure_definition { $1 }
+  | functor_definition { $1 }
+
+compilation_unit: definition_list  EOF { () }
+
