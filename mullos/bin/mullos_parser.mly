@@ -53,6 +53,7 @@ let noimpl () = failwith "not implemented"
 %token EXTERNAL
 %token FN
 %token FUNCTOR
+%token GIVEN
 %token GRAVE_ACCENT
 %token GREATER
 %token HANDLE
@@ -308,12 +309,16 @@ ty:
   | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { noimpl () }
 
 refinement_ty:
-  | refinement_ty WHERE refinement_body END { noimpl () } | fun_ty { $1 }
+  | refinement_ty WHERE refinement_body END { noimpl () } | given_ty { $1 }
 
 refinement_body:
   | expression { [$1] }
   | { [] }
   | expression SEMI refinement_body { $1 :: $3 }
+
+given_ty:
+  | given_ty GIVEN separated_nonempty_list(COMMA, long_id { noimpl () }) { noimpl () } | fun_ty { $1 }
+
 fun_ty:
   | fun_ty HYPHEN_GREATER tuple_ty { noimpl () } | tuple_ty { $1 }
 
@@ -360,7 +365,7 @@ signature:
   | SIG signature_body END { noimpl () }
 
 signature_definition:
-  | SIGNATURE IDENTIFIER EQ signature { noimpl () }
+  | GIVEN? SIGNATURE IDENTIFIER EQ signature { noimpl () }
 
 signature_ref: | signature  { noimpl () } | long_id option(WHERE separated_list(SEMI, signature_ref_where { noimpl () }) END { noimpl () }) { noimpl () }
 
@@ -374,7 +379,7 @@ structure:
   | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { noimpl () }) { noimpl () }
 
 structure_definition:
-  | MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
+  | GIVEN? MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
 
 functor_definition:
   | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
