@@ -362,7 +362,9 @@ signature:
 signature_definition:
   | SIGNATURE IDENTIFIER EQ signature { noimpl () }
 
-signature_ref: | signature  { noimpl () } | long_id { noimpl () }
+signature_ref: | signature  { noimpl () } | long_id option(WHERE separated_list(SEMI, signature_ref_where { noimpl () }) END { noimpl () }) { noimpl () }
+
+signature_ref_where: type_variable* IDENTIFIER EQ ty { noimpl () }
 
 structure_body_part:
   | type_definition { noimpl () }
