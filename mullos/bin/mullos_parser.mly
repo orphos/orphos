@@ -113,6 +113,7 @@ let noimpl () = failwith "not implemented"
 %token WHEN
 %token WHERE
 %token WITH
+%token WITHOUT
 
 %start<unit> compilation_unit
 
@@ -124,8 +125,8 @@ semi:
   | SEMI { () }
 
 long_id:
-  IDENTIFIER BIG_COLON long_id { $1 :: $3 }
-  | IDENTIFIER { [$1] }
+  IDENTIFIER BIG_COLON long_id { let LongId tail = $3 in LongId  ($1 :: tail) }
+  | IDENTIFIER { LongId [$1] }
 
 seq:
   | expression semi seq { $1 :: $3 }
@@ -136,103 +137,103 @@ expression:
   | IF expression THEN expression END { IfThenElse ($2, $4, None) }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
-  | LET simple_pattern EQ expression semi expression { Let ($2, [], $4, $6) }
-  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) semi expression { noimpl () }
+  | LET pat=simple_pattern params=simple_pattern* EQ body=expression semi exp=expression { Let (pat, params, body, exp) }
+  | LET REC pat=simple_pattern params=simple_pattern* EQ body=expression ands=list(AND pat=simple_pattern params=simple_pattern* EQ body=expression { pat, params, body }) semi exp=expression { LetRec ((pat, params, body) :: ands, exp) }
   | assignment_expression HANDLE pattern_clause+ END { noimpl () }
   | assignment_expression { $1 }
-  | LBRACKET separated_list(SEMI, expression) RBRACKET { noimpl () }
-  | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
+  | LBRACKET separated_list(SEMI, expression) RBRACKET { ListLiteral $2 }
+  | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
   | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
-  | LCBRACKET ioption(expression WITH{}) separated_list(SEMI, DOT IDENTIFIER EQ expression { noimpl () }) RCBRACKET { noimpl () }
-  | LCBRACKET DOT IDENTIFIER HYPHEN expression RCBRACKET { noimpl () }
-  | GRAVE_ACCENT IDENTIFIER expression { noimpl () }
+  | LCBRACKET row=ioption(expression WITH { $1 }) fields=separated_list(SEMI, DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
+  | LCBRACKET left=expression WITHOUT DOT right=IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) }
+  | GRAVE_ACCENT IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) }
 
-assignment_expression: assignment_expression binop_assignment pipeline_expression { noimpl () } | pipeline_expression { $1 }
+assignment_expression: assignment_expression binop_assignment pipeline_expression { BinOp ($1, $2, $3) } | pipeline_expression { $1 }
 %inline
 binop_assignment:
   | PLUS_EQ { `AddAsign }
   | HYPHEN_EQ { `SubstractAsign }
   | COLON_EQ { `Asign }
 
-pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { noimpl () } | dollar_expression { $1 }
+pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { BinOp ($1, `Pipeline, $3) } | dollar_expression { $1 }
 
-dollar_expression: dollar_expression DOLLAR tuple_expression { noimpl () } | tuple_expression { $1 }
+dollar_expression: dollar_expression DOLLAR tuple_expression { Apply ($1, $3) } | tuple_expression { $1 }
 
-tuple_expression: lor_expression nonempty_list(COMMA lor_expression { noimpl () }) { noimpl () } | lor_expression { $1 }
+tuple_expression: lor_expression nonempty_list(COMMA lor_expression { $2 }) { Tuple ($1 :: $2) } | lor_expression { $1 }
 
-lor_expression: lor_expression BIG_VERTICAL land_expression { noimpl () } | land_expression { $1 }
+lor_expression: lor_expression BIG_VERTICAL land_expression { BinOp ($1, `Or, $3) } | land_expression { $1 }
 
-land_expression: land_expression BIG_AMPERSAND bitwise_or_expression { noimpl () } | bitwise_or_expression { $1 }
+land_expression: land_expression BIG_AMPERSAND bitwise_or_expression { BinOp ($1, `And, $3) } | bitwise_or_expression { $1 }
 
-bitwise_or_expression: bitwise_or_expression VERTICAL xor_expression { noimpl () } | xor_expression { $1 }
+bitwise_or_expression: bitwise_or_expression VERTICAL xor_expression { BinOp ($1, `BitwiseOr, $3) } | xor_expression { $1 }
 
-xor_expression: xor_expression CIRCUMFLEX bitwise_and_expression { noimpl () } | bitwise_and_expression { $1 }
+xor_expression: xor_expression CIRCUMFLEX bitwise_and_expression { BinOp ($1, `Xor, $3) } | bitwise_and_expression { $1 }
 
-bitwise_and_expression: bitwise_and_expression AMPERSAND equal_expression { noimpl () } | equal_expression { $1 }
+bitwise_and_expression: bitwise_and_expression AMPERSAND equal_expression { BinOp ($1, `BitwiseAnd, $3) } | equal_expression { $1 }
 
-equal_expression: equal_expression binop_equal greater_expression { noimpl () } | greater_expression { $1 }
+equal_expression: equal_expression binop_equal greater_expression { BinOp ($1, $2, $3) } | greater_expression { $1 }
 %inline
 binop_equal:
   | EXCLAMATION_EQ { `NotEqual }
   | BIG_EQ { `Equal }
 
-greater_expression: greater_expression binop_greater shift_expression { noimpl () } | shift_expression { $1 }
+greater_expression: greater_expression binop_greater shift_expression { BinOp ($1, $2, $3) } | shift_expression { $1 }
 %inline
 binop_greater:
   | LESS { `Less }
   | GREATER { `Greater }
 
-shift_expression: shift_expression binop_shift cons_expression { noimpl () } | cons_expression { $1 }
+shift_expression: shift_expression binop_shift cons_expression { BinOp ($1, $2, $3) } | cons_expression { $1 }
 %inline
 binop_shift:
   | BIG_LESS { `BitwiseLeftShift }
   | BIG_GREATER { `BitwiseRightShift }
 
-cons_expression: add_expression binop_cons cons_expression { noimpl () } | add_expression { $1 }
+cons_expression: add_expression binop_cons cons_expression { BinOp ($3, $2, $1) } | add_expression { $1 }
 %inline
 binop_cons:
-   | COLON_PLUS { noimpl () }
-   | COLON_HYPHEN { noimpl () }
-   | COLON_PLUS_COLON { noimpl () }
-   | COLON_HYPHEN_COLON { noimpl () }
+   | PLUS_COLON { `Append }
+   | HYPHEN_COLON { `Erase }
 
-add_expression: add_expression binop_add multiply_expression { noimpl () } | multiply_expression { $1 }
+add_expression: add_expression binop_add multiply_expression { BinOp ($1, $2, $3) } | multiply_expression { $1 }
 %inline
 binop_add:
   | PLUS { `Add }
   | HYPHEN { `Substract }
-  | PLUS_COLON { noimpl () }
-  | HYPHEN_COLON { noimpl () }
+  | COLON_PLUS { `Prepend }
+  | COLON_HYPHEN { `Erase }
+  | COLON_PLUS_COLON { `Combine }
+  | COLON_HYPHEN_COLON { `Remove }
 
-multiply_expression: multiply_expression binop_multiply prefix_expression { noimpl () } | prefix_expression { $1 }
+multiply_expression: multiply_expression binop_multiply prefix_expression { BinOp ($1, $2, $3) } | prefix_expression { $1 }
 %inline
 binop_multiply:
   | ASTERISK { `Multiply }
   | SOLIDUS  { `Division }
   | PERCENT { `Reminder }
 
-prefix_expression: prefix_op postfix_expression { noimpl () } | postfix_expression { $1 }
+prefix_expression: prefix_op postfix_expression { PrefixOp ($1, $2) } | postfix_expression { $1 }
 %inline
 prefix_op:
-  | PLUS { noimpl () }
-  | HYPHEN { noimpl () }
-  | EXCLAMATION { noimpl () }
-  | AMPERSAND { noimpl () }
-  | ASTERISK { noimpl () }
-  | BIG_PLUS { noimpl () }
-  | BIG_HYPHEN { noimpl () }
-  | RAISE { noimpl() }
-  | LAZY { noimpl() }
+  | PLUS { `Positive }
+  | HYPHEN { `Negative }
+  | EXCLAMATION { `Not }
+  | AMPERSAND { `Ref }
+  | ASTERISK { `Deref }
+  | BIG_PLUS { `Increment }
+  | BIG_HYPHEN { `Decrement }
+  | RAISE { `Raise }
+  | LAZY { `Lazy }
 
-postfix_expression: application_expression postfix_op { noimpl () } | application_expression { $1 }
+postfix_expression: application_expression postfix_op { PostfixOp ($1, $2) } | application_expression { $1 }
 %inline
 postfix_op:
-  | BIG_PLUS { noimpl () }
-  | BIG_HYPHEN { noimpl () }
+  | BIG_PLUS { `Increment }
+  | BIG_HYPHEN { `Decrement }
 
 application_expression: application_expression dot_expression { Apply ($1, $2) } | dot_expression { $1 }
 
-dot_expression: dot_expression DOT simple_expression { BinOp ($1, `Dot, $3, []) } | simple_expression { $1 }
+dot_expression: dot_expression DOT IDENTIFIER { RecordSelection ($1, $3) } | simple_expression { $1 }
 
 simple_expression:
   | IDENTIFIER { Identifier $1 }
@@ -254,44 +255,21 @@ pattern_or_clause:
 
 pattern_condition: WHEN expression { $2 }
 
-%inline
-pattern_op:
-  | COMMA { `Comma }
-  | AT { `At }
-
 pattern:
-  | LBRACKET separated_list(SEMI, pattern) RBRACKET { noimpl () }
-  | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { noimpl () }
+  | LBRACKET separated_list(SEMI, pattern) RBRACKET { PListLiteral $2 }
+  | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { PArrayLiteral $2 }
   | tuple_pattern { $1 }
-  | GRAVE_ACCENT IDENTIFIER pattern { noimpl () }
+  | GRAVE_ACCENT IDENTIFIER pattern { PPolymorphicVariant ($2, $3) }
 
-tuple_pattern: cons_pattern list(COMMA cons_pattern { noimpl () }) { noimpl() }
+tuple_pattern: lazy_pattern COMMA separated_nonempty_list(COMMA, lazy_pattern) { PTuple ($1 :: $3) } | lazy_pattern { $1 }
 
-cons_pattern:
-  | append_pattern cons_pattern_op cons_pattern { noimpl () } | append_pattern { $1 }
-%inline
-cons_pattern_op:
-  | PLUS_COLON { noimpl () }
-  | HYPHEN_COLON { noimpl () }
-  | COLON_PLUS_COLON { noimpl () }
-  | COLON_HYPHEN_COLON { noimpl () }
-
-append_pattern: append_pattern append_pattern_op prefix_pattern { noimpl () } | prefix_pattern { $1 }
-%inline
-append_pattern_op:
-  | COLON_PLUS { noimpl () }
-  | COLON_HYPHEN { noimpl () }
-
-prefix_pattern: prefix_pattern_op capture_pattern { noimpl () } | capture_pattern { $1 }
-%inline
-prefix_pattern_op:
-   | LAZY { noimpl () }
+lazy_pattern: LAZY capture_pattern { PLazy $2 } | capture_pattern { $1 }
 
 capture_pattern:
-  | IDENTIFIER EQ ctor_pattern { noimpl () } | ctor_pattern { $1 }
+  | IDENTIFIER EQ ctor_pattern { PCapture ($1, $3) } | ctor_pattern { $1 }
 
 ctor_pattern:
-  | IDENTIFIER simple_pattern { noimpl () } | simple_pattern { $1 }
+  | IDENTIFIER simple_pattern { PCtor ($1, $2) } | simple_pattern { $1 }
 
 simple_pattern:
   | IDENTIFIER { PIdent $1 }
@@ -304,12 +282,12 @@ simple_pattern:
 
 ty:
   | refinement_ty { $1 }
-  | LCBRACKET option(ty WITH { noimpl () }) separated_list(SEMI, DOT IDENTIFIER COLON ty { noimpl () }) RCBRACKET { noimpl () }
-  | GRAVE_ACCENT IDENTIFIER OF ty { noimpl () }
-  | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { noimpl () }
+  | LCBRACKET row=option(ty WITH { $1 }) fields=separated_list(SEMI, DOT IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) }
+  | GRAVE_ACCENT IDENTIFIER OF ty { TPolymorphicVariant ($2, $4) }
+  | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { TOr $2 }
 
 refinement_ty:
-  | refinement_ty WHERE refinement_body END { noimpl () } | given_ty { $1 }
+  | refinement_ty WHERE refinement_body END { TRefinement ($1, $3) } | given_ty { $1 }
 
 refinement_body:
   | expression { [$1] }
@@ -317,26 +295,31 @@ refinement_body:
   | expression SEMI refinement_body { $1 :: $3 }
 
 given_ty:
-  | given_ty GIVEN separated_nonempty_list(COMMA, long_id { noimpl () }) { noimpl () } | fun_ty { $1 }
+  | given_ty GIVEN separated_nonempty_list(COMMA, long_id) { TGiven ($1, $3) } | fun_ty { $1 }
 
 fun_ty:
-  | fun_ty HYPHEN_GREATER tuple_ty { noimpl () } | tuple_ty { $1 }
+  | fun_ty HYPHEN_GREATER tuple_ty { TArrow ($1, $3) } | tuple_ty { $1 }
 
 tuple_ty:
-  | tuple_ty ASTERISK ty_with_effect { noimpl () } | ty_with_effect { $1 }
+  | ty_with_effect nonempty_list(ASTERISK ty_with_effect { $2 }) { TTuple ($1 :: $2) } | ty_with_effect { $1 }
 
 ty_with_effect:
-  | application_ty AT long_id { noimpl () } | application_ty { $1 }
+  | application_ty AT separated_nonempty_list(COMMA, long_id) { TEff ($1, $3) } | application_ty { $1 }
 
 application_ty:
-  | simple_ty+ { noimpl() }
+  | simple_ty application_ty {
+      match $2 with
+        | TApply (params, fn) -> TApply ($1 :: params, fn)
+        | fn -> TApply ([$1], fn)
+      }
+  | simple_ty { $1 }
 
 simple_ty:
   | long_id { TIdent $1 }
-  | TYPE_VARIABLE_ID { noimpl () }
+  | type_variable { TVar $1 }
   | LPAREN ty RPAREN { $2 }
 
-type_variable: SINGLE_QUOTE IDENTIFIER { noimpl () }
+type_variable: SINGLE_QUOTE IDENTIFIER { $2 }
 
 type_definition:
   | TYPE params=type_variable* IDENTIFIER ioption(EQ type_definition_body { noimpl () }) { noimpl () }

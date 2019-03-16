@@ -3,6 +3,8 @@
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
 
+type long_id = LongId of string list
+
 type number_literal_type = ZType | QType | IntType of int | FloatType of int
 
 type number = Q.t * number_literal_type
@@ -30,9 +32,15 @@ type bin_op =
   | `Combine
   | `Remove
   | `Cons
+  | `Pipeline
+  | `Append
+  | `Prepend
+  | `Erase
   | `Dot ]
 
-type unary_op = Positive | Negative | Not | Deref | Ref | Raise | Lazy
+type prefix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement ]
+
+type postfix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement ]
 
 type pat_bin_op = [`Colon | `Comma | `At]
 
@@ -43,15 +51,23 @@ type exp =
   | Identifier of string
   | Unit
   | Apply of exp * exp
-  | BinOp of exp * bin_op * exp * (bin_op * exp) list
-  | UnaryOp of unary_op * exp
+  | BinOp of exp * bin_op * exp
+  | PrefixOp of prefix_op * exp
+  | PostfixOp of exp * postfix_op
   | Tuple of exp list
   | IfThenElse of exp * exp * exp option
   | Seq of exp list
   | Lambda of pat * exp
   | Let of pat * pat list * exp * exp
+  | LetRec of (pat * pat list * exp) list * exp
   | Label of string * exp
   | Match of exp * pat_clause list
+  | ListLiteral of exp list
+  | ArrayLiteral of exp list
+  | RecordLiteral of exp option * (string * exp) list
+  | RecordRestrictionLiteral of exp * string
+  | RecordSelection of exp * string
+  | PolymorphicVariantConstruction of string * exp
 
 and pat_clause =
   | MatchPat of pat * exp option * exp
@@ -61,22 +77,23 @@ and pat_clause =
 and pat =
   | PIdent of string
   | PUnit
-  | PBind of string * pat
+  | PCapture of string * pat
   | PCtor of string * pat
   | PTuple of pat list
-  | PCons of pat * pat
   | PWildcard
   | PText of string
   | PNumber of number
   | PBool of bool
   | PLazy of pat
-  | PLabel of string * pat
   | POr of pat * pat
+  | PListLiteral of pat list
+  | PArrayLiteral of pat list
+  | PPolymorphicVariant of string * pat
 
 type ty_bin_op = TComma | TArrow | TApply
 
 type ty =
-  | TIdent of string list
+  | TIdent of long_id
   | TVar of string
   | TPointer of ty
   | TNumber of number
@@ -84,10 +101,16 @@ type ty =
   | TBool of bool
   | TLazy of ty
   | TLabel of string * ty
-  | TEff of ty * eff
+  | TEff of ty * long_id list
   | TBinOp of ty * ty_bin_op * ty * (ty_bin_op * ty) list
-
-and eff = ETy of ty list | EWildcard
+  | TRecord of ty option * (string * ty) list
+  | TPolymorphicVariant of string * ty
+  | TOr of ty list
+  | TRefinement of ty * exp list
+  | TGiven of ty * long_id list
+  | TArrow of ty * ty
+  | TTuple of ty list
+  | TApply of ty list * ty
 
 type definition =
   | VariantDef of string * ty list * deriving option * typedef_body
