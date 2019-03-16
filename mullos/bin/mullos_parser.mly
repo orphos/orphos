@@ -379,7 +379,12 @@ structure:
   | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { noimpl () }) { noimpl () }
 
 structure_definition:
-  | GIVEN? MODULE IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
+  | structure_definition_start EQ structure { noimpl () }
+
+structure_definition_start:
+  | GIVEN MODULE name=IDENTIFIER EQ { true, Some name }
+  | GIVEN { true, None }
+  | MODULE name=IDENTIFIER EQ { false, Some name }
 
 functor_definition:
   | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
