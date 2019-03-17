@@ -322,20 +322,18 @@ simple_ty:
 type_variable: SINGLE_QUOTE IDENTIFIER { $2 }
 
 type_definition:
-  | TYPE params=type_variable* IDENTIFIER ioption(EQ type_definition_body { noimpl () }) { noimpl () }
-%inline
-type_definition_body:
-    | ty { noimpl () }
-    | ioption(VERTICAL) IDENTIFIER OF ty list(VERTICAL IDENTIFIER OF ty { noimpl () }) { noimpl () }
+  | TYPE type_variable* IDENTIFIER { TypeDecl ($2, $3) }
+  | TYPE type_variable* IDENTIFIER EQ ty { TypeAlias ($2, $3, $5) }
+  | TYPE params=type_variable* name=IDENTIFIER EQ ioption(VERTICAL) ctor=IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL IDENTIFIER OF ty { $2, $4 }) { MonomorphicVariant (params, name, (ctor, ty) :: tail) }
 
 val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) }
 
 let_definition:
-  | LET simple_pattern EQ expression { noimpl () }
-  | LET REC simple_pattern EQ expression list(AND simple_pattern EQ expression{ noimpl () }) { noimpl () }
+  | LET name=IDENTIFIER EQ exp=expression { LetDef (name, exp) }
+  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ name, exp }) { LetRecDef ((name, exp) :: ands) }
 
 exception_definition:
-  | EXCEPTION IDENTIFIER option(OF ty { noimpl () }) { noimpl () }
+  | EXCEPTION IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) }
 
 signature_body_part:
   | val_definition { noimpl () }

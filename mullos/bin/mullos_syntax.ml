@@ -113,15 +113,13 @@ type ty =
   | TApply of ty list * ty
 
 type definition =
-  | VariantDef of string * ty list * deriving option * typedef_body
-  | ExtensibleVariantDef of string * ctor
+  | TypeAlias of string list * string * ty
+  | MonomorphicVariant of string list * string * (string * ty) list
+  | TypeDecl of string list * string
   | ModuleDef of bool * string * ty list list * definition list
   | TraitDef of string * string list * ty list list * definition list
-  | LetDef of exp
+  | LetDef of string * exp
+  | LetRecDef of (string * exp) list
   | ValDef of string * ty
+  | ExceptionDef of string * ty option
 
-and typedef_body = Variant of ctor list | ExtensibleVariant
-
-and ctor = string * ty option
-
-and deriving = ty list
