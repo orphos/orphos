@@ -112,14 +112,30 @@ type ty =
   | TTuple of ty list
   | TApply of ty list * ty
 
-type definition =
-  | TypeAlias of string list * string * ty
-  | MonomorphicVariant of string list * string * (string * ty) list
-  | TypeDecl of string list * string
-  | ModuleDef of bool * string * ty list list * definition list
-  | TraitDef of string * string list * ty list list * definition list
-  | LetDef of string * exp
-  | LetRecDef of (string * exp) list
-  | ValDef of string * ty
-  | ExceptionDef of string * ty option
+type signature_part = [
+  | `TypeAlias of string list * string * ty
+  | `MonomorphicVariant of string list * string * (string * ty) list
+  | `TypeDecl of string list * string
+  | `ValDef of string * ty
+  | `ExceptionDef of string * ty option
+]
+type struct_part = [
+  | `SignatureInStruct of signature_part
+  | `LetDef of string * exp
+  | `LetRecDef of (string * exp) list
+]
+
+type signature = signature_part list * (string list * string * ty) list
+
+type signature_decl = [`SignatureDecl of string * bool * signature]
+
+type signature_ref = Signature of signature | SignatureId of long_id
+
+type structure = struct_part list * signature_ref list
+
+type struct_decl = [`StructDecl of string option * bool * structure]
+
+type functor_decl = [`FunctorDecl of string * (string * signature_ref) list * structure]
+
+type compilation_unit = CompilationUnit of [signature_decl | struct_decl | functor_decl] list
 

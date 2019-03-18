@@ -115,7 +115,7 @@ let noimpl () = failwith "not implemented"
 %token WITH
 %token WITHOUT
 
-%start<unit> compilation_unit
+%start<Mullos_syntax.compilation_unit> compilation_unit
 
 %%
 
@@ -322,58 +322,69 @@ simple_ty:
 type_variable: SINGLE_QUOTE IDENTIFIER { $2 }
 
 type_definition:
-  | TYPE type_variable* IDENTIFIER { TypeDecl ($2, $3) }
-  | TYPE type_variable* IDENTIFIER EQ ty { TypeAlias ($2, $3, $5) }
-  | TYPE params=type_variable* name=IDENTIFIER EQ ioption(VERTICAL) ctor=IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL IDENTIFIER OF ty { $2, $4 }) { MonomorphicVariant (params, name, (ctor, ty) :: tail) }
+  | TYPE type_variable* IDENTIFIER { `TypeDecl ($2, $3) }
+  | TYPE type_variable* IDENTIFIER EQ ty { `TypeAlias ($2, $3, $5) }
+  | TYPE params=type_variable* name=IDENTIFIER EQ ioption(VERTICAL) ctor=IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL IDENTIFIER OF ty { $2, $4 }) { `MonomorphicVariant (params, name, (ctor, ty) :: tail) }
 
-val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) }
+val_definition: VAL name=IDENTIFIER COLON ty=ty { `ValDef (name, ty) }
 
 let_definition:
-  | LET name=IDENTIFIER EQ exp=expression { LetDef (name, exp) }
-  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ name, exp }) { LetRecDef ((name, exp) :: ands) }
+  | LET name=IDENTIFIER EQ exp=expression { `LetDef (name, exp) }
+  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ name, exp }) { `LetRecDef ((name, exp) :: ands) }
 
 exception_definition:
-  | EXCEPTION IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) }
+  | EXCEPTION IDENTIFIER option(OF ty { $2 }) { `ExceptionDef ($2, $3) }
 
 signature_body_part:
-  | val_definition { noimpl () }
-  | type_definition { noimpl () }
-  | exception_definition { noimpl () }
+  | val_definition { $1 }
+  | type_definition { $1 }
+  | exception_definition { $1 }
 
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
 signature:
-  | SIG signature_body END { noimpl () }
+  | SIG signature_body END WHERE separated_list(SEMI, signature_where_part) END { $2, $5 }
+  | SIG signature_body END { $2, [] }
 
 signature_definition:
-  | GIVEN? SIGNATURE IDENTIFIER EQ signature { noimpl () }
+  | SIGNATURE IDENTIFIER EQ signature { `SignatureDecl ($2, false, $4)  }
+  | GIVEN SIGNATURE IDENTIFIER EQ signature { `SignatureDecl ($3, true, $5)  }
 
-signature_ref: | signature  { noimpl () } | long_id option(WHERE separated_list(SEMI, signature_ref_where { noimpl () }) END { noimpl () }) { noimpl () }
+signature_ref: | signature  { Signature $1 } | long_id { SignatureId $1  }
 
-signature_ref_where: type_variable* IDENTIFIER EQ ty { noimpl () }
+signature_where_part: type_variable* IDENTIFIER EQ ty { $1, $2, $4 }
 
 structure_body_part:
-  | type_definition { noimpl () }
-  | let_definition { noimpl () }
+  | val_definition { `SignatureInStruct $1 }
+  | type_definition { `SignatureInStruct $1 }
+  | exception_definition { `SignatureInStruct $1 }
+  | let_definition { $1 }
 
 structure:
-  | STRUCT separated_list(semi, structure_body_part) END option(COLON signature_ref { noimpl () }) { noimpl () }
+  | STRUCT separated_list(SEMI, structure_body_part) END { $2 }
+structure_with_constraint:
+  | structure structure_signature_constraint { $1, $2 }
 
 structure_definition:
-  | structure_definition_start EQ structure { noimpl () }
+  | GIVEN MODULE IDENTIFIER structure_signature_constraint EQ structure  {
+        `StructDecl (Some $3, true, (($6, $4): structure))
+      }
+  | GIVEN structure_with_constraint {
+        `StructDecl (None, false, $2)
+      }
+  | MODULE IDENTIFIER structure_signature_constraint EQ structure {
+        `StructDecl (Some $2, false, ($5, $3))
+      }
 
-structure_definition_start:
-  | GIVEN MODULE name=IDENTIFIER EQ { true, Some name }
-  | GIVEN { true, None }
-  | MODULE name=IDENTIFIER EQ { false, Some name }
+structure_signature_constraint: | { [] } | COLON separated_nonempty_list(COMMA, signature_ref) { $2 }
 
 functor_definition:
-  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { noimpl () }) EQ structure { noimpl () }
+  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { $1, $3 }) structure_signature_constraint EQ structure { `FunctorDecl ($2, ($3 : (string * signature_ref) list), (($6, $4): structure)) }
 
-definition_list:
+definition:
   | signature_definition { $1 }
   | structure_definition { $1 }
   | functor_definition { $1 }
 
-compilation_unit: definition_list  EOF { () }
+compilation_unit: definition*  EOF { CompilationUnit $1 }
 
