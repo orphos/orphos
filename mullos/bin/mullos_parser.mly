@@ -99,6 +99,7 @@ let noimpl () = failwith "not implemented"
 %token SINGLE_QUOTE
 %token SOLIDUS
 %token STRUCT
+%token STRUCTURE
 %token <string> TEXT
 %token THEN
 %token TILDE
@@ -366,13 +367,13 @@ structure_with_constraint:
   | structure structure_signature_constraint { $1, $2 }
 
 structure_definition:
-  | GIVEN MODULE IDENTIFIER structure_signature_constraint EQ structure  {
+  | GIVEN STRUCTURE IDENTIFIER structure_signature_constraint EQ structure  {
         `StructDecl (Some $3, true, (($6, $4): structure))
       }
   | GIVEN structure_with_constraint {
         `StructDecl (None, false, $2)
       }
-  | MODULE IDENTIFIER structure_signature_constraint EQ structure {
+  | STRUCTURE IDENTIFIER structure_signature_constraint EQ structure {
         `StructDecl (Some $2, false, ($5, $3))
       }
 
