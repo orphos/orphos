@@ -144,7 +144,6 @@ expression:
   | assignment_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { ListLiteral $2 }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
-  | MUTABLE LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { noimpl () }
   | LCBRACKET row=ioption(expression WITH { $1 }) fields=separated_list(SEMI, DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
   | LCBRACKET left=expression WITHOUT DOT right=IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) }
   | GRAVE_ACCENT IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) }
