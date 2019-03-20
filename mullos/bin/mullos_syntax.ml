@@ -68,6 +68,7 @@ type exp =
   | RecordRestrictionLiteral of exp * string
   | RecordSelection of exp * string
   | PolymorphicVariantConstruction of string * exp
+  | Handle of exp * pat_clause list
 
 and pat_clause =
   | MatchPat of pat * exp option * exp

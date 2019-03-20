@@ -140,7 +140,7 @@ expression:
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
   | LET pat=simple_pattern params=simple_pattern* EQ body=expression semi exp=expression { Let (pat, params, body, exp) }
   | LET REC pat=simple_pattern params=simple_pattern* EQ body=expression ands=list(AND pat=simple_pattern params=simple_pattern* EQ body=expression { pat, params, body }) semi exp=expression { LetRec ((pat, params, body) :: ands, exp) }
-  | assignment_expression HANDLE pattern_clause+ END { noimpl () }
+  | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) }
   | assignment_expression { $1 }
   | LBRACKET separated_list(SEMI, expression) RBRACKET { ListLiteral $2 }
   | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
