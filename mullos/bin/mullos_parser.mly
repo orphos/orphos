@@ -142,9 +142,9 @@ expression:
   | LET REC pat=simple_pattern params=simple_pattern* EQ body=expression ands=list(AND pat=simple_pattern params=simple_pattern* EQ body=expression { pat, params, body }) semi exp=expression { LetRec ((pat, params, body) :: ands, exp) }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) }
   | assignment_expression { $1 }
-  | LBRACKET separated_list(SEMI, expression) RBRACKET { ListLiteral $2 }
-  | LBRACKET_VERTICAL separated_list(SEMI, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
-  | LCBRACKET row=ioption(expression WITH { $1 }) fields=separated_list(SEMI, DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
+  | LBRACKET separated_list(semi, expression) RBRACKET { ListLiteral $2 }
+  | LBRACKET_VERTICAL separated_list(semi, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
+  | LCBRACKET row=ioption(expression WITH { $1 }) fields=separated_list(semi, DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
   | LCBRACKET left=expression WITHOUT DOT right=IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) }
   | GRAVE_ACCENT IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) }
 
@@ -256,8 +256,8 @@ pattern_or_clause:
 pattern_condition: WHEN expression { $2 }
 
 pattern:
-  | LBRACKET separated_list(SEMI, pattern) RBRACKET { PListLiteral $2 }
-  | LBRACKET_VERTICAL separated_list(SEMI, pattern) VERTICAL_RBRACKET { PArrayLiteral $2 }
+  | LBRACKET separated_list(semi, pattern) RBRACKET { PListLiteral $2 }
+  | LBRACKET_VERTICAL separated_list(semi, pattern) VERTICAL_RBRACKET { PArrayLiteral $2 }
   | tuple_pattern { $1 }
   | GRAVE_ACCENT IDENTIFIER pattern { PPolymorphicVariant ($2, $3) }
 
@@ -282,7 +282,7 @@ simple_pattern:
 
 ty:
   | refinement_ty { $1 }
-  | LCBRACKET row=option(ty WITH { $1 }) fields=separated_list(SEMI, DOT IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) }
+  | LCBRACKET row=option(ty WITH { $1 }) fields=separated_list(semi, DOT IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) }
   | GRAVE_ACCENT IDENTIFIER OF ty { TPolymorphicVariant ($2, $4) }
   | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { TOr $2 }
 
@@ -292,7 +292,7 @@ refinement_ty:
 refinement_body:
   | expression { [$1] }
   | { [] }
-  | expression SEMI refinement_body { $1 :: $3 }
+  | expression semi refinement_body { $1 :: $3 }
 
 given_ty:
   | given_ty GIVEN separated_nonempty_list(COMMA, long_id) { TGiven ($1, $3) } | fun_ty { $1 }
@@ -343,7 +343,7 @@ signature_body_part:
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
 signature:
-  | SIG signature_body END WHERE separated_list(SEMI, signature_where_part) END { $2, $5 }
+  | SIG signature_body END WHERE separated_list(semi, signature_where_part) END { $2, $5 }
   | SIG signature_body END { $2, [] }
 
 signature_definition:
@@ -361,7 +361,7 @@ structure_body_part:
   | let_definition { $1 }
 
 structure:
-  | STRUCT separated_list(SEMI, structure_body_part) END { $2 }
+  | STRUCT separated_list(semi, structure_body_part) END { $2 }
 structure_with_constraint:
   | structure structure_signature_constraint { $1, $2 }
 
