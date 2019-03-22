@@ -133,6 +133,11 @@ seq:
   | expression semi seq { $1 :: $3 }
   | expression { [$1] }
 
+list_nonauto_semi(X):
+  | X SEMI list_nonauto_semi(X) { $1 :: $3 }
+  | X SEMI { [$1] }
+  | X { [$1] }
+
 expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression END { IfThenElse ($2, $4, None) }
@@ -142,9 +147,9 @@ expression:
   | LET REC pat=simple_pattern params=simple_pattern* EQ body=expression ands=list(AND pat=simple_pattern params=simple_pattern* EQ body=expression { pat, params, body }) semi exp=expression { LetRec ((pat, params, body) :: ands, exp) }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) }
   | assignment_expression { $1 }
-  | LBRACKET separated_list(semi, expression) RBRACKET { ListLiteral $2 }
-  | LBRACKET_VERTICAL separated_list(semi, expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
-  | LCBRACKET row=ioption(expression WITH { $1 }) fields=separated_list(semi, DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
+  | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 }
+  | LBRACKET_VERTICAL list_nonauto_semi(expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
+  | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
   | LCBRACKET left=expression WITHOUT DOT right=IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) }
   | GRAVE_ACCENT IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) }
 
@@ -282,7 +287,7 @@ simple_pattern:
 
 ty:
   | refinement_ty { $1 }
-  | LCBRACKET row=option(ty WITH { $1 }) fields=separated_list(semi, DOT IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) }
+  | LCBRACKET row=option(ty WITH { $1 }) fields=list_nonauto_semi(DOT IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) }
   | GRAVE_ACCENT IDENTIFIER OF ty { TPolymorphicVariant ($2, $4) }
   | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { TOr $2 }
 
