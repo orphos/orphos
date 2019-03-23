@@ -8,7 +8,7 @@ open Mullos_syntax
 let is_expression_start = function
   | AMPERSAND | ASTERISK | BOOL _ | EXCLAMATION | FN | HYPHEN | IF | LAZY
    |LCBRACKET | LET | IDENTIFIER _ | LPAREN | NUMBER _ | PLUS | RAISE
-   |TEXT _ | MODULE | SINGLETON | VAL ->
+   |TEXT _ | VAL ->
       true
   | _ -> false
 
@@ -139,8 +139,6 @@ let new_reader () =
     | Plus (' ' | '\t') -> read_raw_token lexbuf
     | Plus '\n' -> Sedlexing.new_line lexbuf ; read_newline lexbuf
     | "!=" -> EXCLAMATION_EQ
-    | "#!" -> NUMBERSIGN_EXCLAMATION_LBRACKET
-    | "#" -> NUMBERSIGN_LBRACKET
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
     | "+=" -> PLUS_EQ
@@ -149,7 +147,6 @@ let new_reader () =
     | "--" -> BIG_HYPHEN
     | "-=" -> HYPHEN_EQ
     | "->" -> HYPHEN_GREATER
-    | ".." -> BIG_DOT
     | "::" -> BIG_COLON
     | ":=" -> COLON_EQ
     | "==" -> BIG_EQ
@@ -157,31 +154,20 @@ let new_reader () =
     | "[" -> LBRACKET
     | "]" -> RBRACKET
     | "case" -> CASE
-    | "catch" -> CATCH
-    | "class" -> CLASS
-    | "def" -> DEF
-    | "deriving" -> DERIVING
     | "effect" -> EFFECT
     | "else" -> ELSE
     | "exception" -> EXCEPTION
-    | "external" -> EXTERNAL
     | "false" -> BOOL false
     | "fn" -> FN
     | "if" -> IF
-    | "instance" -> INSTANCE
-    | "internal" -> INTERNAL
     | "lazy" -> LAZY
     | "let" -> LET
     | "match" -> MATCH
-    | "module" -> MODULE
     | "raise" -> RAISE
-    | "singleton" -> SINGLETON
     | "then" -> THEN
-    | "trait" -> TRAIT
     | "true" -> BOOL true
     | "type" -> TYPE
     | "val" -> VAL
-    | "unsafe" -> UNSAFE
     | "where" -> WHERE
     | "||" -> BIG_VERTICAL
     | '!' -> EXCLAMATION
@@ -199,7 +185,6 @@ let new_reader () =
     | '<' -> LESS
     | '=' -> EQ
     | '>' -> GREATER
-    | '?' -> QUESTION
     | '@' -> AT
     | '^' -> CIRCUMFLEX
     | '_' -> LOWLINE

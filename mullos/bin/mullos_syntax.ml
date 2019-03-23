@@ -38,9 +38,9 @@ type bin_op =
   | `Erase
   | `Dot ]
 
-type prefix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement ]
+type prefix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement | `BitwiseNot ]
 
-type postfix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement ]
+type postfix_op = [ `Increment | `Decrement ]
 
 type pat_bin_op = [`Colon | `Comma | `At]
 

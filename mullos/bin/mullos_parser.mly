@@ -15,10 +15,8 @@ let noimpl () = failwith "not implemented"
 %token AND
 %token ASTERISK
 %token AT
-%token BIGBIG_COLON
 %token BIG_AMPERSAND
 %token BIG_COLON
-%token BIG_DOT
 %token BIG_EQ
 %token BIG_GREATER
 %token BIG_HYPHEN
@@ -27,9 +25,7 @@ let noimpl () = failwith "not implemented"
 %token BIG_VERTICAL
 %token <bool> BOOL
 %token CASE
-%token CATCH
 %token CIRCUMFLEX
-%token CLASS
 %token COLON
 %token COLON_EQ
 %token COLON_HYPHEN
@@ -37,8 +33,6 @@ let noimpl () = failwith "not implemented"
 %token COLON_PLUS
 %token COLON_PLUS_COLON
 %token COMMA
-%token DEF
-%token DERIVING
 %token DOLLAR
 %token DOT
 %token EFFECT
@@ -50,7 +44,6 @@ let noimpl () = failwith "not implemented"
 %token EXCEPTION
 %token EXCLAMATION
 %token EXCLAMATION_EQ
-%token EXTERNAL
 %token FN
 %token FUNCTOR
 %token GIVEN
@@ -63,30 +56,22 @@ let noimpl () = failwith "not implemented"
 %token HYPHEN_GREATER
 %token <string> IDENTIFIER
 %token IF
-%token INSTANCE
-%token INTERNAL
 %token LAZY
 %token LCBRACKET
 %token LBRACKET
-%token LBRACKET_VERTICAL
 %token LESS
 %token LET
 %token LOWLINE
 %token LPAREN
 %token MATCH
-%token MODULE
-%token MUTABLE
 %token NL
 %token <Mullos_syntax.number> NUMBER
 %token NUMBERSIGN
-%token NUMBERSIGN_EXCLAMATION_LBRACKET
-%token NUMBERSIGN_LBRACKET
 %token OF
 %token PERCENT
 %token PLUS
 %token PLUS_COLON
 %token PLUS_EQ
-%token QUESTION
 %token RAISE
 %token RBRACKET
 %token RCBRACKET
@@ -95,7 +80,6 @@ let noimpl () = failwith "not implemented"
 %token SEMI
 %token SIG
 %token SIGNATURE
-%token SINGLETON
 %token SINGLE_QUOTE
 %token SOLIDUS
 %token STRUCT
@@ -103,14 +87,10 @@ let noimpl () = failwith "not implemented"
 %token <string> TEXT
 %token THEN
 %token TILDE
-%token TRAIT
 %token TYPE
-%token TYPE_VARIABLE_ID
-%token UNSAFE
 %token VAL
 %token VERTICAL
 %token VERTICAL_GREATER
-%token VERTICAL_RBRACKET
 %token WHEN
 %token WHERE
 %token WITH
@@ -148,7 +128,7 @@ expression:
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) }
   | assignment_expression { $1 }
   | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 }
-  | LBRACKET_VERTICAL list_nonauto_semi(expression) VERTICAL_RBRACKET { ArrayLiteral $2 }
+  | NUMBERSIGN LBRACKET list_nonauto_semi(expression) RBRACKET { ArrayLiteral $3 }
   | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) }
   | LCBRACKET left=expression WITHOUT DOT right=IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) }
   | GRAVE_ACCENT IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) }
@@ -229,6 +209,7 @@ prefix_op:
   | BIG_HYPHEN { `Decrement }
   | RAISE { `Raise }
   | LAZY { `Lazy }
+  | TILDE { `BitwiseNot }
 
 postfix_expression: application_expression postfix_op { PostfixOp ($1, $2) } | application_expression { $1 }
 %inline
@@ -262,7 +243,7 @@ pattern_condition: WHEN expression { $2 }
 
 pattern:
   | LBRACKET separated_list(semi, pattern) RBRACKET { PListLiteral $2 }
-  | LBRACKET_VERTICAL separated_list(semi, pattern) VERTICAL_RBRACKET { PArrayLiteral $2 }
+  | NUMBERSIGN LBRACKET separated_list(semi, pattern) RBRACKET { PArrayLiteral $3 }
   | tuple_pattern { $1 }
   | GRAVE_ACCENT IDENTIFIER pattern { PPolymorphicVariant ($2, $3) }
 
