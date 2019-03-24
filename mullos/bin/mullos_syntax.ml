@@ -38,9 +38,19 @@ type bin_op =
   | `Erase
   | `Dot ]
 
-type prefix_op = [ `Positive | `Negative | `Not | `Deref | `Ref | `Raise | `Lazy | `Increment | `Decrement | `BitwiseNot ]
+type prefix_op =
+  [ `Positive
+  | `Negative
+  | `Not
+  | `Deref
+  | `Ref
+  | `Raise
+  | `Lazy
+  | `Increment
+  | `Decrement
+  | `BitwiseNot ]
 
-type postfix_op = [ `Increment | `Decrement ]
+type postfix_op = [`Increment | `Decrement]
 
 type pat_bin_op = [`Colon | `Comma | `At]
 
@@ -113,18 +123,17 @@ type ty =
   | TTuple of ty list
   | TApply of ty list * ty
 
-type signature_part = [
-  | `TypeAlias of string list * string * ty
+type signature_part =
+  [ `TypeAlias of string list * string * ty
   | `MonomorphicVariant of string list * string * (string * ty) list
   | `TypeDecl of string list * string
   | `ValDef of string * ty
-  | `ExceptionDef of string * ty option
-]
-type struct_part = [
-  | `SignatureInStruct of signature_part
+  | `ExceptionDef of string * ty option ]
+
+type struct_part =
+  [ `SignatureInStruct of signature_part
   | `LetDef of string * exp
-  | `LetRecDef of (string * exp) list
-]
+  | `LetRecDef of (string * exp) list ]
 
 type signature = signature_part list * (string list * string * ty) list
 
@@ -136,7 +145,8 @@ type structure = struct_part list * signature_ref list
 
 type struct_decl = [`StructDecl of string option * bool * structure]
 
-type functor_decl = [`FunctorDecl of string * (string * signature_ref) list * structure]
+type functor_decl =
+  [`FunctorDecl of string * (string * signature_ref) list * structure]
 
-type compilation_unit = CompilationUnit of [signature_decl | struct_decl | functor_decl] list
-
+type compilation_unit =
+  | CompilationUnit of [signature_decl | struct_decl | functor_decl] list

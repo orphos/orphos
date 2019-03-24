@@ -242,8 +242,8 @@ pattern_or_clause:
 pattern_condition: WHEN expression { $2 }
 
 pattern:
-  | LBRACKET separated_list(semi, pattern) RBRACKET { PListLiteral $2 }
-  | NUMBERSIGN LBRACKET separated_list(semi, pattern) RBRACKET { PArrayLiteral $3 }
+  | LBRACKET list_nonauto_semi(pattern) RBRACKET { PListLiteral $2 }
+  | NUMBERSIGN LBRACKET list_nonauto_semi(pattern) RBRACKET { PArrayLiteral $3 }
   | tuple_pattern { $1 }
   | GRAVE_ACCENT IDENTIFIER pattern { PPolymorphicVariant ($2, $3) }
 
@@ -277,6 +277,7 @@ refinement_ty:
 
 refinement_body:
   | expression { [$1] }
+  | semi { [] }
   | { [] }
   | expression semi refinement_body { $1 :: $3 }
 
@@ -329,7 +330,7 @@ signature_body_part:
 signature_body: separated_list(semi, signature_body_part) { $1 }
 
 signature:
-  | SIG signature_body END WHERE separated_list(semi, signature_where_part) END { $2, $5 }
+  | SIG signature_body END WHERE list_nonauto_semi(signature_where_part) END { $2, $5 }
   | SIG signature_body END { $2, [] }
 
 signature_definition:

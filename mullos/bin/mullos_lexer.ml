@@ -5,15 +5,18 @@
 open Mullos_parser
 open Mullos_syntax
 
-let is_expression_start = function
-  | AMPERSAND | ASTERISK | BOOL _ | EXCLAMATION | FN | HYPHEN | IF | LAZY
-   |LCBRACKET | LET | IDENTIFIER _ | LPAREN | NUMBER _ | PLUS | RAISE
-   |TEXT _ | VAL ->
+let is_auto_semi_followed = function
+  | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET | GRAVE_ACCENT
+   |PLUS | HYPHEN | EXCLAMATION | AMPERSAND | ASTERISK | BIG_PLUS
+   |BIG_HYPHEN | RAISE | LAZY | TILDE | IDENTIFIER _ | LPAREN | TEXT _
+   |NUMBER _ | BOOL _ | TYPE | VAL | EXCEPTION ->
       true
   | _ -> false
 
-let is_expression_end = function
-  | BOOL _ | IDENTIFIER _ | NUMBER _ | RCBRACKET | RPAREN | TEXT _ -> true
+let is_followed_by_auto_semi = function
+  | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | IDENTIFIER _
+   |RPAREN | TEXT _ | NUMBER _ | BOOL _ ->
+      true
   | _ -> false
 
 module Buf = CamomileLibrary.UTF8.Buf
@@ -234,7 +237,7 @@ let new_reader () =
   let autoinsert_semicolon tokens =
     let rec aux acc = function
       | t1 :: (NL as t2) :: t3 :: tl
-        when is_expression_end t1 && is_expression_start t3 ->
+        when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
           aux (t3 :: t2 :: t1 :: acc) tl
       | t1 :: NL :: t3 :: tl -> aux (t3 :: t1 :: acc) tl
       | NL :: tl -> aux acc tl
