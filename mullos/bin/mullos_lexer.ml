@@ -141,41 +141,75 @@ let new_reader () =
     match%sedlex lexbuf with
     | Plus (' ' | '\t') -> read_raw_token lexbuf
     | Plus '\n' -> Sedlexing.new_line lexbuf ; read_newline lexbuf
+    (* three character symbols *)
+    | ":+:" -> COLON_PLUS_COLON
+    | ":-:" -> COLON_HYPHEN_COLON
+    (* two character symbols *)
     | "!=" -> EXCLAMATION_EQ
     | "&&" -> BIG_AMPERSAND
     | "++" -> BIG_PLUS
+    | "+:" -> PLUS_COLON
     | "+=" -> PLUS_EQ
     | "," -> COMMA
-    | "-" -> HYPHEN
     | "--" -> BIG_HYPHEN
+    | "-:" -> HYPHEN_COLON
     | "-=" -> HYPHEN_EQ
     | "->" -> HYPHEN_GREATER
+    | ":+" -> COLON_PLUS
+    | ":-" -> COLON_HYPHEN
     | "::" -> BIG_COLON
     | ":=" -> COLON_EQ
+    | "<<" -> BIG_LESS
     | "==" -> BIG_EQ
     | "=>" -> EQ_GREATER
+    | ">>" -> BIG_GREATER
     | "[" -> LBRACKET
     | "]" -> RBRACKET
-    | "case" -> CASE
-    | "effect" -> EFFECT
-    | "else" -> ELSE
-    | "exception" -> EXCEPTION
-    | "false" -> BOOL false
-    | "fn" -> FN
-    | "if" -> IF
-    | "lazy" -> LAZY
-    | "let" -> LET
-    | "match" -> MATCH
-    | "raise" -> RAISE
-    | "then" -> THEN
-    | "true" -> BOOL true
-    | "type" -> TYPE
-    | "val" -> VAL
-    | "where" -> WHERE
+    | "|>" -> VERTICAL_GREATER
     | "||" -> BIG_VERTICAL
+    (* raw identifier or keyword *)
+    | ( ( 'a' .. 'z'
+        | 'A' .. 'Z'
+        | '_', ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') )
+      , Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ) -> (
+      match lexeme lexbuf with
+      | "and" -> AND
+      | "case" -> CASE
+      | "effect" -> EFFECT
+      | "else" -> ELSE
+      | "end" -> END
+      | "exception" -> EXCEPTION
+      | "false" -> BOOL false
+      | "fn" -> FN
+      | "functor" -> FUNCTOR
+      | "given" -> GIVEN
+      | "handle" -> HANDLE
+      | "if" -> IF
+      | "lazy" -> LAZY
+      | "let" -> LET
+      | "match" -> MATCH
+      | "of" -> OF
+      | "raise" -> RAISE
+      | "rec" -> REC
+      | "sig" -> SIG
+      | "signature" -> SIGNATURE
+      | "struct" -> STRUCT
+      | "structure" -> STRUCTURE
+      | "then" -> THEN
+      | "true" -> BOOL true
+      | "type" -> TYPE
+      | "val" -> VAL
+      | "when" -> WHEN
+      | "where" -> WHERE
+      | "with" -> WITH
+      | "without" -> WITHOUT
+      | id -> IDENTIFIER id )
+    (* one character symbols *)
+    | "-" -> HYPHEN
     | '!' -> EXCLAMATION
     | '#' -> NUMBERSIGN
     | '$' -> DOLLAR
+    | '%' -> PERCENT
     | '&' -> AMPERSAND
     | '(' -> LPAREN
     | ')' -> RPAREN
@@ -189,20 +223,15 @@ let new_reader () =
     | '=' -> EQ
     | '>' -> GREATER
     | '@' -> AT
+    | '\'' -> SINGLE_QUOTE
     | '^' -> CIRCUMFLEX
     | '_' -> LOWLINE
+    | '_' -> LOWLINE
+    | '`' -> GRAVE_ACCENT
     | '{' -> LCBRACKET
     | '|' -> VERTICAL
     | '}' -> RCBRACKET
     | '~' -> TILDE
-    | ( ( 'a' .. 'z'
-        | 'A' .. 'Z'
-        | '_', ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') )
-      , Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ) ->
-        IDENTIFIER (lexeme lexbuf)
-    | '_' -> LOWLINE
-    | "``" -> failwith "empty identifier"
-    | '`' -> IDENTIFIER (read_quoted_identifier lexbuf '`')
     | '"' -> TEXT (read_text lexbuf)
     | "0", '0' .. '7' ->
         rollback lexbuf ;
@@ -215,6 +244,7 @@ let new_reader () =
     | _ -> EOF
   in
   let read_raw_tokens lexbuf =
+    (* read all tokens *)
     let aux acc =
       match read_raw_token lexbuf with
       | EOF -> List.rev (EOF :: acc)
@@ -223,24 +253,26 @@ let new_reader () =
     aux []
   in
   let filter_nl tokens =
-    let rec aux stack acc = function
-      | LCBRACKET :: tl -> aux (true :: stack) (LCBRACKET :: acc) tl
-      | (LPAREN | LBRACKET) :: tl -> aux (false :: stack) (LCBRACKET :: acc) tl
-      | (RCBRACKET | RPAREN | RBRACKET) :: tl ->
-          aux (List.tl stack) (LCBRACKET :: acc) tl
-      | NL :: tl when not (List.hd stack) -> aux stack acc tl
-      | hd :: tl -> aux stack (hd :: acc) tl
-      | [] -> List.rev acc
+    (* Remove NL inside auto semicolon disabled region *)
+    let rec aux acc = function
+      | stack, LCBRACKET :: tl -> aux (LCBRACKET :: acc) (true :: stack, tl)
+      | stack, (LPAREN | LBRACKET) :: tl ->
+          aux (LCBRACKET :: acc) (false :: stack, tl)
+      | _ :: stack, (RCBRACKET | RPAREN | RBRACKET) :: tl ->
+          aux (LCBRACKET :: acc) (stack, tl)
+      | (false :: _ as stack), NL :: tl -> aux acc (stack, tl)
+      | stack, hd :: tl -> aux (hd :: acc) (stack, tl)
+      | _, [] -> List.rev acc
     in
-    aux [true] [] tokens
+    aux [] ([true], tokens)
   in
   let autoinsert_semicolon tokens =
+    (* Remove NL unless semicolon should be auto inserted  *)
     let rec aux acc = function
+      | NL :: tl -> aux acc tl
       | t1 :: (NL as t2) :: t3 :: tl
         when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
           aux (t3 :: t2 :: t1 :: acc) tl
-      | t1 :: NL :: t3 :: tl -> aux (t3 :: t1 :: acc) tl
-      | NL :: tl -> aux acc tl
       | hd :: tl -> aux (hd :: acc) tl
       | [] -> List.rev acc
     in
