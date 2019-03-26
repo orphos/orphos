@@ -204,11 +204,13 @@ let new_reader () =
       | "with" -> WITH
       | "without" -> WITHOUT
       | id -> IDENTIFIER id )
+    (* quoted identifier *)
+    | "${", Sub (any, '}'), '}' ->
+        failwith "quoted identifier is not implemented yet"
     (* one character symbols *)
     | "-" -> HYPHEN
     | '!' -> EXCLAMATION
     | '#' -> NUMBERSIGN
-    | '$' -> DOLLAR
     | '%' -> PERCENT
     | '&' -> AMPERSAND
     | '(' -> LPAREN

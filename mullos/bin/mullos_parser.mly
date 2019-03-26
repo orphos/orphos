@@ -33,7 +33,6 @@ let noimpl () = failwith "not implemented"
 %token COLON_PLUS
 %token COLON_PLUS_COLON
 %token COMMA
-%token DOLLAR
 %token DOT
 %token EFFECT
 %token ELSE
@@ -140,9 +139,7 @@ binop_assignment:
   | HYPHEN_EQ { `SubstractAsign }
   | COLON_EQ { `Asign }
 
-pipeline_expression: dollar_expression VERTICAL_GREATER pipeline_expression { BinOp ($1, `Pipeline, $3) } | dollar_expression { $1 }
-
-dollar_expression: dollar_expression DOLLAR tuple_expression { Apply ($1, $3) } | tuple_expression { $1 }
+pipeline_expression: tuple_expression VERTICAL_GREATER pipeline_expression { BinOp ($1, `Pipeline, $3) } | tuple_expression { $1 }
 
 tuple_expression: lor_expression nonempty_list(COMMA lor_expression { $2 }) { Tuple ($1 :: $2) } | lor_expression { $1 }
 
