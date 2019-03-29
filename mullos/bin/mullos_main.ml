@@ -5,4 +5,4 @@
 open Mullos_parser
 open Mullos_lexer
 
-let _ = print_endline (Mullos_llvm.hello_llvm ())
+let _ = print_endline ""

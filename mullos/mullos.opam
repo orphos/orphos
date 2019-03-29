@@ -20,7 +20,6 @@ depends: [
   "menhir"
   "sqlite3"
   "toml"
-  "llvm"
   "zarith"
   "camomile"
 ]

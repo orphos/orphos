@@ -4,8 +4,7 @@
    base
    sedlex
    zarith
-   camomile
-   llvm)
+   camomile)
  (preprocess (pps sedlex.ppx)))
 
 (menhir
