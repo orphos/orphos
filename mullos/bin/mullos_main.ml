@@ -4,5 +4,7 @@
  *)
 open Mullos_parser
 open Mullos_lexer
+open Mullos_type
+open Mullos_infer
 
 let _ = print_endline ""

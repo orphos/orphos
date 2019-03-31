@@ -121,9 +121,14 @@ expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) }
   | IF expression THEN expression END { IfThenElse ($2, $4, None) }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) }
-  | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) }
-  | LET pat=simple_pattern params=simple_pattern* EQ body=expression semi exp=expression { Let (pat, params, body, exp) }
-  | LET REC pat=simple_pattern params=simple_pattern* EQ body=expression ands=list(AND pat=simple_pattern params=simple_pattern* EQ body=expression { pat, params, body }) semi exp=expression { LetRec ((pat, params, body) :: ands, exp) }
+  | FN IDENTIFIER+ HYPHEN_GREATER expression {
+                       let rec aux body = function
+                         | h :: t -> aux (Lambda (h, body)) t
+                         | [] -> body in
+                       aux $4 $2
+                     }
+  | LET name=IDENTIFIER params=IDENTIFIER* EQ body=expression semi exp=expression { Let (name, params, body, exp) }
+  | LET REC name=IDENTIFIER params=IDENTIFIER* EQ body=expression ands=list(AND name=IDENTIFIER params=IDENTIFIER* EQ body=expression { name, params, body }) semi exp=expression { LetRec ((name, params, body) :: ands, exp) }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) }
   | assignment_expression { $1 }
   | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 }
@@ -219,7 +224,7 @@ application_expression: application_expression dot_expression { Apply ($1, $2) }
 dot_expression: dot_expression DOT IDENTIFIER { RecordSelection ($1, $3) } | simple_expression { $1 }
 
 simple_expression:
-  | IDENTIFIER { Identifier $1 }
+  | long_id { Ident $1 }
   | LPAREN RPAREN { Unit }
   | LCBRACKET seq RCBRACKET { Seq $2 }
   | TEXT { Text $1 }
