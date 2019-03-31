@@ -38,7 +38,7 @@ end
 
 module IdMap = Map.Make (LongIdIsOrdered)
 
-type env = Mullos_syntax.ty IdMap.t
+type env = type_exp IdMap.t
 
 let empty = IdMap.empty
 

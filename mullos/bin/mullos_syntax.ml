@@ -103,39 +103,39 @@ and pat =
 
 type ty_bin_op = TComma | TArrow | TApply
 
-type ty =
+type type_exp =
   | TIdent of long_id
   | TVar of string
-  | TPointer of ty
+  | TPointer of type_exp
   | TNumber of number
   | TText of string
   | TBool of bool
-  | TLazy of ty
-  | TLabel of string * ty
-  | TEff of ty * long_id list
-  | TBinOp of ty * ty_bin_op * ty * (ty_bin_op * ty) list
-  | TRecord of ty option * (string * ty) list
-  | TPolymorphicVariant of string * ty
-  | TOr of ty list
-  | TRefinement of ty * exp list
-  | TGiven of ty * long_id list
-  | TArrow of ty * ty
-  | TTuple of ty list
-  | TApply of ty list * ty
+  | TLazy of type_exp
+  | TLabel of string * type_exp
+  | TEff of type_exp * long_id list
+  | TBinOp of type_exp * ty_bin_op * type_exp * (ty_bin_op * type_exp) list
+  | TRecord of type_exp option * (string * type_exp) list
+  | TPolymorphicVariant of string * type_exp
+  | TOr of type_exp list
+  | TRefinement of type_exp * exp list
+  | TGiven of type_exp * long_id list
+  | TArrow of type_exp * type_exp
+  | TTuple of type_exp list
+  | TApply of type_exp list * type_exp
 
 type signature_part =
-  [ `TypeAlias of string list * string * ty
-  | `MonomorphicVariant of string list * string * (string * ty) list
+  [ `TypeAlias of string list * string * type_exp
+  | `MonomorphicVariant of string list * string * (string * type_exp) list
   | `TypeDecl of string list * string
-  | `ValDef of string * ty
-  | `ExceptionDef of string * ty option ]
+  | `ValDef of string * type_exp
+  | `ExceptionDef of string * type_exp option ]
 
 type struct_part =
   [ `SignatureInStruct of signature_part
   | `LetDef of string * exp
   | `LetRecDef of (string * exp) list ]
 
-type signature = signature_part list * (string list * string * ty) list
+type signature = signature_part list * (string list * string * type_exp) list
 
 type signature_decl = [`SignatureDecl of string * bool * signature]
 
