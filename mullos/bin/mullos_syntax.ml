@@ -2,59 +2,78 @@
  *
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
+open Mullos_aux
 
 type long_id = LongId of string list
+
+module Type = struct
+  type level = int
+
+  type ty =
+    | TLongId of long_id
+    | TApply of ty list * ty
+    | TArrow of ty * ty
+    | TTuple of ty list
+    | TLazy of ty
+    | TVar of tvar ref
+
+  and tvar = Unbound of int * level | Link of ty | Generic of int
+
+  let new_var level = TVar (ref (Unbound (new_oid (), level)))
+
+  let new_gen_var () = TVar (ref (Generic (new_oid ())))
+end
 
 type number_literal_type = ZType | QType | IntType of int | FloatType of int
 
 type number = Q.t * number_literal_type
 
 type bin_op =
-  [ `Add
-  | `Substract
-  | `Multiply
-  | `Division
-  | `Xor
-  | `Reminder
-  | `BitwiseLeftShift
-  | `BitwiseRightShift
-  | `Less
-  | `Greater
-  | `Equal
-  | `NotEqual
-  | `BitwiseAnd
-  | `And
-  | `BitwiseOr
-  | `Or
-  | `AddAsign
-  | `SubstractAsign
-  | `Asign
-  | `Combine
-  | `Remove
-  | `Cons
-  | `Pipeline
-  | `Append
-  | `Prepend
-  | `Erase
-  | `Dot ]
+  | Add
+  | Substract
+  | Multiply
+  | Division
+  | Xor
+  | Reminder
+  | BitwiseLeftShift
+  | BitwiseRightShift
+  | Less
+  | Greater
+  | Equal
+  | NotEqual
+  | BitwiseAnd
+  | And
+  | BitwiseOr
+  | Or
+  | AddAsign
+  | SubstractAsign
+  | Asign
+  | Combine
+  | Remove
+  | Cons
+  | Pipeline
+  | Append
+  | Prepend
+  | Erase
+  | Dot
 
 type prefix_op =
-  [ `Positive
-  | `Negative
-  | `Not
-  | `Deref
-  | `Ref
-  | `Raise
-  | `Lazy
-  | `Increment
-  | `Decrement
-  | `BitwiseNot ]
+  | Positive
+  | Negative
+  | Not
+  | Deref
+  | Ref
+  | Raise
+  | Lazy
+  | PrefixIncrement
+  | PrefixDecrement
+  | BitwiseNot
 
-type postfix_op = [`Increment | `Decrement]
+type postfix_op = PostfixIncrement | PostfixDecrement
 
 type pat_bin_op = [`Colon | `Comma | `At]
 
-type exp =
+type exp' =
   | Bool of bool
   | Number of number
   | Text of string
@@ -70,7 +89,6 @@ type exp =
   | Lambda of string * exp
   | Let of string * string list * exp * exp
   | LetRec of (string * string list * exp) list * exp
-  | Label of string * exp
   | Match of exp * pat_clause list
   | ListLiteral of exp list
   | ArrayLiteral of exp list
@@ -80,12 +98,16 @@ type exp =
   | PolymorphicVariantConstruction of string * exp
   | Handle of exp * pat_clause list
 
-and pat_clause =
+and exp = oid * exp'
+
+and pat_clause' =
   | MatchPat of pat * exp option * exp
   | MatchException of pat * exp option * exp
   | MatchEffect of pat * exp option * exp
 
-and pat =
+and pat_clause = oid * pat_clause'
+
+and pat' =
   | PIdent of string
   | PUnit
   | PCapture of string * pat
@@ -101,9 +123,11 @@ and pat =
   | PArrayLiteral of pat list
   | PPolymorphicVariant of string * pat
 
+and pat = oid * pat'
+
 type ty_bin_op = TComma | TArrow | TApply
 
-type type_exp =
+type type_exp' =
   | TIdent of long_id
   | TVar of string
   | TPointer of type_exp
@@ -123,30 +147,39 @@ type type_exp =
   | TTuple of type_exp list
   | TApply of type_exp list * type_exp
 
-type signature_part =
-  [ `TypeAlias of string list * string * type_exp
-  | `MonomorphicVariant of string list * string * (string * type_exp) list
-  | `TypeDecl of string list * string
-  | `ValDef of string * type_exp
-  | `ExceptionDef of string * type_exp option ]
+and type_exp = oid * type_exp'
 
-type struct_part =
-  [ `SignatureInStruct of signature_part
-  | `LetDef of string * exp
-  | `LetRecDef of (string * exp) list ]
+type signature_part' =
+  | TypeAlias of string list * string * type_exp
+  | MonomorphicVariant of string list * string * (string * type_exp) list
+  | TypeDecl of string list * string
+  | ValDef of string * type_exp
+  | ExceptionDef of string * type_exp option
+
+type signature_part = oid * signature_part'
+
+type struct_part' =
+  | SignatureInStruct of signature_part
+  | LetDef of string * exp
+  | LetRecDef of (string * exp) list
+
+type struct_part = oid * struct_part'
 
 type signature = signature_part list * (string list * string * type_exp) list
 
-type signature_decl = [`SignatureDecl of string * bool * signature]
+type signature_ref' = Signature of signature | SignatureId of long_id
 
-type signature_ref = Signature of signature | SignatureId of long_id
+type signature_ref = oid * signature_ref'
 
 type structure = struct_part list * signature_ref list
 
-type struct_decl = [`StructDecl of string option * bool * structure]
+type decl' =
+  | SignatureDecl of string * bool * signature
+  | StructDecl of string option * bool * structure
+  | FunctorDecl of string * (string * signature_ref) list * structure
 
-type functor_decl =
-  [`FunctorDecl of string * (string * signature_ref) list * structure]
+type decl = oid * decl'
 
-type compilation_unit =
-  | CompilationUnit of [signature_decl | struct_decl | functor_decl] list
+type compilation_unit' = CompilationUnit of decl list
+
+type compilation_unit = oid * compilation_unit'
