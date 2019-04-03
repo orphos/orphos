@@ -4,6 +4,6 @@
  *)
 open Mullos_parser
 open Mullos_lexer
-open Mullos_infer
+open Mullos_elab
 
 let _ = print_endline ""
