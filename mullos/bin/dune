@@ -4,7 +4,8 @@
    base
    sedlex
    zarith
-   camomile)
+   camomile
+   batteries)
  (preprocess (pps sedlex.ppx)))
 
 (menhir
