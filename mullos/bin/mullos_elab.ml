@@ -131,34 +131,37 @@ let rec elabPat (env : env) (level : level) = function
     | PArrayLiteral pats -> assert false
     | PPolymorphicVariant (label, pat) -> assert false )
 
-let rec infer env level = function
-  | id, exp' -> (
-    match exp' with
-    | Ident name -> (
-      try instantiate level (lookup env name) with Not_found ->
-        error "variable not found" )
-    | Lambda (param, body) ->
-        let param_ty = new_var level in
-        let env = extend env (LongId [param]) param_ty in
-        let return_ty = infer env level body in
-        TArrow (param_ty, return_ty)
-    | Let (name, params, value, body) ->
-        let value_ty = infer env (level + 1) value in
-        let generalized_ty = generalize level value_ty in
-        infer (extend env (LongId [name]) generalized_ty) level body
-    | LetRec (lets, body) ->
-        (* TODO *)
-        let rec aux env = function
-          | (name, params, value) :: t ->
-              aux (extend env (LongId [name]) (new_var (level + 1))) t
-          | [] -> env
-        in
-        let env = aux env lets in
-        assert false
-    | Apply (fn, arg) -> (
-      match infer env level fn with
-      | TArrow (param, ret) ->
-          let arg = infer env level arg in
-          unify param arg ; ret
-      | _ -> failwith "type error: expected function" )
-    | _ -> assert false )
+let rec infer env level out = function
+  | id, exp' ->
+      let ret =
+        match exp' with
+        | Ident name -> (
+          try instantiate level (lookup env name) with Not_found ->
+            error "variable not found" )
+        | Lambda (param, body) ->
+            let param_ty = new_var level in
+            let env = extend env (LongId [param]) param_ty in
+            let return_ty = infer env level out body in
+            TArrow (param_ty, return_ty)
+        | Let (name, params, value, body) ->
+            let value_ty = infer env (level + 1) out value in
+            let generalized_ty = generalize level value_ty in
+            infer (extend env (LongId [name]) generalized_ty) level out body
+        | LetRec (lets, body) ->
+            (* TODO *)
+            let rec aux env = function
+              | (name, params, value) :: t ->
+                  aux (extend env (LongId [name]) (new_var (level + 1))) t
+              | [] -> env
+            in
+            let env = aux env lets in
+            assert false
+        | Apply (fn, arg) -> (
+          match infer env level out fn with
+          | TArrow (param, ret) ->
+              let arg = infer env level out arg in
+              unify param arg ; ret
+          | _ -> failwith "type error: expected function" )
+        | _ -> assert false
+      in
+      Hashtbl.add out id ret ; ret
