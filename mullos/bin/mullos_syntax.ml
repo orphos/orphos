@@ -87,8 +87,8 @@ type exp' =
   | IfThenElse of exp * exp * exp option
   | Seq of exp list
   | Lambda of string * exp
-  | Let of string * string list * exp * exp
-  | LetRec of (string * string list * exp) list * exp
+  | Let of pat * pat list * exp * exp
+  | LetRec of (pat * pat list * exp) list * exp
   | Match of exp * pat_clause list
   | ListLiteral of exp list
   | ArrayLiteral of exp list

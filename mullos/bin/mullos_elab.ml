@@ -131,7 +131,7 @@ let rec elabPat (env : env) (level : level) = function
     | PArrayLiteral pats -> assert false
     | PPolymorphicVariant (label, pat) -> assert false )
 
-let rec infer env level out = function
+let rec elabExp env level types = function
   | id, exp' ->
       let ret =
         match exp' with
@@ -141,27 +141,42 @@ let rec infer env level out = function
         | Lambda (param, body) ->
             let param_ty = new_var level in
             let env = extend env (LongId [param]) param_ty in
-            let return_ty = infer env level out body in
+            let return_ty = elabExp env level types body in
             TArrow (param_ty, return_ty)
-        | Let (name, params, value, body) ->
-            let value_ty = infer env (level + 1) out value in
+        | Let ((patId, PIdent name), params, value, body) ->
+            let value_ty = elabExp env (level + 1) types value in
             let generalized_ty = generalize level value_ty in
-            infer (extend env (LongId [name]) generalized_ty) level out body
+            Hashtbl.add types patId generalized_ty ;
+            elabExp
+              (extend env (LongId [name]) generalized_ty)
+              level types body
         | LetRec (lets, body) ->
-            (* TODO *)
-            let rec aux env = function
-              | (name, params, value) :: t ->
-                  aux (extend env (LongId [name]) (new_var (level + 1))) t
+            let rec allocate_type_vars env = function
+              | ((patId, PIdent name), params, value) :: t ->
+                  let ty = new_var (level + 1) in
+                  Hashtbl.add types patId ty ;
+                  allocate_type_vars (extend env (LongId [name]) ty) t
+              | ((patId, _), params, value) :: t -> assert false
               | [] -> env
             in
-            let env = aux env lets in
-            assert false
+            let env = allocate_type_vars env lets in
+            let rec elabBindees env = function
+              | ((patId, PIdent name), params, value) :: t ->
+                  let value_ty = elabExp env (level + 1) types value in
+                  Hashtbl.add types patId value_ty ;
+                  elabBindees (extend env (LongId [name]) value_ty) t
+              | [] -> env
+              | _ -> assert false
+            in
+            let env = elabBindees env lets in
+            (* elabExp body *)
+            elabExp env level types body
         | Apply (fn, arg) -> (
-          match infer env level out fn with
+          match elabExp env level types fn with
           | TArrow (param, ret) ->
-              let arg = infer env level out arg in
+              let arg = elabExp env level types arg in
               unify param arg ; ret
           | _ -> failwith "type error: expected function" )
         | _ -> assert false
       in
-      Hashtbl.add out id ret ; ret
+      Hashtbl.add types id ret ; ret

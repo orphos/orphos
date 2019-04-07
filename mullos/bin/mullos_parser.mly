@@ -129,8 +129,10 @@ expression:
                          | [] -> body in
                        aux $4 $2
                      }
-  | LET name=IDENTIFIER params=IDENTIFIER* EQ body=expression semi exp=expression { Let (name, params, body, exp) |> new_tree }
-  | LET REC name=IDENTIFIER params=IDENTIFIER* EQ body=expression ands=list(AND name=IDENTIFIER params=IDENTIFIER* EQ body=expression { name, params, body }) semi exp=expression { LetRec ((name, params, body) :: ands, exp) |> new_tree }
+  | LET name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression semi exp=expression { Let (PIdent name |> new_tree , params, body, exp) |> new_tree }
+  | LET REC name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression ands=list(AND name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression { PIdent name |> new_tree, params, body }) semi exp=expression {
+      LetRec ((PIdent name |> new_tree, params, body) :: ands, exp) |> new_tree
+    }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) |> new_tree }
   | assignment_expression { $1 }
   | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 |> new_tree }
