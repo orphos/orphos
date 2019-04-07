@@ -6,6 +6,8 @@ open Mullos_aux
 
 type long_id = LongId of string list
 
+let long_id components = LongId components
+
 module Type = struct
   type level = int
 
@@ -22,6 +24,30 @@ module Type = struct
   let new_var level = TVar (ref (Unbound (new_oid (), level)))
 
   let new_gen_var () = TVar (ref (Generic (new_oid ())))
+
+  let i1 = TLongId (long_id ["Orphos"; "Bool"; "t"])
+
+  let i8 = TLongId (long_id ["Orphos"; "Int8"; "t"])
+
+  let i16 = TLongId (long_id ["Orphos"; "Int16"; "t"])
+
+  let i32 = TLongId (long_id ["Orphos"; "Int32"; "t"])
+
+  let i64 = TLongId (long_id ["Orphos"; "Int64"; "t"])
+
+  let u8 = TLongId (long_id ["Orphos"; "UInt8"; "t"])
+
+  let u16 = TLongId (long_id ["Orphos"; "UInt16"; "t"])
+
+  let u32 = TLongId (long_id ["Orphos"; "UInt32"; "t"])
+
+  let u64 = TLongId (long_id ["Orphos"; "UInt64"; "t"])
+
+  let z = TLongId (long_id ["Oprhos"; "Z"; "t"])
+
+  let text = TLongId (long_id ["Oprhos"; "Text"; "t"])
+
+  let unit = TLongId (long_id ["Orphos"; "Unit"; "t"])
 end
 
 type number_literal_type = ZType | QType | IntType of int | FloatType of int

@@ -177,6 +177,10 @@ let rec elabExp env level types = function
               let arg = elabExp env level types arg in
               unify param arg ; ret
           | _ -> failwith "type error: expected function" )
+        | Bool _ -> i1
+        | Number _ -> i64 (* TODO: implement integer suffix  *)
+        | Text _ -> text
+        | Unit _ -> unit
         | _ -> assert false
       in
       Hashtbl.add types id ret ; ret
