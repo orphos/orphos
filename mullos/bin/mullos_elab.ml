@@ -180,7 +180,33 @@ let rec elabExp env level types = function
         | Bool _ -> i1
         | Number _ -> i64 (* TODO: implement integer suffix  *)
         | Text _ -> text
-        | Unit _ -> unit
+        | Unit -> unit
+        | BinOp (left, op, right) -> (
+            (* TODO: many of binary operators are planned to be desugared to a call to type class method *)
+            let elab = elabExp env level types in
+            match op with
+            | Add | Substract | Multiply | Division | Xor | Reminder ->
+                unify i64 (elab left) ;
+                unify i64 (elab right) ;
+                i64
+            | BitwiseLeftShift | BitwiseRightShift | BitwiseAnd | BitwiseOr ->
+                unify u64 (elab left) ;
+                unify u64 (elab right) ;
+                i64
+            | Less | Greater ->
+                unify i64 (elab left) ;
+                unify i64 (elab right) ;
+                i1
+            | Equal | NotEqual ->
+                unify (elab left) (elab right) ;
+                i1
+            | And | Or ->
+                unify i1 (elab left) ;
+                unify i1 (elab right) ;
+                i1
+            | Combine | Remove | Cons | Pipeline | Append | Prepend | Erase
+             |Dot | AddAsign | SubstractAsign | Asign ->
+                failwith "no implemented" )
         | _ -> assert false
       in
       Hashtbl.add types id ret ; ret
