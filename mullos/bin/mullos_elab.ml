@@ -207,6 +207,9 @@ let rec elabExp env level types = function
             | Combine | Remove | Cons | Pipeline | Append | Prepend | Erase
              |Dot | AddAsign | SubstractAsign | Asign ->
                 failwith "no implemented" )
+        | Match (value, mrules) ->
+            let valueType = elabExp env level types value in
+            failwith "pattern matching is not implemented yet"
         | _ -> assert false
       in
       Hashtbl.add types id ret ; ret
