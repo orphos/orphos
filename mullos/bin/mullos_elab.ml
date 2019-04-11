@@ -215,6 +215,7 @@ let rec elabExp env level types = function
             | BitwiseNot -> unify u64 operandType ; u64
             | Deref | Ref | Raise | Lazy | PrefixIncrement | PrefixDecrement ->
                 failwith "not implemented" )
+        | PostfixOp (operand, op) -> failwith "not implemented"
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
             failwith "pattern matching is not implemented yet"
