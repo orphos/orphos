@@ -216,6 +216,17 @@ let rec elabExp env level types = function
             | Deref | Ref | Raise | Lazy | PrefixIncrement | PrefixDecrement ->
                 failwith "not implemented" )
         | PostfixOp (operand, op) -> failwith "not implemented"
+        | Tuple values -> TTuple (List.map elab values)
+        | ListLiteral values ->
+            let types = List.map elab values in
+            let elemType = new_var level in
+            List.iter (unify elemType) types ;
+            TApply ([elemType], listType)
+        | ArrayLiteral values ->
+            let types = List.map elab values in
+            let elemType = new_var level in
+            List.iter (unify elemType) types ;
+            TApply ([elemType], arrayType)
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
             failwith "pattern matching is not implemented yet"

@@ -48,6 +48,10 @@ module Type = struct
   let text = TLongId (long_id ["Oprhos"; "Text"; "t"])
 
   let unit = TLongId (long_id ["Orphos"; "Unit"; "t"])
+
+  let listType = TLongId (long_id ["Orphos"; "List"; "t"])
+
+  let arrayType = TLongId (long_id ["Orphos"; "Array"; "t"])
 end
 
 type number_literal_type = ZType | QType | IntType of int | FloatType of int
