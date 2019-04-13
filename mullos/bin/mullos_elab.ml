@@ -227,6 +227,16 @@ let rec elabExp env level types = function
             let elemType = new_var level in
             List.iter (unify elemType) types ;
             TApply ([elemType], arrayType)
+        | IfThenElse (cond, body, Some fallback) ->
+            elab cond |> unify i1 ;
+            let bodyType = elab body in
+            let fallbackType = elab fallback in
+            unify bodyType fallbackType ;
+            bodyType
+        | IfThenElse (cond, body, None) ->
+            elab cond |> unify i1 ;
+            elab body |> ignore ;
+            unit
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
             failwith "pattern matching is not implemented yet"
