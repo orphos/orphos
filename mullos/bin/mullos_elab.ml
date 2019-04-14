@@ -237,6 +237,15 @@ let rec elabExp env level types = function
             elab cond |> unify i1 ;
             elab body |> ignore ;
             unit
+        | Seq exps ->
+            let rec aux = function
+              | [last] -> elab last
+              | exp :: t ->
+                  elab exp |> ignore ;
+                  aux t
+              | [] -> unit
+            in
+            aux exps
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
             failwith "pattern matching is not implemented yet"
