@@ -179,34 +179,34 @@ type type_exp' =
 
 and type_exp = oid * type_exp'
 
-type signature_part' =
+type interface_part' =
   | TypeAlias of string list * string * type_exp
   | MonomorphicVariant of string list * string * (string * type_exp) list
   | TypeDecl of string list * string
   | ValDef of string * type_exp
   | ExceptionDef of string * type_exp option
 
-type signature_part = oid * signature_part'
+type interface_part = oid * interface_part'
 
-type struct_part' =
-  | SignatureInStruct of signature_part
+type module_part' =
+  | InterfaceInModule of interface_part
   | LetDef of string * exp
   | LetRecDef of (string * exp) list
 
-type struct_part = oid * struct_part'
+type module_part = oid * module_part'
 
-type signature = signature_part list * (string list * string * type_exp) list
+type interface_exp = interface_part list * (string list * string * type_exp) list
 
-type signature_ref' = Signature of signature | SignatureId of long_id
+type interface_ref' = InterfaceExp of interface_exp | InterfaceId of long_id
 
-type signature_ref = oid * signature_ref'
+type interface_ref = oid * interface_ref'
 
-type structure = struct_part list * signature_ref list
+type module_exp = module_part list * interface_ref list
 
 type decl' =
-  | SignatureDecl of string * bool * signature
-  | StructDecl of string option * bool * structure
-  | FunctorDecl of string * (string * signature_ref) list * structure
+  | InterfaceDecl of string * bool * interface_exp
+  | ModuleDecl of string option * bool * module_exp
+  | FunctorDecl of string * (string * interface_ref) list * module_exp
 
 type decl = oid * decl'
 

@@ -181,20 +181,17 @@ let new_reader () =
       | "exception" -> EXCEPTION
       | "false" -> BOOL false
       | "fn" -> FN
-      | "functor" -> FUNCTOR
       | "given" -> GIVEN
       | "handle" -> HANDLE
       | "if" -> IF
+      | "interface" -> INTERFACE
       | "lazy" -> LAZY
       | "let" -> LET
       | "match" -> MATCH
+      | "module" -> MODULE
       | "of" -> OF
       | "raise" -> RAISE
       | "rec" -> REC
-      | "sig" -> SIG
-      | "signature" -> SIGNATURE
-      | "struct" -> STRUCT
-      | "structure" -> STRUCTURE
       | "then" -> THEN
       | "true" -> BOOL true
       | "type" -> TYPE

@@ -46,7 +46,6 @@ let new_tree x = with_oid x
 %token EXCLAMATION
 %token EXCLAMATION_EQ
 %token FN
-%token FUNCTOR
 %token GIVEN
 %token GRAVE_ACCENT
 %token GREATER
@@ -57,6 +56,7 @@ let new_tree x = with_oid x
 %token HYPHEN_GREATER
 %token <string> IDENTIFIER
 %token IF
+%token INTERFACE
 %token LAZY
 %token LCBRACKET
 %token LBRACKET
@@ -65,6 +65,7 @@ let new_tree x = with_oid x
 %token LOWLINE
 %token LPAREN
 %token MATCH
+%token MODULE
 %token NL
 %token <Mullos_syntax.number> NUMBER
 %token NUMBERSIGN
@@ -79,12 +80,8 @@ let new_tree x = with_oid x
 %token REC
 %token RPAREN
 %token SEMI
-%token SIG
-%token SIGNATURE
 %token SINGLE_QUOTE
 %token SOLIDUS
-%token STRUCT
-%token STRUCTURE
 %token <string> TEXT
 %token THEN
 %token TILDE
@@ -328,56 +325,54 @@ let_definition:
 exception_definition:
   | EXCEPTION IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) |> new_tree }
 
-signature_body_part:
+interface_body_part:
   | val_definition { $1 }
   | type_definition { $1 }
   | exception_definition { $1 }
 
-signature_body: separated_list(semi, signature_body_part) { $1 }
+interface_body: separated_list(semi, interface_body_part) { $1 }
 
-signature:
-  | SIG signature_body END WHERE list_nonauto_semi(signature_where_part) END { $2, $5 }
-  | SIG signature_body END { $2, [] }
+interface_exp_tail:
+  | interface_body END WHERE list_nonauto_semi(interface_where_part) END { $1, $4 }
+  | interface_body END { $1, [] }
+interface_exp: INTERFACE interface_exp_tail { $2 }
 
-signature_definition:
-  | SIGNATURE IDENTIFIER EQ signature { SignatureDecl ($2, false, $4)  |> new_tree }
-  | GIVEN SIGNATURE IDENTIFIER EQ signature { SignatureDecl ($3, true, $5)  |> new_tree }
+interface_decl:
+  | INTERFACE IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($2, false, $4)  |> new_tree }
+  | GIVEN INTERFACE IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($3, true, $5)  |> new_tree }
 
-signature_ref: | signature  { Signature $1 |> new_tree } | long_id { SignatureId $1  |> new_tree }
+interface_ref: interface_exp  { InterfaceExp $1 |> new_tree } | long_id { InterfaceId $1  |> new_tree }
 
-signature_where_part: type_variable* IDENTIFIER EQ ty { $1, $2, $4 }
+interface_where_part: type_variable* IDENTIFIER EQ ty { $1, $2, $4 }
 
-structure_body_part:
-  | val_definition { SignatureInStruct $1 |> new_tree }
-  | type_definition { SignatureInStruct $1 |> new_tree }
-  | exception_definition { SignatureInStruct $1 |> new_tree }
+module_body_part:
+  | val_definition { InterfaceInModule $1 |> new_tree }
+  | type_definition { InterfaceInModule $1 |> new_tree }
+  | exception_definition { InterfaceInModule $1 |> new_tree }
   | let_definition { $1 }
 
-structure:
-  | STRUCT separated_list(semi, structure_body_part) END { $2 }
-structure_with_constraint:
-  | structure structure_signature_constraint { $1, $2 }
+module_exp:
+  | MODULE separated_list(semi, module_body_part) END { $2 }
+module_with_constraint:
+  | module_exp module_interface_constraint { $1, $2 }
 
-structure_definition:
-  | GIVEN STRUCTURE IDENTIFIER structure_signature_constraint EQ structure  {
-        StructDecl (Some $3, true, (($6, $4): structure)) |> new_tree
+module_or_functor_decl:
+  | GIVEN MODULE IDENTIFIER module_interface_constraint EQ module_exp  {
+        ModuleDecl (Some $3, true, (($6, $4): module_exp)) |> new_tree
       }
-  | GIVEN structure_with_constraint {
-        StructDecl (None, false, $2) |> new_tree
+  | GIVEN module_with_constraint {
+        ModuleDecl (None, false, $2) |> new_tree
       }
-  | STRUCTURE IDENTIFIER structure_signature_constraint EQ structure {
-        StructDecl (Some $2, false, ($5, $3)) |> new_tree
+  | MODULE IDENTIFIER module_interface_constraint EQ module_exp {
+        ModuleDecl (Some $2, false, ($5, $3)) |> new_tree
       }
+  | MODULE IDENTIFIER separated_nonempty_list(COMMA, IDENTIFIER COLON interface_ref { $1, $3 }) module_interface_constraint EQ module_exp { FunctorDecl ($2, ($3 : (string * interface_ref) list), (($6, $4): module_exp)) |> new_tree }
 
-structure_signature_constraint: | { [] } | COLON separated_nonempty_list(COMMA, signature_ref) { $2 }
+module_interface_constraint: | { [] } | COLON separated_nonempty_list(COMMA, interface_ref) { $2 }
 
-functor_definition:
-  | FUNCTOR IDENTIFIER separated_list(COMMA, IDENTIFIER COLON signature_ref { $1, $3 }) structure_signature_constraint EQ structure { FunctorDecl ($2, ($3 : (string * signature_ref) list), (($6, $4): structure)) |> new_tree }
+decl:
+  | interface_decl { $1 }
+  | module_or_functor_decl { $1 }
 
-definition:
-  | signature_definition { $1 }
-  | structure_definition { $1 }
-  | functor_definition { $1 }
-
-compilation_unit: definition*  EOF { CompilationUnit $1 |> new_tree }
+compilation_unit: decl*  EOF { CompilationUnit $1 |> new_tree }
 
