@@ -195,7 +195,8 @@ type module_part' =
 
 type module_part = oid * module_part'
 
-type interface_exp = interface_part list * (string list * string * type_exp) list
+type interface_exp =
+  interface_part list * (string list * string * type_exp) list
 
 type interface_ref' = InterfaceExp of interface_exp | InterfaceId of long_id
 

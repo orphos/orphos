@@ -151,6 +151,7 @@ let rec elabExp env level types = function
             elabExp
               (extend env (LongId [name]) generalized_ty)
               level types body
+        | Let _ -> failwith "binding to pattern is not implemented"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
               | ((patId, PIdent name), params, value) :: t ->
@@ -249,6 +250,10 @@ let rec elabExp env level types = function
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
             failwith "pattern matching is not implemented yet"
-        | _ -> assert false
+        | Handle _ -> failwith "effect handler is not implemented yet"
+        | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
+            failwith "record is not implemented yet"
+        | PolymorphicVariantConstruction _ ->
+            failwith "polymorphic variant is not implemented yet"
       in
       Hashtbl.add types id ret ; ret
