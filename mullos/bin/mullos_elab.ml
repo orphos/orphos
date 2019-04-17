@@ -28,7 +28,7 @@ end
 
 module IdMap = Map.Make (LongIdIsOrdered)
 
-type env = type_exp IdMap.t
+type env = ty IdMap.t
 
 let empty = IdMap.empty
 
@@ -257,3 +257,57 @@ let rec elabExp env level types = function
             failwith "polymorphic variant is not implemented yet"
       in
       Hashtbl.add types id ret ; ret
+
+let elabModulePart (path : string list) (env : env)
+    (types : (long_id, ty) Hashtbl.t) : module_part -> env = function
+  | part_id, part -> (
+      (* prepare *)
+      let env = empty in
+      let types = Hashtbl.create 1024 in
+      let level = 0 in
+      match part with
+      | InterfaceInModule _ -> failwith "interface is not implemented yet"
+      | LetDef (name, exp) ->
+          let exp_type = elabExp env (level + 1) types exp in
+          let generalized_type = generalize level exp_type in
+          Hashtbl.add types part_id generalized_type ;
+          extend env (LongId (List.append path [name])) generalized_type
+      | LetRecDef lets ->
+          let rec allocate_type_vars env = function
+            | (part_id, LetRecDefPart (name, value)) :: t ->
+                let ty = new_var (level + 1) in
+                Hashtbl.add types part_id ty ;
+                allocate_type_vars (extend env (LongId [name]) ty) t
+            | [] -> env
+          in
+          let env = allocate_type_vars env lets in
+          let rec elabParts env = function
+            | (part_id, LetRecDefPart (name, exp)) :: t ->
+                let exp_type = elabExp env (level + 1) types exp in
+                Hashtbl.add types part_id exp_type ;
+                elabParts (extend env (LongId [name]) exp_type) t
+            | [] -> env
+          in
+          elabParts env lets )
+
+let rec elabModule' path env types module_id name = function
+  | h :: t ->
+      let env = elabModulePart path env types h in
+      elabModule' path env types module_id name t
+  | [] -> env
+
+let elabModule module_id name module_parts =
+  elabModule' [name] empty (Hashtbl.create 1024) module_id name module_parts
+
+let elabDecl = function
+  | oid, decl -> (
+    match decl with
+    | InterfaceDecl _ -> failwith "interface is not implemented yet"
+    | FunctorDecl _ -> failwith "functor is not implemented yet"
+    | ModuleDecl (Some name, false, (module_parts, [])) ->
+        elabModule oid name module_parts
+    | ModuleDecl (Some _, false, (_, _ :: _)) ->
+        failwith "interface is not implemented yet"
+    | ModuleDecl (_, true, _) -> failwith "given module is not implemented yet"
+    | ModuleDecl (None, _, _) ->
+        failwith "anonymous module is not supported yet" )

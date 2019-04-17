@@ -188,10 +188,14 @@ type interface_part' =
 
 type interface_part = oid * interface_part'
 
+type let_rec_def_part' = LetRecDefPart of string * exp
+
+type let_rec_def_part = oid * let_rec_def_part'
+
 type module_part' =
   | InterfaceInModule of interface_part
   | LetDef of string * exp
-  | LetRecDef of (string * exp) list
+  | LetRecDef of let_rec_def_part list
 
 type module_part = oid * module_part'
 

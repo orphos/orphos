@@ -320,7 +320,7 @@ val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) |> new_tree 
 
 let_definition:
   | LET name=IDENTIFIER EQ exp=expression { LetDef (name, exp) |> new_tree }
-  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ name, exp }) { LetRecDef ((name, exp) :: ands) |> new_tree }
+  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ LetRecDefPart (name, exp) |> new_tree }) { LetRecDef ((LetRecDefPart (name, exp) |> new_tree) :: ands) |> new_tree }
 
 exception_definition:
   | EXCEPTION IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) |> new_tree }
