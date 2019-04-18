@@ -15,3 +15,11 @@ let new_oid () =
   ret
 
 let with_oid x = (new_oid (), x)
+
+exception NotImplemented of string
+
+let noimpl feat = raise (NotImplemented feat)
+
+exception Panic of string
+
+let bug msg = raise (Panic ("[BUG] " ^ msg))

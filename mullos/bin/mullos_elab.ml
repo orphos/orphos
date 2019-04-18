@@ -6,9 +6,9 @@ open Mullos_syntax
 open Mullos_syntax.Type
 open Mullos_aux
 
-exception Error of string
+exception TypeError of string
 
-let error msg = raise (Error msg)
+let error msg = raise (TypeError ("type error: " ^ msg))
 
 module LongIdIsOrdered = struct
   type t = long_id
@@ -39,7 +39,7 @@ let lookup env name = IdMap.find name env
 let occurs_check_adjust_levels tvar_id tvar_level ty =
   let rec f = function
     | TVar {contents= Link ty} -> f ty
-    | TVar {contents= Generic _} -> assert false
+    | TVar {contents= Generic _} -> bug "occurs check to generic variable"
     | TVar ({contents= Unbound (other_id, other_level)} as other_tvar) ->
         if other_id = tvar_id then error "recursive types"
         else if other_level > tvar_level then
@@ -68,13 +68,12 @@ let rec unify ty1 ty2 =
         unify ty1 ty2
     | TVar {contents= Unbound (id1, _)}, TVar {contents= Unbound (id2, _)}
       when id1 = id2 ->
-        assert false
-        (* There is only a single instance of a particular type variable. *)
+        bug "multiple instance of a particular type variable."
     | TVar ({contents= Unbound (id, level)} as tvar), ty
      |ty, TVar ({contents= Unbound (id, level)} as tvar) ->
         occurs_check_adjust_levels id level ty ;
         tvar := Link ty
-    | TLazy _, _ -> assert false
+    | TLazy _, _ -> noimpl "lazy"
     | TTuple xs, TTuple ys -> List.iter2 unify xs ys
     | _, _ -> error "cannot unify types "
 
@@ -117,7 +116,7 @@ let rec elabPat (env : env) (level : level) = function
     | PIdent _ -> new_var level
     | PUnit -> TLongId (LongId ["unit"])
     | PCapture (_, pat) -> elabPat env level pat
-    | PCtor (ctor, pat) -> assert false
+    | PCtor (ctor, pat) -> noimpl "variant constructor pattern"
     | PTuple pats -> TTuple (List.map (fun pat -> elabPat env level pat) pats)
     | PWildcard -> new_var level
     | PText _ -> TLongId (LongId ["text"])
@@ -126,10 +125,11 @@ let rec elabPat (env : env) (level : level) = function
     | PLazy pat -> TLazy (elabPat env level pat)
     | POr (pat1, pat2) ->
         unify (elabPat env level pat1) (elabPat env level pat2) ;
-        assert false
-    | PListLiteral pats -> assert false
-    | PArrayLiteral pats -> assert false
-    | PPolymorphicVariant (label, pat) -> assert false )
+        noimpl "union pattern"
+    | PListLiteral pats -> noimpl "list pattern"
+    | PArrayLiteral pats -> noimpl "array pattern"
+    | PPolymorphicVariant (label, pat) -> noimpl "polymorphic variant pattern"
+    )
 
 let rec elabExp env level types = function
   | id, exp' ->
@@ -151,14 +151,14 @@ let rec elabExp env level types = function
             elabExp
               (extend env (LongId [name]) generalized_ty)
               level types body
-        | Let _ -> failwith "binding to pattern is not implemented"
+        | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
               | ((patId, PIdent name), params, value) :: t ->
                   let ty = new_var (level + 1) in
                   Hashtbl.add types patId ty ;
                   allocate_type_vars (extend env (LongId [name]) ty) t
-              | ((patId, _), params, value) :: t -> assert false
+              | ((patId, _), params, value) :: t -> noimpl "binding to pattern"
               | [] -> env
             in
             let env = allocate_type_vars env lets in
@@ -168,7 +168,7 @@ let rec elabExp env level types = function
                   Hashtbl.add types patId value_ty ;
                   elabBindees (extend env (LongId [name]) value_ty) t
               | [] -> env
-              | _ -> assert false
+              | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
             in
             let env = elabBindees env lets in
             (* elabExp body *)
@@ -178,7 +178,7 @@ let rec elabExp env level types = function
           | TArrow (param, ret) ->
               let arg = elabExp env level types arg in
               unify param arg ; ret
-          | _ -> failwith "type error: expected function" )
+          | _ -> error "expected function" )
         | Bool _ -> i1
         | Number _ -> i64 (* TODO: implement integer suffix  *)
         | Text _ -> text
@@ -205,18 +205,25 @@ let rec elabExp env level types = function
               unify i1 (elab left) ;
               unify i1 (elab right) ;
               i1
-          | Combine | Remove | Cons | Pipeline | Append | Prepend | Erase
-           |Dot | AddAsign | SubstractAsign | Asign ->
-              failwith "no implemented" )
+          | Combine | Remove | Cons -> noimpl "sequence operators"
+          | Pipeline -> noimpl "pipeline operator"
+          | Append | Prepend | Erase ->
+              noimpl "sequence-with-element operators"
+          | Dot -> noimpl "dot operator"
+          | AddAsign | SubstractAsign | Asign -> noimpl "assignment operators"
+          )
         | PrefixOp (op, operand) -> (
             let operandType = elab operand in
             match op with
             | Positive | Negative -> unify i64 operandType ; i64
             | Not -> unify i1 operandType ; i1
             | BitwiseNot -> unify u64 operandType ; u64
-            | Deref | Ref | Raise | Lazy | PrefixIncrement | PrefixDecrement ->
-                failwith "not implemented" )
-        | PostfixOp (operand, op) -> failwith "not implemented"
+            | Deref | Ref -> noimpl "ref/deref operators"
+            | Raise -> noimpl "raise"
+            | Lazy -> noimpl "lazy"
+            | PrefixIncrement | PrefixDecrement ->
+                noimpl "increment/decrement operators" )
+        | PostfixOp (operand, op) -> noimpl "postfix operators"
         | Tuple values -> TTuple (List.map elab values)
         | ListLiteral values ->
             let types = List.map elab values in
@@ -249,12 +256,11 @@ let rec elabExp env level types = function
             aux exps
         | Match (value, mrules) ->
             let valueType = elabExp env level types value in
-            failwith "pattern matching is not implemented yet"
-        | Handle _ -> failwith "effect handler is not implemented yet"
+            noimpl "pattern matching"
+        | Handle _ -> noimpl "effect handler"
         | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
-            failwith "record is not implemented yet"
-        | PolymorphicVariantConstruction _ ->
-            failwith "polymorphic variant is not implemented yet"
+            noimpl "record"
+        | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
       in
       Hashtbl.add types id ret ; ret
 
@@ -266,7 +272,7 @@ let elabModulePart (path : string list) (env : env)
       let types = Hashtbl.create 1024 in
       let level = 0 in
       match part with
-      | InterfaceInModule _ -> failwith "interface is not implemented yet"
+      | InterfaceInModule _ -> noimpl "interface"
       | LetDef (name, exp) ->
           let exp_type = elabExp env (level + 1) types exp in
           let generalized_type = generalize level exp_type in
@@ -302,12 +308,10 @@ let elabModule module_id name module_parts =
 let elabDecl = function
   | oid, decl -> (
     match decl with
-    | InterfaceDecl _ -> failwith "interface is not implemented yet"
-    | FunctorDecl _ -> failwith "functor is not implemented yet"
+    | InterfaceDecl _ -> noimpl "interface"
+    | FunctorDecl _ -> noimpl "functor"
     | ModuleDecl (Some name, false, (module_parts, [])) ->
         elabModule oid name module_parts
-    | ModuleDecl (Some _, false, (_, _ :: _)) ->
-        failwith "interface is not implemented yet"
-    | ModuleDecl (_, true, _) -> failwith "given module is not implemented yet"
-    | ModuleDecl (None, _, _) ->
-        failwith "anonymous module is not supported yet" )
+    | ModuleDecl (Some _, false, (_, _ :: _)) -> noimpl "interface"
+    | ModuleDecl (_, true, _) -> noimpl "given module"
+    | ModuleDecl (None, _, _) -> noimpl "anonymous module" )
