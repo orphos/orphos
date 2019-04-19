@@ -2,9 +2,27 @@
  *
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
-open Mullos_syntax
-open Mullos_syntax.Type
 open Mullos_aux
+open Mullos_syntax
+
+type data = {mutable ty_field: Mullos_syntax.Type.ty option}
+
+let get_ty = function
+  | {ty_field= Some ty} -> ty
+  | {ty_field= None} -> bug "ty is not allocated yet"
+
+let set_ty data ty = data.ty_field <- Some ty
+
+module ElabData = struct
+  type t = data
+
+  let allocate () = {ty_field= None}
+end
+
+open ElabData
+module Tree = Mullos_syntax.Make (ElabData)
+open Tree
+open Mullos_syntax.Type
 
 exception TypeError of string
 
@@ -111,29 +129,33 @@ let instantiate level ty =
   f ty
 
 let rec elabPat (env : env) (level : level) = function
-  | id, pat' -> (
-    match pat' with
-    | PIdent _ -> new_var level
-    | PUnit -> TLongId (LongId ["unit"])
-    | PCapture (_, pat) -> elabPat env level pat
-    | PCtor (ctor, pat) -> noimpl "variant constructor pattern"
-    | PTuple pats -> TTuple (List.map (fun pat -> elabPat env level pat) pats)
-    | PWildcard -> new_var level
-    | PText _ -> TLongId (LongId ["text"])
-    | PNumber _ -> TLongId (LongId ["i32"])
-    | PBool _ -> TLongId (LongId ["bool"])
-    | PLazy pat -> TLazy (elabPat env level pat)
-    | POr (pat1, pat2) ->
-        unify (elabPat env level pat1) (elabPat env level pat2) ;
-        noimpl "union pattern"
-    | PListLiteral pats -> noimpl "list pattern"
-    | PArrayLiteral pats -> noimpl "array pattern"
-    | PPolymorphicVariant (label, pat) -> noimpl "polymorphic variant pattern"
-    )
+  | data, pat' ->
+      let ty =
+        match pat' with
+        | PIdent _ -> new_var level
+        | PUnit -> TLongId (LongId ["unit"])
+        | PCapture (_, pat) -> elabPat env level pat
+        | PCtor (ctor, pat) -> noimpl "variant constructor pattern"
+        | PTuple pats ->
+            TTuple (List.map (fun pat -> elabPat env level pat) pats)
+        | PWildcard -> new_var level
+        | PText _ -> TLongId (LongId ["text"])
+        | PNumber _ -> TLongId (LongId ["i32"])
+        | PBool _ -> TLongId (LongId ["bool"])
+        | PLazy pat -> TLazy (elabPat env level pat)
+        | POr (pat1, pat2) ->
+            unify (elabPat env level pat1) (elabPat env level pat2) ;
+            noimpl "union pattern"
+        | PListLiteral pats -> noimpl "list pattern"
+        | PArrayLiteral pats -> noimpl "array pattern"
+        | PPolymorphicVariant (label, pat) ->
+            noimpl "polymorphic variant pattern"
+      in
+      set_ty data ty ; ty
 
-let rec elabExp env level types = function
-  | id, exp' ->
-      let elab = elabExp env level types in
+let rec elabExp env level = function
+  | data, exp' ->
+      let elab = elabExp env level in
       let ret =
         match exp' with
         | Ident name -> (
@@ -142,41 +164,39 @@ let rec elabExp env level types = function
         | Lambda (param, body) ->
             let param_ty = new_var level in
             let env = extend env (LongId [param]) param_ty in
-            let return_ty = elabExp env level types body in
+            let return_ty = elabExp env level body in
             TArrow (param_ty, return_ty)
         | Let ((patId, PIdent name), params, value, body) ->
-            let value_ty = elabExp env (level + 1) types value in
+            let value_ty = elabExp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
-            Hashtbl.add types patId generalized_ty ;
-            elabExp
-              (extend env (LongId [name]) generalized_ty)
-              level types body
+            set_ty data generalized_ty ;
+            elabExp (extend env (LongId [name]) generalized_ty) level body
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
-              | ((patId, PIdent name), params, value) :: t ->
+              | ((pat_data, PIdent name), params, value) :: t ->
                   let ty = new_var (level + 1) in
-                  Hashtbl.add types patId ty ;
+                  set_ty pat_data ty ;
                   allocate_type_vars (extend env (LongId [name]) ty) t
               | ((patId, _), params, value) :: t -> noimpl "binding to pattern"
               | [] -> env
             in
             let env = allocate_type_vars env lets in
             let rec elabBindees env = function
-              | ((patId, PIdent name), params, value) :: t ->
-                  let value_ty = elabExp env (level + 1) types value in
-                  Hashtbl.add types patId value_ty ;
+              | ((pat_data, PIdent name), params, value) :: t ->
+                  let value_ty = elabExp env (level + 1) value in
+                  set_ty pat_data value_ty ;
                   elabBindees (extend env (LongId [name]) value_ty) t
               | [] -> env
               | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
             in
             let env = elabBindees env lets in
             (* elabExp body *)
-            elabExp env level types body
+            elabExp env level body
         | Apply (fn, arg) -> (
-          match elabExp env level types fn with
+          match elabExp env level fn with
           | TArrow (param, ret) ->
-              let arg = elabExp env level types arg in
+              let arg = elabExp env level arg in
               unify param arg ; ret
           | _ -> error "expected function" )
         | Bool _ -> i1
@@ -255,63 +275,61 @@ let rec elabExp env level types = function
             in
             aux exps
         | Match (value, mrules) ->
-            let valueType = elabExp env level types value in
+            let valueType = elabExp env level value in
             noimpl "pattern matching"
         | Handle _ -> noimpl "effect handler"
         | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
             noimpl "record"
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
       in
-      Hashtbl.add types id ret ; ret
+      set_ty data ret ; ret
 
-let elabModulePart (path : string list) (env : env)
-    (types : (long_id, ty) Hashtbl.t) : module_part -> env = function
-  | part_id, part -> (
+let elabModulePart (path : string list) (env : env) : module_part -> env =
+  function
+  | data, part -> (
       (* prepare *)
       let env = empty in
-      let types = Hashtbl.create 1024 in
       let level = 0 in
       match part with
       | InterfaceInModule _ -> noimpl "interface"
       | LetDef (name, exp) ->
-          let exp_type = elabExp env (level + 1) types exp in
+          let exp_type = elabExp env (level + 1) exp in
           let generalized_type = generalize level exp_type in
-          Hashtbl.add types part_id generalized_type ;
+          set_ty data generalized_type ;
           extend env (LongId (List.append path [name])) generalized_type
       | LetRecDef lets ->
           let rec allocate_type_vars env = function
-            | (part_id, LetRecDefPart (name, value)) :: t ->
+            | (part_data, LetRecDefPart (name, value)) :: t ->
                 let ty = new_var (level + 1) in
-                Hashtbl.add types part_id ty ;
+                set_ty part_data ty ;
                 allocate_type_vars (extend env (LongId [name]) ty) t
             | [] -> env
           in
           let env = allocate_type_vars env lets in
           let rec elabParts env = function
-            | (part_id, LetRecDefPart (name, exp)) :: t ->
-                let exp_type = elabExp env (level + 1) types exp in
-                Hashtbl.add types part_id exp_type ;
+            | (part_data, LetRecDefPart (name, exp)) :: t ->
+                let exp_type = elabExp env (level + 1) exp in
                 elabParts (extend env (LongId [name]) exp_type) t
             | [] -> env
           in
           elabParts env lets )
 
-let rec elabModule' path env types module_id name = function
+let rec elabModule' path env module_id name = function
   | h :: t ->
-      let env = elabModulePart path env types h in
-      elabModule' path env types module_id name t
+      let env = elabModulePart path env h in
+      elabModule' path env module_id name t
   | [] -> env
 
 let elabModule module_id name module_parts =
-  elabModule' [name] empty (Hashtbl.create 1024) module_id name module_parts
+  elabModule' [name] empty module_id name module_parts
 
 let elabDecl = function
-  | oid, decl -> (
+  | data, decl -> (
     match decl with
     | InterfaceDecl _ -> noimpl "interface"
     | FunctorDecl _ -> noimpl "functor"
     | ModuleDecl (Some name, false, (module_parts, [])) ->
-        elabModule oid name module_parts
+        elabModule data name module_parts
     | ModuleDecl (Some _, false, (_, _ :: _)) -> noimpl "interface"
     | ModuleDecl (_, true, _) -> noimpl "given module"
     | ModuleDecl (None, _, _) -> noimpl "anonymous module" )

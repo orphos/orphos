@@ -2,14 +2,17 @@
  *
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
+%parameter <Data : Mullos_syntax.Data>
 %{
 
 open Mullos_aux
 open Mullos_syntax
+module Tree = Mullos_syntax.Make(Data)
+open Tree
 
 let noimpl () = failwith "not implemented"
 
-let new_tree x = with_oid x
+let new_tree x = Data.allocate (),  x
 
 %}
 
@@ -94,7 +97,7 @@ let new_tree x = with_oid x
 %token WITH
 %token WITHOUT
 
-%start<Mullos_syntax.compilation_unit> compilation_unit
+%start<Mullos_syntax.Make(Data).compilation_unit> compilation_unit
 
 %%
 

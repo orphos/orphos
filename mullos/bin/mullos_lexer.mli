@@ -2,4 +2,7 @@
  *
  * SPDX-Identifier: LGPL-3.0-or-later
  *)
-val new_reader : unit -> Sedlexing.lexbuf -> Mullos_parser.token list
+module Make (Data : Mullos_syntax.Data) : sig
+  val new_reader :
+    unit -> Sedlexing.lexbuf -> Mullos_parser.Make(Data).token list
+end

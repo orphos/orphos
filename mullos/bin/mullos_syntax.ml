@@ -103,118 +103,134 @@ type postfix_op = PostfixIncrement | PostfixDecrement
 
 type pat_bin_op = [`Colon | `Comma | `At]
 
-type exp' =
-  | Bool of bool
-  | Number of number
-  | Text of string
-  | Ident of long_id
-  | Unit
-  | Apply of exp * exp
-  | BinOp of exp * bin_op * exp
-  | PrefixOp of prefix_op * exp
-  | PostfixOp of exp * postfix_op
-  | Tuple of exp list
-  | IfThenElse of exp * exp * exp option
-  | Seq of exp list
-  | Lambda of string * exp
-  | Let of pat * pat list * exp * exp
-  | LetRec of (pat * pat list * exp) list * exp
-  | Match of exp * pat_clause list
-  | ListLiteral of exp list
-  | ArrayLiteral of exp list
-  | RecordLiteral of exp option * (string * exp) list
-  | RecordRestrictionLiteral of exp * string
-  | RecordSelection of exp * string
-  | PolymorphicVariantConstruction of string * exp
-  | Handle of exp * pat_clause list
+module type Data = sig
+  type t
 
-and exp = oid * exp'
+  val allocate : unit -> t
+end
 
-and pat_clause' =
-  | MatchPat of pat * exp option * exp
-  | MatchException of pat * exp option * exp
-  | MatchEffect of pat * exp option * exp
+module EmptyData : Data = struct
+  type t = unit
 
-and pat_clause = oid * pat_clause'
+  let allocate () = ()
+end
 
-and pat' =
-  | PIdent of string
-  | PUnit
-  | PCapture of string * pat
-  | PCtor of string * pat
-  | PTuple of pat list
-  | PWildcard
-  | PText of string
-  | PNumber of number
-  | PBool of bool
-  | PLazy of pat
-  | POr of pat * pat
-  | PListLiteral of pat list
-  | PArrayLiteral of pat list
-  | PPolymorphicVariant of string * pat
+module Make (Data : Data) = struct
+  type exp' =
+    | Bool of bool
+    | Number of number
+    | Text of string
+    | Ident of long_id
+    | Unit
+    | Apply of exp * exp
+    | BinOp of exp * bin_op * exp
+    | PrefixOp of prefix_op * exp
+    | PostfixOp of exp * postfix_op
+    | Tuple of exp list
+    | IfThenElse of exp * exp * exp option
+    | Seq of exp list
+    | Lambda of string * exp
+    | Let of pat * pat list * exp * exp
+    | LetRec of (pat * pat list * exp) list * exp
+    | Match of exp * pat_clause list
+    | ListLiteral of exp list
+    | ArrayLiteral of exp list
+    | RecordLiteral of exp option * (string * exp) list
+    | RecordRestrictionLiteral of exp * string
+    | RecordSelection of exp * string
+    | PolymorphicVariantConstruction of string * exp
+    | Handle of exp * pat_clause list
 
-and pat = oid * pat'
+  and exp = Data.t * exp'
 
-type ty_bin_op = TComma | TArrow | TApply
+  and pat_clause' =
+    | MatchPat of pat * exp option * exp
+    | MatchException of pat * exp option * exp
+    | MatchEffect of pat * exp option * exp
 
-type type_exp' =
-  | TIdent of long_id
-  | TVar of string
-  | TPointer of type_exp
-  | TNumber of number
-  | TText of string
-  | TBool of bool
-  | TLazy of type_exp
-  | TLabel of string * type_exp
-  | TEff of type_exp * long_id list
-  | TBinOp of type_exp * ty_bin_op * type_exp * (ty_bin_op * type_exp) list
-  | TRecord of type_exp option * (string * type_exp) list
-  | TPolymorphicVariant of string * type_exp
-  | TOr of type_exp list
-  | TRefinement of type_exp * exp list
-  | TGiven of type_exp * long_id list
-  | TArrow of type_exp * type_exp
-  | TTuple of type_exp list
-  | TApply of type_exp list * type_exp
+  and pat_clause = Data.t * pat_clause'
 
-and type_exp = oid * type_exp'
+  and pat' =
+    | PIdent of string
+    | PUnit
+    | PCapture of string * pat
+    | PCtor of string * pat
+    | PTuple of pat list
+    | PWildcard
+    | PText of string
+    | PNumber of number
+    | PBool of bool
+    | PLazy of pat
+    | POr of pat * pat
+    | PListLiteral of pat list
+    | PArrayLiteral of pat list
+    | PPolymorphicVariant of string * pat
 
-type interface_part' =
-  | TypeAlias of string list * string * type_exp
-  | MonomorphicVariant of string list * string * (string * type_exp) list
-  | TypeDecl of string list * string
-  | ValDef of string * type_exp
-  | ExceptionDef of string * type_exp option
+  and pat = Data.t * pat'
 
-type interface_part = oid * interface_part'
+  type ty_bin_op = TComma | TArrow | TApply
 
-type let_rec_def_part' = LetRecDefPart of string * exp
+  type type_exp' =
+    | TIdent of long_id
+    | TVar of string
+    | TPointer of type_exp
+    | TNumber of number
+    | TText of string
+    | TBool of bool
+    | TLazy of type_exp
+    | TLabel of string * type_exp
+    | TEff of type_exp * long_id list
+    | TBinOp of type_exp * ty_bin_op * type_exp * (ty_bin_op * type_exp) list
+    | TRecord of type_exp option * (string * type_exp) list
+    | TPolymorphicVariant of string * type_exp
+    | TOr of type_exp list
+    | TRefinement of type_exp * exp list
+    | TGiven of type_exp * long_id list
+    | TArrow of type_exp * type_exp
+    | TTuple of type_exp list
+    | TApply of type_exp list * type_exp
 
-type let_rec_def_part = oid * let_rec_def_part'
+  and type_exp = Data.t * type_exp'
 
-type module_part' =
-  | InterfaceInModule of interface_part
-  | LetDef of string * exp
-  | LetRecDef of let_rec_def_part list
+  type interface_part' =
+    | TypeAlias of string list * string * type_exp
+    | MonomorphicVariant of string list * string * (string * type_exp) list
+    | TypeDecl of string list * string
+    | ValDef of string * type_exp
+    | ExceptionDef of string * type_exp option
 
-type module_part = oid * module_part'
+  type interface_part = Data.t * interface_part'
 
-type interface_exp =
-  interface_part list * (string list * string * type_exp) list
+  type let_rec_def_part' = LetRecDefPart of string * exp
 
-type interface_ref' = InterfaceExp of interface_exp | InterfaceId of long_id
+  type let_rec_def_part = Data.t * let_rec_def_part'
 
-type interface_ref = oid * interface_ref'
+  type module_part' =
+    | InterfaceInModule of interface_part
+    | LetDef of string * exp
+    | LetRecDef of let_rec_def_part list
 
-type module_exp = module_part list * interface_ref list
+  type module_part = Data.t * module_part'
 
-type decl' =
-  | InterfaceDecl of string * bool * interface_exp
-  | ModuleDecl of string option * bool * module_exp
-  | FunctorDecl of string * (string * interface_ref) list * module_exp
+  type interface_exp =
+    interface_part list * (string list * string * type_exp) list
 
-type decl = oid * decl'
+  type interface_ref' =
+    | InterfaceExp of interface_exp
+    | InterfaceId of long_id
 
-type compilation_unit' = CompilationUnit of decl list
+  type interface_ref = Data.t * interface_ref'
 
-type compilation_unit = oid * compilation_unit'
+  type module_exp = module_part list * interface_ref list
+
+  type decl' =
+    | InterfaceDecl of string * bool * interface_exp
+    | ModuleDecl of string option * bool * module_exp
+    | FunctorDecl of string * (string * interface_ref) list * module_exp
+
+  type decl = Data.t * decl'
+
+  type compilation_unit' = CompilationUnit of decl list
+
+  type compilation_unit = Data.t * compilation_unit'
+end
