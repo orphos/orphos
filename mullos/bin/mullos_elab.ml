@@ -128,6 +128,28 @@ let instantiate level ty =
   in
   f ty
 
+let rec elab_type type_env level = function
+  | data, type_exp ->
+      let elab = elab_type type_env level in
+      let ty =
+        match type_exp with
+        | TIdent id -> lookup type_env id
+        | TGeneric id -> lookup type_env (long_id [id])
+        | TLazy _ -> noimpl "lazy"
+        | TLabel _ -> noimpl "record"
+        | TEff _ -> noimpl "effect"
+        | TRecord _ -> noimpl "record"
+        | TPolymorphicVariant _ -> noimpl "polymorphic variant"
+        | TOr _ -> noimpl "union type"
+        | TRefinement _ -> noimpl "refinement type"
+        | TGiven _ -> noimpl "given type"
+        | TArrow (param, ret) -> Type.TArrow (elab param, elab ret)
+        | TTuple elems -> Type.TTuple (elems |> List.map elab)
+        | TApply (params, applicant) ->
+            Type.TApply (params |> List.map elab, elab applicant)
+      in
+      set_ty data ty ; ty
+
 let rec elabPat (env : env) (level : level) = function
   | data, pat' ->
       let ty =

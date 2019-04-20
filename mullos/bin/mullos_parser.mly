@@ -309,7 +309,7 @@ application_ty:
 
 simple_ty:
   | long_id { TIdent $1 |> new_tree }
-  | type_variable { TVar $1 |> new_tree }
+  | type_variable { TGeneric $1 |> new_tree }
   | LPAREN ty RPAREN { $2 }
 
 type_variable: SINGLE_QUOTE IDENTIFIER { $2 }

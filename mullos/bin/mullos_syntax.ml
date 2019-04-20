@@ -172,15 +172,10 @@ module Make (Data : Data) = struct
 
   type type_exp' =
     | TIdent of long_id
-    | TVar of string
-    | TPointer of type_exp
-    | TNumber of number
-    | TText of string
-    | TBool of bool
+    | TGeneric of string
     | TLazy of type_exp
     | TLabel of string * type_exp
     | TEff of type_exp * long_id list
-    | TBinOp of type_exp * ty_bin_op * type_exp * (ty_bin_op * type_exp) list
     | TRecord of type_exp option * (string * type_exp) list
     | TPolymorphicVariant of string * type_exp
     | TOr of type_exp list
