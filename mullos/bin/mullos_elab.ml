@@ -150,23 +150,23 @@ let rec elab_type type_env level = function
       in
       set_ty data ty ; ty
 
-let rec elabPat (env : env) (level : level) = function
+let rec elab_pat (env : env) (level : level) = function
   | data, pat' ->
       let ty =
         match pat' with
         | PIdent _ -> new_var level
         | PUnit -> TLongId (LongId ["unit"])
-        | PCapture (_, pat) -> elabPat env level pat
+        | PCapture (_, pat) -> elab_pat env level pat
         | PCtor (ctor, pat) -> noimpl "variant constructor pattern"
         | PTuple pats ->
-            TTuple (List.map (fun pat -> elabPat env level pat) pats)
+            TTuple (List.map (fun pat -> elab_pat env level pat) pats)
         | PWildcard -> new_var level
         | PText _ -> TLongId (LongId ["text"])
         | PNumber _ -> TLongId (LongId ["i32"])
         | PBool _ -> TLongId (LongId ["bool"])
-        | PLazy pat -> TLazy (elabPat env level pat)
+        | PLazy pat -> TLazy (elab_pat env level pat)
         | POr (pat1, pat2) ->
-            unify (elabPat env level pat1) (elabPat env level pat2) ;
+            unify (elab_pat env level pat1) (elab_pat env level pat2) ;
             noimpl "union pattern"
         | PListLiteral pats -> noimpl "list pattern"
         | PArrayLiteral pats -> noimpl "array pattern"
@@ -175,9 +175,9 @@ let rec elabPat (env : env) (level : level) = function
       in
       set_ty data ty ; ty
 
-let rec elabExp env level = function
+let rec elab_exp env level = function
   | data, exp' ->
-      let elab = elabExp env level in
+      let elab = elab_exp env level in
       let ret =
         match exp' with
         | Ident name -> (
@@ -186,13 +186,13 @@ let rec elabExp env level = function
         | Lambda (param, body) ->
             let param_ty = new_var level in
             let env = extend env (LongId [param]) param_ty in
-            let return_ty = elabExp env level body in
+            let return_ty = elab_exp env level body in
             TArrow (param_ty, return_ty)
         | Let ((patId, PIdent name), params, value, body) ->
-            let value_ty = elabExp env (level + 1) value in
+            let value_ty = elab_exp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
             set_ty data generalized_ty ;
-            elabExp (extend env (LongId [name]) generalized_ty) level body
+            elab_exp (extend env (LongId [name]) generalized_ty) level body
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
@@ -206,19 +206,19 @@ let rec elabExp env level = function
             let env = allocate_type_vars env lets in
             let rec elabBindees env = function
               | ((pat_data, PIdent name), params, value) :: t ->
-                  let value_ty = elabExp env (level + 1) value in
+                  let value_ty = elab_exp env (level + 1) value in
                   set_ty pat_data value_ty ;
                   elabBindees (extend env (LongId [name]) value_ty) t
               | [] -> env
               | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
             in
             let env = elabBindees env lets in
-            (* elabExp body *)
-            elabExp env level body
+            (* elab_exp body *)
+            elab_exp env level body
         | Apply (fn, arg) -> (
-          match elabExp env level fn with
+          match elab_exp env level fn with
           | TArrow (param, ret) ->
-              let arg = elabExp env level arg in
+              let arg = elab_exp env level arg in
               unify param arg ; ret
           | _ -> error "expected function" )
         | Bool _ -> i1
@@ -297,7 +297,7 @@ let rec elabExp env level = function
             in
             aux exps
         | Match (value, mrules) ->
-            let valueType = elabExp env level value in
+            let valueType = elab_exp env level value in
             noimpl "pattern matching"
         | Handle _ -> noimpl "effect handler"
         | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
@@ -315,7 +315,7 @@ let elabModulePart (path : string list) (env : env) : module_part -> env =
       match part with
       | InterfaceInModule _ -> noimpl "interface"
       | LetDef (name, exp) ->
-          let exp_type = elabExp env (level + 1) exp in
+          let exp_type = elab_exp env (level + 1) exp in
           let generalized_type = generalize level exp_type in
           set_ty data generalized_type ;
           extend env (LongId (List.append path [name])) generalized_type
@@ -330,7 +330,7 @@ let elabModulePart (path : string list) (env : env) : module_part -> env =
           let env = allocate_type_vars env lets in
           let rec elabParts env = function
             | (part_data, LetRecDefPart (name, exp)) :: t ->
-                let exp_type = elabExp env (level + 1) exp in
+                let exp_type = elab_exp env (level + 1) exp in
                 elabParts (extend env (LongId [name]) exp_type) t
             | [] -> env
           in
