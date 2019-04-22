@@ -128,9 +128,9 @@ let instantiate level ty =
   in
   f ty
 
-let rec elab_type type_env level = function
+let rec elab_type type_env = function
   | data, type_exp ->
-      let elab = elab_type type_env level in
+      let elab = elab_type type_env in
       let ty =
         match type_exp with
         | TIdent id -> lookup type_env id
