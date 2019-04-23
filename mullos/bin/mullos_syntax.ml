@@ -18,6 +18,7 @@ module Type = struct
     | TTuple of ty list
     | TLazy of ty
     | TVar of tvar ref
+    | TVariant of string list * string * (string * ty) list
 
   and tvar = Unbound of int * level | Link of ty | Generic of int
 
@@ -129,7 +130,7 @@ module Make (Data : Data) = struct
     | Tuple of exp list
     | IfThenElse of exp * exp * exp option
     | Seq of exp list
-    | Lambda of string * exp
+    | Lambda of pat * exp
     | Let of pat * pat list * exp * exp
     | LetRec of (pat * pat list * exp) list * exp
     | Match of exp * pat_clause list
@@ -187,28 +188,31 @@ module Make (Data : Data) = struct
 
   and type_exp = Data.t * type_exp'
 
-  type interface_part' =
+  type ctor' = Ctor of string * type_exp
+
+  type ctor = Data.t * ctor'
+
+  type type_decl' =
     | TypeAlias of string list * string * type_exp
-    | MonomorphicVariant of string list * string * (string * type_exp) list
+    | MonomorphicVariant of string list * string * ctor list
     | TypeDecl of string list * string
     | ValDef of string * type_exp
     | ExceptionDef of string * type_exp option
 
-  type interface_part = Data.t * interface_part'
+  type type_decl = Data.t * type_decl'
 
-  type let_rec_def_part' = LetRecDefPart of string * exp
+  type let_rec_def_part' = LetRecDefPart of pat * exp
 
   type let_rec_def_part = Data.t * let_rec_def_part'
 
   type module_part' =
-    | InterfaceInModule of interface_part
-    | LetDef of string * exp
+    | TypeDeclInModule of type_decl
+    | LetDef of pat * exp
     | LetRecDef of let_rec_def_part list
 
   type module_part = Data.t * module_part'
 
-  type interface_exp =
-    interface_part list * (string list * string * type_exp) list
+  type interface_exp = type_decl list * (string list * string * type_exp) list
 
   type interface_ref' =
     | InterfaceExp of interface_exp

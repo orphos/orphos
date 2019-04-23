@@ -18,6 +18,7 @@ let new_tree x = Data.allocate (),  x
 
 %token AMPERSAND
 %token AND
+%token AS
 %token ASTERISK
 %token AT
 %token BIG_AMPERSAND
@@ -123,12 +124,7 @@ expression:
   | IF expression THEN expression ELSE expression { IfThenElse ($2, $4, Some $6) |> new_tree }
   | IF expression THEN expression END { IfThenElse ($2, $4, None) |> new_tree }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) |> new_tree }
-  | FN IDENTIFIER+ HYPHEN_GREATER expression {
-                       let rec aux body = function
-                         | h :: t -> aux (Lambda (h, body) |> new_tree) t
-                         | [] -> body in
-                       aux $4 $2
-                     }
+  | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) |> new_tree }
   | LET name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression semi exp=expression { Let (PIdent name |> new_tree , params, body, exp) |> new_tree }
   | LET REC name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression ands=list(AND name=IDENTIFIER params=list(IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression { PIdent name |> new_tree, params, body }) semi exp=expression {
       LetRec ((PIdent name |> new_tree, params, body) :: ands, exp) |> new_tree
@@ -258,7 +254,7 @@ tuple_pattern: lazy_pattern COMMA separated_nonempty_list(COMMA, lazy_pattern) {
 lazy_pattern: LAZY capture_pattern { PLazy $2 |> new_tree } | capture_pattern { $1 }
 
 capture_pattern:
-  | IDENTIFIER EQ ctor_pattern { PCapture ($1, $3) |> new_tree } | ctor_pattern { $1 }
+  | ctor_pattern AS IDENTIFIER { PCapture ($3, $1) |> new_tree } | ctor_pattern { $1 }
 
 ctor_pattern:
   | IDENTIFIER simple_pattern { PCtor ($1, $2) |> new_tree } | simple_pattern { $1 }
@@ -317,13 +313,13 @@ type_variable: SINGLE_QUOTE IDENTIFIER { $2 }
 type_definition:
   | TYPE type_variable* IDENTIFIER { TypeDecl ($2, $3) |> new_tree }
   | TYPE type_variable* IDENTIFIER EQ ty { TypeAlias ($2, $3, $5) |> new_tree }
-  | TYPE params=type_variable* name=IDENTIFIER EQ ioption(VERTICAL) ctor=IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL IDENTIFIER OF ty { $2, $4 }) { MonomorphicVariant (params, name, (ctor, ty) :: tail) |> new_tree }
+  | TYPE params=type_variable* name=IDENTIFIER EQ ioption(VERTICAL) ctor=IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL IDENTIFIER OF ty { Ctor ($2, $4) |> new_tree }) { MonomorphicVariant (params, name, (Ctor (ctor, ty) |> new_tree) :: tail) |> new_tree }
 
 val_definition: VAL name=IDENTIFIER COLON ty=ty { ValDef (name, ty) |> new_tree }
 
 let_definition:
-  | LET name=IDENTIFIER EQ exp=expression { LetDef (name, exp) |> new_tree }
-  | LET REC name=IDENTIFIER EQ exp=expression ands=list(AND name=IDENTIFIER EQ exp=expression{ LetRecDefPart (name, exp) |> new_tree }) { LetRecDef ((LetRecDefPart (name, exp) |> new_tree) :: ands) |> new_tree }
+  | LET bindant=pattern EQ exp=expression { LetDef (bindant, exp) |> new_tree }
+  | LET REC bindant=pattern EQ exp=expression ands=list(AND bindant=pattern EQ exp=expression{ LetRecDefPart (bindant, exp) |> new_tree }) { LetRecDef ((LetRecDefPart (bindant, exp) |> new_tree) :: ands) |> new_tree }
 
 exception_definition:
   | EXCEPTION IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) |> new_tree }
@@ -349,9 +345,9 @@ interface_ref: interface_exp  { InterfaceExp $1 |> new_tree } | long_id { Interf
 interface_where_part: type_variable* IDENTIFIER EQ ty { $1, $2, $4 }
 
 module_body_part:
-  | val_definition { InterfaceInModule $1 |> new_tree }
-  | type_definition { InterfaceInModule $1 |> new_tree }
-  | exception_definition { InterfaceInModule $1 |> new_tree }
+  | val_definition { TypeDeclInModule $1 |> new_tree }
+  | type_definition { TypeDeclInModule $1 |> new_tree }
+  | exception_definition { TypeDeclInModule $1 |> new_tree }
   | let_definition { $1 }
 
 module_exp:

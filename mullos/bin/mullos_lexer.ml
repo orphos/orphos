@@ -179,6 +179,7 @@ module Make (Data : Mullos_syntax.Data) = struct
         , Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ) -> (
         match lexeme lexbuf with
         | "and" -> AND
+        | "as" -> AS
         | "case" -> CASE
         | "effect" -> EFFECT
         | "else" -> ELSE

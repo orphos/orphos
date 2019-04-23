@@ -5,7 +5,7 @@
 open Mullos_aux
 open Mullos_syntax
 
-type data = {mutable ty_field: Mullos_syntax.Type.ty option}
+type data = {mutable ty_field: Mullos_syntax.Type.ty option; oid: oid}
 
 let get_ty = function
   | {ty_field= Some ty} -> ty
@@ -13,10 +13,14 @@ let get_ty = function
 
 let set_ty data ty = data.ty_field <- Some ty
 
+let get_ty_of = function data, _ -> get_ty data
+
+let set_ty_of = function data, _ -> fun ty -> data.ty_field <- Some ty
+
 module ElabData = struct
   type t = data
 
-  let allocate () = {ty_field= None}
+  let allocate () = {ty_field= None; oid= new_oid ()}
 end
 
 open ElabData
@@ -46,13 +50,24 @@ end
 
 module IdMap = Map.Make (LongIdIsOrdered)
 
-type env = ty IdMap.t
+type value = Exp of exp | CtorValue of ctor | Captured of pat
 
-let empty = IdMap.empty
+let get_ty_of_value = function
+  | Exp (data, _) | CtorValue (data, _) | Captured (data, _) -> get_ty data
 
-let extend env name ty = IdMap.add name ty env
+type env = {values: value IdMap.t; types: type_decl IdMap.t}
 
-let lookup env name = IdMap.find name env
+let empty = {values= IdMap.empty; types= IdMap.empty}
+
+let extend_value env name value =
+  {env with values= IdMap.add name value env.values}
+
+let extend_type env name type_exp =
+  {env with types= IdMap.add name type_exp env.types}
+
+let resolve_value env name = IdMap.find name env.values
+
+let resolve_type env name = IdMap.find name env.types
 
 let occurs_check_adjust_levels tvar_id tvar_level ty =
   let rec f = function
@@ -68,6 +83,7 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
     | TLongId _ -> ()
     | TLazy ty -> f ty
     | TTuple tys -> List.iter f tys
+    | TVariant (_, _, ctors) -> List.iter (function _, ty -> f ty) ctors
   in
   f ty
 
@@ -103,6 +119,11 @@ let rec generalize level = function
   | TArrow (param_ty, return_ty) ->
       TArrow (generalize level param_ty, generalize level return_ty)
   | TTuple tys -> TTuple (List.map (generalize level) tys)
+  | TVariant (params, name, ctors) ->
+      TVariant
+        ( params
+        , name
+        , List.map (function name, ty -> (name, generalize level ty)) ctors )
   | TLazy ty -> TLazy (generalize level ty)
   | TVar {contents= Link ty} -> generalize level ty
   | (TVar {contents= Generic _} | TVar {contents= Unbound _} | TLongId _) as ty
@@ -124,17 +145,20 @@ let instantiate level ty =
     | TApply (ty_args, ty) -> TApply (List.map f ty_args, f ty)
     | TArrow (param_ty, return_ty) -> TArrow (f param_ty, f return_ty)
     | TTuple tys -> TTuple (List.map f tys)
+    | TVariant (params, name, ctors) ->
+        TVariant
+          (params, name, List.map (function name, ty -> (name, f ty)) ctors)
     | TLazy ty -> TLazy (f ty)
   in
   f ty
 
-let rec elab_type type_env = function
+let rec elab_type env = function
   | data, type_exp ->
-      let elab = elab_type type_env in
+      let elab = elab_type env in
       let ty =
         match type_exp with
-        | TIdent id -> lookup type_env id
-        | TGeneric id -> lookup type_env (long_id [id])
+        | TIdent id -> resolve_type env id |> get_ty_of
+        | TGeneric id -> resolve_type env (long_id [id]) |> get_ty_of
         | TLazy _ -> noimpl "lazy"
         | TLabel _ -> noimpl "record"
         | TEff _ -> noimpl "effect"
@@ -181,34 +205,44 @@ let rec elab_exp env level = function
       let ret =
         match exp' with
         | Ident name -> (
-          try instantiate level (lookup env name) with Not_found ->
-            error "variable not found" )
-        | Lambda (param, body) ->
+          try instantiate level (resolve_value env name |> get_ty_of_value)
+          with Not_found -> error "variable not found" )
+        | Lambda (((param_data, PIdent param_name) as param), body) ->
             let param_ty = new_var level in
-            let env = extend env (LongId [param]) param_ty in
+            set_ty param_data param_ty ;
+            let env =
+              extend_value env (LongId [param_name]) (Captured param)
+            in
             let return_ty = elab_exp env level body in
             TArrow (param_ty, return_ty)
-        | Let ((patId, PIdent name), params, value, body) ->
+        | Lambda ((_, _), _) -> noimpl "pattern param"
+        | Let (((patId, PIdent name) as bindant), params, value, body) ->
             let value_ty = elab_exp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
             set_ty data generalized_ty ;
-            elab_exp (extend env (LongId [name]) generalized_ty) level body
+            elab_exp
+              (extend_value env (LongId [name]) (Captured bindant))
+              level body
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
-              | ((pat_data, PIdent name), params, value) :: t ->
+              | (((pat_data, PIdent name) as bindant), params, value) :: t ->
                   let ty = new_var (level + 1) in
                   set_ty pat_data ty ;
-                  allocate_type_vars (extend env (LongId [name]) ty) t
+                  allocate_type_vars
+                    (extend_value env (LongId [name]) (Captured bindant))
+                    t
               | ((patId, _), params, value) :: t -> noimpl "binding to pattern"
               | [] -> env
             in
             let env = allocate_type_vars env lets in
             let rec elabBindees env = function
-              | ((pat_data, PIdent name), params, value) :: t ->
+              | (((pat_data, PIdent name) as bindant), params, value) :: t ->
                   let value_ty = elab_exp env (level + 1) value in
                   set_ty pat_data value_ty ;
-                  elabBindees (extend env (LongId [name]) value_ty) t
+                  elabBindees
+                    (extend_value env (LongId [name]) (Captured bindant))
+                    t
               | [] -> env
               | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
             in
@@ -313,37 +347,68 @@ let elabModulePart (path : string list) (env : env) : module_part -> env =
       let env = empty in
       let level = 0 in
       match part with
-      | InterfaceInModule _ -> noimpl "interface"
-      | LetDef (name, exp) ->
+      | TypeDeclInModule ((_, MonomorphicVariant (params, name, ctors)) as decl)
+        ->
+          let ctor_types =
+            List.map
+              (function
+                | (_, Ctor (name, type_exp)) as ctor ->
+                    let ty = elab_type env type_exp in
+                    set_ty_of ctor ty ;
+                    (name, elab_type env type_exp))
+              ctors
+          in
+          let ty = TVariant (params, name, ctor_types) in
+          set_ty_of decl ty ;
+          let env = extend_type env (LongId (List.append path [name])) decl in
+          let rec aux env = function
+            | ((_, Ctor (name, ty)) as ctor) :: t ->
+                aux
+                  (extend_value env
+                     (LongId (List.append path [name]))
+                     (CtorValue ctor))
+                  t
+            | [] -> env
+          in
+          aux env ctors
+      | TypeDeclInModule _ -> noimpl "interface"
+      | LetDef (((_, PIdent name) as bindant), exp) ->
           let exp_type = elab_exp env (level + 1) exp in
           let generalized_type = generalize level exp_type in
-          set_ty data generalized_type ;
-          extend env (LongId (List.append path [name])) generalized_type
+          set_ty_of bindant generalized_type ;
+          extend_value env
+            (LongId (List.append path [name]))
+            (Captured bindant)
+      | LetDef ((_, _), _) -> noimpl "pattern binding"
       | LetRecDef lets ->
           let rec allocate_type_vars env = function
-            | (part_data, LetRecDefPart (name, value)) :: t ->
+            | (part_data, LetRecDefPart (((_, PIdent name) as bindant), value))
+              :: t ->
                 let ty = new_var (level + 1) in
-                set_ty part_data ty ;
-                allocate_type_vars (extend env (LongId [name]) ty) t
+                set_ty_of bindant ty ;
+                allocate_type_vars
+                  (extend_value env (LongId [name]) (Captured bindant))
+                  t
+            | (_, _) :: _ -> noimpl "pattern binding"
             | [] -> env
           in
           let env = allocate_type_vars env lets in
           let rec elabParts env = function
             | (part_data, LetRecDefPart (name, exp)) :: t ->
-                let exp_type = elab_exp env (level + 1) exp in
-                elabParts (extend env (LongId [name]) exp_type) t
+                elab_exp env (level + 1) exp |> ignore ;
+                elabParts env t
             | [] -> env
           in
           elabParts env lets )
 
-let rec elabModule' path env module_id name = function
+let rec elabModule' path env type_env module_id name = function
   | h :: t ->
       let env = elabModulePart path env h in
-      elabModule' path env module_id name t
+      elabModule' path env type_env module_id name t
   | [] -> env
 
 let elabModule module_id name module_parts =
-  elabModule' [name] empty module_id name module_parts
+  elabModule' [name] empty empty module_id name module_parts
 
 let elabDecl = function
   | data, decl -> (
