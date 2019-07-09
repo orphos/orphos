@@ -19,7 +19,6 @@ depends: [
   "sedlex"
   "menhir"
   "sqlite3"
-  "toml"
   "zarith"
   "camomile"
   "batteries"

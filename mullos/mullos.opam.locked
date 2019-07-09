@@ -13,7 +13,6 @@ build: [
   ["dune" "runtest" "-p" name] {with-test}
 ]
 depends: [
-  "ISO8601" {= "0.2.5"}
   "base" {= "v0.11.1"}
   "base-bigarray" {= "base"}
   "base-bytes" {= "base"}
@@ -42,7 +41,6 @@ depends: [
   "sexplib0" {= "v0.11.0"}
   "sqlite3" {= "4.4.1"}
   "stdio" {= "v0.11.0"}
-  "toml" {= "5.0.0"}
   "uchar" {= "0.0.2"}
   "zarith" {= "1.7"}
 ]
