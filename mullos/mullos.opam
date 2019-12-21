@@ -7,7 +7,7 @@ authors: ["Takezoe,Tomoaki"]
 homepage: "https://orphos.res.ac/"
 bug-reports: "https://github.com/orphos/orphos"
 dev-repo: "git+https://github.com/orphos/orphos.git"
-license: "LGPLv3-or-later"
+license: "Apache-2.0 WITH LLVM-exception"
 build: [
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name] {with-test}

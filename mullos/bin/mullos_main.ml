@@ -1,6 +1,6 @@
 (* Copyright (C) 2018 Takezoe,Tomoaki <tomoaki@res.ac>
  *
- * SPDX-Identifier:LGPL-3.0-or-later
+ * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
 open Mullos_parser
 open Mullos_lexer
