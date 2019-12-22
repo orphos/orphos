@@ -81,7 +81,6 @@ type bin_op =
   | Combine
   | Remove
   | Cons
-  | Pipeline
   | Append
   | Prepend
   | Erase

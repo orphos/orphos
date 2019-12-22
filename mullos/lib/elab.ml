@@ -275,7 +275,6 @@ let rec elab_exp env level = function
               unify i1 (elab right) ;
               i1
           | Combine | Remove | Cons -> noimpl "sequence operators"
-          | Pipeline -> noimpl "pipeline operator"
           | Append | Prepend | Erase ->
               noimpl "sequence-with-element operators"
           | Dot -> noimpl "dot operator"
