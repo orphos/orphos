@@ -12,13 +12,13 @@ module Make (Data : Syntax.Data) = struct
   let is_auto_semi_followed = function
     | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET
      |GRAVE_ACCENT | PLUS | HYPHEN | EXCLAMATION | AMPERSAND | ASTERISK
-     |BIG_PLUS | BIG_HYPHEN | RAISE | LAZY | TILDE | IDENTIFIER _ | LPAREN
+     |BIG_PLUS | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | LPAREN
      |TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL | EXCEPTION ->
         true
     | _ -> false
 
   let is_followed_by_auto_semi = function
-    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | IDENTIFIER _
+    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
      |RPAREN | TEXT _ | NUMBER _ | BOOL _ ->
         true
     | _ -> false
@@ -172,11 +172,10 @@ module Make (Data : Syntax.Data) = struct
       | "]" -> RBRACKET
       | "|>" -> VERTICAL_GREATER
       | "||" -> BIG_VERTICAL
-      (* raw identifier or keyword *)
-      | ( ( 'a' .. 'z'
-          | 'A' .. 'Z'
-          | '_', ('_' | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9') )
-        , Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ) -> (
+      (* raw identifiers starting with uppercase character *)
+      | ('A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> UPPER_IDENTIFIER (lexeme lexbuf)
+      (* raw identifiers starting with lowercase or lowline character, or keyword *)
+      | ( 'a' .. 'z' | '_' ), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> (
         match lexeme lexbuf with
         | "and" -> AND
         | "as" -> AS
@@ -206,7 +205,7 @@ module Make (Data : Syntax.Data) = struct
         | "where" -> WHERE
         | "with" -> WITH
         | "without" -> WITHOUT
-        | id -> IDENTIFIER id )
+        | id -> LOWER_IDENTIFIER id )
       (* quoted identifier *)
       | "${", Sub (any, '}'), '}' ->
           failwith "quoted identifier is not implemented yet"
