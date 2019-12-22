@@ -2,9 +2,4 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-open Mullos
-open Parser
-open Lexer
-open Elab
-
-let _ = print_endline ""
+let _ = print_endline "stub"

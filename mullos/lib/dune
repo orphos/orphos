@@ -18,4 +18,4 @@
   (flags --explain)
   (modules parser))
 
-(env (dev (flags (:standard -warn-error -a))))
+(env (dev (flags (:standard -w +a-4) (:standard -warn-error -a+31))))

@@ -8,8 +8,8 @@ open Syntax
 type data = {mutable ty_field: Syntax.Type.ty option; oid: oid}
 
 let get_ty = function
-  | {ty_field= Some ty} -> ty
-  | {ty_field= None} -> bug "ty is not allocated yet"
+  | {ty_field= Some ty; _} -> ty
+  | {ty_field= None; _} -> bug "ty is not allocated yet"
 
 let set_ty data ty = data.ty_field <- Some ty
 
@@ -23,7 +23,6 @@ module ElabData = struct
   let allocate () = {ty_field= None; oid= new_oid ()}
 end
 
-open ElabData
 module Tree = Syntax.Make (ElabData)
 open Tree
 open Syntax.Type
@@ -37,13 +36,12 @@ module LongIdIsOrdered = struct
 
   let compare left right =
     let rec aux = function
-      | [], [] -> 0
-      | h1 :: t1, h2 :: t2 ->
-          let x = String.compare h1 h2 in
-          if x == 0 then compare t1 t2 else x
-      | h :: t, [] -> 1
-      | [], h :: t -> -1
-    in
+        | [], [] -> 0
+        | h1 :: t1, h2 :: t2 ->
+            let x = String.compare h1 h2 in
+            if x == 0 then aux (t1, t2) else x
+        | _ :: _, [] -> 1
+        | [], _ :: _ -> -1 in
     let LongId left, LongId right = (left, right) in
     aux (left, right)
 end
@@ -78,11 +76,10 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
         else if other_level > tvar_level then
           other_tvar := Unbound (other_id, tvar_level)
         else ()
-    | TApply (ty_args, ty) -> f ty ; List.iter f ty_args
-    | TArrow (param_ty, return_ty) -> f param_ty ; f return_ty
+    | TApp (ty_args, ty) -> f ty ; List.iter f ty_args
+    | TFun (param_ty, return_ty) -> f param_ty ; f return_ty
     | TLongId _ -> ()
-    | TLazy ty -> f ty
-    | TTuple tys -> List.iter f tys
+    | TProduct tys -> List.iter f tys
     | TVariant (_, _, ctors) -> List.iter (function _, ty -> f ty) ctors
   in
   f ty
@@ -92,10 +89,10 @@ let rec unify ty1 ty2 =
   else
     match (ty1, ty2) with
     | TLongId long_id1, TLongId long_id2 when long_id1 = long_id2 -> ()
-    | TApply (ty_args1, ty1), TApply (ty_args2, ty2) ->
+    | TApp (ty_args1, ty1), TApp (ty_args2, ty2) ->
         unify ty1 ty2 ;
         List.iter2 unify ty_args1 ty_args2
-    | TArrow (param_ty1, return_ty1), TArrow (param_ty2, return_ty2) ->
+    | TFun (param_ty1, return_ty1), TFun (param_ty2, return_ty2) ->
         unify param_ty1 param_ty2 ;
         unify return_ty1 return_ty2
     | TVar {contents= Link ty1}, ty2 | ty1, TVar {contents= Link ty2} ->
@@ -107,24 +104,22 @@ let rec unify ty1 ty2 =
      |ty, TVar ({contents= Unbound (id, level)} as tvar) ->
         occurs_check_adjust_levels id level ty ;
         tvar := Link ty
-    | TLazy _, _ -> noimpl "lazy"
-    | TTuple xs, TTuple ys -> List.iter2 unify xs ys
+    | TProduct xs, TProduct ys -> List.iter2 unify xs ys
     | _, _ -> error "cannot unify types "
 
 let rec generalize level = function
   | TVar {contents= Unbound (id, other_level)} when other_level > level ->
       TVar (ref (Generic id))
-  | TApply (ty_args, ty) ->
-      TApply (List.map (generalize level) ty_args, generalize level ty)
-  | TArrow (param_ty, return_ty) ->
-      TArrow (generalize level param_ty, generalize level return_ty)
-  | TTuple tys -> TTuple (List.map (generalize level) tys)
+  | TApp (ty_args, ty) ->
+      TApp (List.map (generalize level) ty_args, generalize level ty)
+  | TFun (param_ty, return_ty) ->
+      TFun (generalize level param_ty, generalize level return_ty)
+  | TProduct tys -> TProduct (List.map (generalize level) tys)
   | TVariant (params, name, ctors) ->
       TVariant
         ( params
         , name
         , List.map (function name, ty -> (name, generalize level ty)) ctors )
-  | TLazy ty -> TLazy (generalize level ty)
   | TVar {contents= Link ty} -> generalize level ty
   | (TVar {contents= Generic _} | TVar {contents= Unbound _} | TLongId _) as ty
     ->
@@ -142,13 +137,12 @@ let instantiate level ty =
         Hashtbl.add id_var_map id var ;
         var )
     | TVar {contents= Unbound _} -> ty
-    | TApply (ty_args, ty) -> TApply (List.map f ty_args, f ty)
-    | TArrow (param_ty, return_ty) -> TArrow (f param_ty, f return_ty)
-    | TTuple tys -> TTuple (List.map f tys)
+    | TApp (ty_args, ty) -> TApp (List.map f ty_args, f ty)
+    | TFun (param_ty, return_ty) -> TFun (f param_ty, f return_ty)
+    | TProduct tys -> TProduct (List.map f tys)
     | TVariant (params, name, ctors) ->
         TVariant
           (params, name, List.map (function name, ty -> (name, f ty)) ctors)
-    | TLazy ty -> TLazy (f ty)
   in
   f ty
 
@@ -167,10 +161,10 @@ let rec elab_type env = function
         | TOr _ -> noimpl "union type"
         | TRefinement _ -> noimpl "refinement type"
         | TGiven _ -> noimpl "given type"
-        | TArrow (param, ret) -> Type.TArrow (elab param, elab ret)
-        | TTuple elems -> Type.TTuple (elems |> List.map elab)
+        | TArrow (param, ret) -> TFun (elab param, elab ret)
+        | TTuple elems -> TProduct (elems |> List.map elab)
         | TApply (params, applicant) ->
-            Type.TApply (params |> List.map elab, elab applicant)
+            TApp (params |> List.map elab, elab applicant)
       in
       set_ty data ty ; ty
 
@@ -181,21 +175,20 @@ let rec elab_pat (env : env) (level : level) = function
         | PIdent _ -> new_var level
         | PUnit -> TLongId (LongId ["unit"])
         | PCapture (_, pat) -> elab_pat env level pat
-        | PCtor (ctor, pat) -> noimpl "variant constructor pattern"
+        | PCtor _ -> noimpl "variant constructor pattern"
         | PTuple pats ->
-            TTuple (List.map (fun pat -> elab_pat env level pat) pats)
+            TProduct (List.map (fun pat -> elab_pat env level pat) pats)
         | PWildcard -> new_var level
         | PText _ -> TLongId (LongId ["text"])
         | PNumber _ -> TLongId (LongId ["i32"])
         | PBool _ -> TLongId (LongId ["bool"])
-        | PLazy pat -> TLazy (elab_pat env level pat)
+        | PLazy _ -> noimpl "lazy pattern"
         | POr (pat1, pat2) ->
             unify (elab_pat env level pat1) (elab_pat env level pat2) ;
             noimpl "union pattern"
-        | PListLiteral pats -> noimpl "list pattern"
-        | PArrayLiteral pats -> noimpl "array pattern"
-        | PPolymorphicVariant (label, pat) ->
-            noimpl "polymorphic variant pattern"
+        | PListLiteral _ -> noimpl "list pattern"
+        | PArrayLiteral _ -> noimpl "array pattern"
+        | PPolymorphicVariant _ -> noimpl "polymorphic variant pattern"
       in
       set_ty data ty ; ty
 
@@ -214,9 +207,9 @@ let rec elab_exp env level = function
               extend_value env (LongId [param_name]) (Captured param)
             in
             let return_ty = elab_exp env level body in
-            TArrow (param_ty, return_ty)
+            TFun (param_ty, return_ty)
         | Lambda ((_, _), _) -> noimpl "pattern param"
-        | Let (((patId, PIdent name) as bindant), params, value, body) ->
+        | Let (((_, PIdent name) as bindant), _, value, body) ->
             let value_ty = elab_exp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
             set_ty data generalized_ty ;
@@ -226,18 +219,18 @@ let rec elab_exp env level = function
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars env = function
-              | (((pat_data, PIdent name) as bindant), params, value) :: t ->
+              | (((pat_data, PIdent name) as bindant), _, _) :: t ->
                   let ty = new_var (level + 1) in
                   set_ty pat_data ty ;
                   allocate_type_vars
                     (extend_value env (LongId [name]) (Captured bindant))
                     t
-              | ((patId, _), params, value) :: t -> noimpl "binding to pattern"
+              | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
               | [] -> env
             in
             let env = allocate_type_vars env lets in
             let rec elabBindees env = function
-              | (((pat_data, PIdent name) as bindant), params, value) :: t ->
+              | (((pat_data, PIdent name) as bindant), _, value) :: t ->
                   let value_ty = elab_exp env (level + 1) value in
                   set_ty pat_data value_ty ;
                   elabBindees
@@ -251,7 +244,7 @@ let rec elab_exp env level = function
             elab_exp env level body
         | Apply (fn, arg) -> (
           match elab_exp env level fn with
-          | TArrow (param, ret) ->
+          | TFun (param, ret) ->
               let arg = elab_exp env level arg in
               unify param arg ; ret
           | _ -> error "expected function" )
@@ -299,18 +292,18 @@ let rec elab_exp env level = function
             | Lazy -> noimpl "lazy"
             | PrefixIncrement | PrefixDecrement ->
                 noimpl "increment/decrement operators" )
-        | PostfixOp (operand, op) -> noimpl "postfix operators"
-        | Tuple values -> TTuple (List.map elab values)
+        | PostfixOp _ -> noimpl "postfix operators"
+        | Tuple values -> TProduct (List.map elab values)
         | ListLiteral values ->
             let types = List.map elab values in
             let elemType = new_var level in
             List.iter (unify elemType) types ;
-            TApply ([elemType], listType)
+            TApp ([elemType], listType)
         | ArrayLiteral values ->
             let types = List.map elab values in
             let elemType = new_var level in
             List.iter (unify elemType) types ;
-            TApply ([elemType], arrayType)
+            TApp ([elemType], arrayType)
         | IfThenElse (cond, body, Some fallback) ->
             elab cond |> unify i1 ;
             let bodyType = elab body in
@@ -330,9 +323,7 @@ let rec elab_exp env level = function
               | [] -> unit
             in
             aux exps
-        | Match (value, mrules) ->
-            let valueType = elab_exp env level value in
-            noimpl "pattern matching"
+        | Match _ -> noimpl "pattern matching"
         | Handle _ -> noimpl "effect handler"
         | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
             noimpl "record"
@@ -340,9 +331,9 @@ let rec elab_exp env level = function
       in
       set_ty data ret ; ret
 
-let elab_modulePart (path : string list) (env : env) : module_part -> env =
+let elab_module_part path _ =
   function
-  | data, part -> (
+  | _, part -> (
       (* prepare *)
       let env = empty in
       let level = 0 in
@@ -362,7 +353,7 @@ let elab_modulePart (path : string list) (env : env) : module_part -> env =
           set_ty_of decl ty ;
           let env = extend_type env (LongId (List.append path [name])) decl in
           let rec aux env = function
-            | ((_, Ctor (name, ty)) as ctor) :: t ->
+            | ((_, Ctor (name, _)) as ctor) :: t ->
                 aux
                   (extend_value env
                      (LongId (List.append path [name]))
@@ -382,7 +373,7 @@ let elab_modulePart (path : string list) (env : env) : module_part -> env =
       | LetDef ((_, _), _) -> noimpl "pattern binding"
       | LetRecDef lets ->
           let rec allocate_type_vars env = function
-            | (part_data, LetRecDefPart (((_, PIdent name) as bindant), value))
+            | (_, LetRecDefPart (((_, PIdent name) as bindant), _))
               :: t ->
                 let ty = new_var (level + 1) in
                 set_ty_of bindant ty ;
@@ -394,7 +385,7 @@ let elab_modulePart (path : string list) (env : env) : module_part -> env =
           in
           let env = allocate_type_vars env lets in
           let rec elabParts env = function
-            | (part_data, LetRecDefPart (name, exp)) :: t ->
+            | (_, LetRecDefPart (_, exp)) :: t ->
                 elab_exp env (level + 1) exp |> ignore ;
                 elabParts env t
             | [] -> env
@@ -403,7 +394,7 @@ let elab_modulePart (path : string list) (env : env) : module_part -> env =
 
 let rec elab_module' path env type_env module_id name = function
   | h :: t ->
-      let env = elab_modulePart path env h in
+      let env = elab_module_part path env h in
       elab_module' path env type_env module_id name t
   | [] -> env
 

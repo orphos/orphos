@@ -13,10 +13,9 @@ module Type = struct
 
   type ty =
     | TLongId of long_id
-    | TApply of ty list * ty
-    | TArrow of ty * ty
-    | TTuple of ty list
-    | TLazy of ty
+    | TApp of ty list * ty
+    | TFun of ty * ty
+    | TProduct of ty list
     | TVar of tvar ref
     | TVariant of string list * string * (string * ty) list
 
@@ -169,7 +168,8 @@ module Make (Data : Data) = struct
 
   and pat = Data.t * pat'
 
-  type ty_bin_op = TComma | TArrow | TApply
+(*
+  type ty_bin_op = TComma | TArrow | TApply*)
 
   type type_exp' =
     | TIdent of long_id

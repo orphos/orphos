@@ -8,4 +8,4 @@
  (section bin)
 (files (mullos_compiler.exe as mullos-compiler)))
 
-(env (dev (flags (:standard -warn-error -a))))
+(env (dev (flags (:standard -w +a) (:standard -warn-error -a+31))))

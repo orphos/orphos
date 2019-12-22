@@ -5,12 +5,9 @@
 %parameter <Data : Syntax.Data>
 %{
 
-open Aux
 open Syntax
 module Tree = Syntax.Make(Data)
 open Tree
-
-let noimpl () = failwith "not implemented"
 
 let new_tree x = Data.allocate (),  x
 
@@ -107,8 +104,6 @@ let new_tree x = Data.allocate (),  x
 semi:
   | NL { () }
   | SEMI { () }
-
-id: UPPER_IDENTIFIER { $1 } | LOWER_IDENTIFIER { $1 }
 
 long_id:
   UPPER_IDENTIFIER BIG_COLON long_id { let LongId tail = $3 in LongId  ($1 :: tail) }

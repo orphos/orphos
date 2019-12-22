@@ -2,7 +2,6 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-open Parser
 open Syntax
 
 module Make (Data : Syntax.Data) = struct
@@ -36,21 +35,7 @@ module Make (Data : Syntax.Data) = struct
       | ' ' | '\t' -> read_newline lexbuf
       | _ -> rollback lexbuf ; NL
     in
-    let read_quoted_identifier lexbuf mark =
-      let buf = Buf.create 1024 in
-      let rec loop () =
-        match%sedlex lexbuf with
-        | any ->
-            let c = lexeme_char lexbuf 0 in
-            if c = Uchar.of_char mark then Buf.contents buf
-            else (
-              Buf.add_string buf (lexeme lexbuf) ;
-              loop () )
-        | _ -> failwith "unreachable"
-      in
-      loop ()
-    in
-    let rec read_unicode_escape lexbuf limit =
+    let read_unicode_escape lexbuf limit =
       let rec loop acc = function
         | i when i = limit -> UChar.of_int i
         | i -> (
@@ -86,7 +71,7 @@ module Make (Data : Syntax.Data) = struct
       | 'v' -> UChar.of_int 0x0b
       | _ -> failwith "Invalid escape sequence"
     in
-    let rec read_text lexbuf =
+    let read_text lexbuf =
       let buf = Buf.create 1024 in
       let rec aux () =
         match%sedlex lexbuf with
@@ -206,9 +191,14 @@ module Make (Data : Syntax.Data) = struct
         | "with" -> WITH
         | "without" -> WITHOUT
         | id -> LOWER_IDENTIFIER id )
-      (* quoted identifier *)
+      (* quoted lower-identifier *)
       | "${", Sub (any, '}'), '}' ->
-          failwith "quoted identifier is not implemented yet"
+          let s = lexeme lexbuf in
+          LOWER_IDENTIFIER (String.sub s 2 (String.length s - 3))
+      (* quoted upper-identifier *)
+      | "$[", Sub (any, ']'), ']' ->
+          let s = lexeme lexbuf in
+          UPPER_IDENTIFIER (String.sub s 2 (String.length s - 3))
       (* one character symbols *)
       | "-" -> HYPHEN
       | '!' -> EXCLAMATION
