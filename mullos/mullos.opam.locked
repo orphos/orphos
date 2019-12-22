@@ -7,44 +7,39 @@ authors: ["Takezoe,Tomoaki"]
 homepage: "https://orphos.res.ac/"
 bug-reports: "https://github.com/orphos/orphos"
 dev-repo: "git+https://github.com/orphos/orphos.git"
-license: "LGPLv3-or-later"
+license: "Apache-2.0 WITH LLVM-exception"
 build: [
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name] {with-test}
 ]
 depends: [
-  "base" {= "v0.11.1"}
-  "base-bigarray" {= "base"}
+  "base" {= "v0.13.0"}
   "base-bytes" {= "base"}
   "base-threads" {= "base"}
   "base-unix" {= "base"}
-  "batteries" {= "2.9.0"}
-  "camomile" {= "1.0.1"}
+  "batteries" {= "2.11.0"}
+  "camomile" {= "1.0.2"}
   "conf-gmp" {= "1"}
   "conf-m4" {= "1"}
   "conf-perl" {= "1"}
   "conf-pkg-config" {= "1.1"}
   "conf-sqlite3" {= "1"}
-  "dune" {= "1.5.1"}
-  "gen" {= "0.5.1"}
-  "jbuilder" {= "transition"}
-  "menhir" {= "20181113"}
-  "num" {= "1.1"}
-  "ocaml" {= "4.07.1"}
-  "ocaml-base-compiler" {= "4.07.1"}
-  "ocaml-migrate-parsetree" {= "1.1.0"}
-  "ocamlbuild" {= "0.12.0"}
-  "ocamlfind" {= "1.8.0"}
-  "ppx_tools_versioned" {= "5.2"}
-  "result" {= "1.3"}
-  "sedlex" {= "1.99.4"}
-  "sexplib0" {= "v0.11.0"}
-  "sqlite3" {= "4.4.1"}
-  "stdio" {= "v0.11.0"}
+  "dune" {= "2.0.1"}
+  "dune-configurator" {= "2.0.1"}
+  "dune-private-libs" {= "2.0.1"}
+  "gen" {= "0.5.2"}
+  "menhir" {= "20190924"}
+  "num" {= "1.3"}
+  "ocaml" {= "4.09.0"}
+  "ocaml-migrate-parsetree" {= "1.5.0"}
+  "ocamlbuild" {= "0.14.0"}
+  "ocamlfind" {= "1.8.1"}
+  "ppx_derivers" {= "1.2.1"}
+  "ppx_tools_versioned" {= "5.2.3"}
+  "result" {= "1.4"}
+  "sedlex" {= "2.1"}
+  "sexplib0" {= "v0.13.0"}
+  "sqlite3" {= "5.0.1"}
   "uchar" {= "0.0.2"}
-  "zarith" {= "1.7"}
-]
-pin-depends: [
-  "sedlex.1.99.4"
-  "git+https://github.com/ocaml-community/sedlex.git#739b047fec6c5e5d5a225bb9741e2d43e19dd902"
+  "zarith" {= "1.9.1"}
 ]
