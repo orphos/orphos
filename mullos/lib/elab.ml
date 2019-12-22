@@ -340,7 +340,7 @@ let rec elab_exp env level = function
       in
       set_ty data ret ; ret
 
-let elabModulePart (path : string list) (env : env) : module_part -> env =
+let elab_modulePart (path : string list) (env : env) : module_part -> env =
   function
   | data, part -> (
       (* prepare *)
@@ -401,22 +401,22 @@ let elabModulePart (path : string list) (env : env) : module_part -> env =
           in
           elabParts env lets )
 
-let rec elabModule' path env type_env module_id name = function
+let rec elab_module' path env type_env module_id name = function
   | h :: t ->
-      let env = elabModulePart path env h in
-      elabModule' path env type_env module_id name t
+      let env = elab_modulePart path env h in
+      elab_module' path env type_env module_id name t
   | [] -> env
 
-let elabModule module_id name module_parts =
-  elabModule' [name] empty empty module_id name module_parts
+let elab_module module_id name module_parts =
+  elab_module' [name] empty empty module_id name module_parts
 
-let elabDecl = function
+let elab_decl = function
   | data, decl -> (
     match decl with
     | InterfaceDecl _ -> noimpl "interface"
     | FunctorDecl _ -> noimpl "functor"
     | ModuleDecl (Some name, false, (module_parts, [])) ->
-        elabModule data name module_parts
+        elab_module data name module_parts
     | ModuleDecl (Some _, false, (_, _ :: _)) -> noimpl "interface"
     | ModuleDecl (_, true, _) -> noimpl "given module"
     | ModuleDecl (None, _, _) -> noimpl "anonymous module" )
