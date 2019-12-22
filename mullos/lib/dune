@@ -1,0 +1,21 @@
+(library
+ (public_name mullos)
+ (libraries
+   base
+   sedlex
+   zarith
+   camomile
+   batteries)
+ (modules
+   mullos_lexer
+   mullos_parser
+   mullos_elab
+   mullos_syntax
+   mullos_aux)
+ (preprocess (pps sedlex.ppx)))
+
+(menhir
+  (flags --explain)
+  (modules mullos_parser))
+
+(env (dev (flags (:standard -warn-error -a))))

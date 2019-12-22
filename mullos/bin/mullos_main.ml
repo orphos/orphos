@@ -2,6 +2,7 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
+open Mullos
 open Mullos_parser
 open Mullos_lexer
 open Mullos_elab

@@ -1,17 +1,11 @@
 (executables
  (names mullos_main)
- (libraries
-   base
-   sedlex
-   zarith
-   camomile
-   batteries)
+ (libraries mullos)
+ (modules mullos_main)
  (preprocess (pps sedlex.ppx)))
-
-(menhir
-  (flags --explain)
-  (modules mullos_parser))
 
 (install
  (section bin)
 (files (mullos_main.exe as mullos)))
+
+(env (dev (flags (:standard -warn-error -a))))
