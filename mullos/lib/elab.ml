@@ -328,6 +328,7 @@ let rec elab_exp env level = function
         | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ ->
             noimpl "record"
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
+        | Construct _ -> noimpl "monomorphic variant"
       in
       set_ty data ret ; ret
 

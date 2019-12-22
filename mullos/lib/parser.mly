@@ -92,8 +92,7 @@ let new_tree x = Data.allocate (),  x
 %token VERTICAL
 %token VERTICAL_GREATER
 %token WHEN
-%token WHERE
-%token WITH
+%token WHERE %token WITH
 %token WITHOUT
 
 %start<Syntax.Make(Data).compilation_unit> compilation_unit
@@ -105,9 +104,11 @@ semi:
   | NL { () }
   | SEMI { () }
 
-long_id:
-  UPPER_IDENTIFIER BIG_COLON long_id { let LongId tail = $3 in LongId  ($1 :: tail) }
-  | UPPER_IDENTIFIER { LongId [$1] }
+lower_long_id: LOWER_IDENTIFIER { LongId [$1] }
+  | UPPER_IDENTIFIER BIG_COLON lower_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
+
+upper_long_id: UPPER_IDENTIFIER { LongId [$1] }
+  | UPPER_IDENTIFIER BIG_COLON upper_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
 
 seq:
   | expression semi seq { $1 :: $3 }
@@ -143,7 +144,11 @@ binop_assignment:
   | HYPHEN_EQ { SubstractAsign }
   | COLON_EQ { Asign }
 
-pipeline_expression: tuple_expression VERTICAL_GREATER pipeline_expression { BinOp ($1, Pipeline, $3) |> new_tree } | tuple_expression { $1 }
+pipeline_expression: tuple_expression VERTICAL_GREATER pipeline_expression {
+  (match $3 with
+  | _, Construct (name, None) -> Construct (name, Some $1) |> new_tree
+  | _ -> Apply ($3, $1) |> new_tree)
+} | tuple_expression { $1 }
 
 tuple_expression: lor_expression nonempty_list(COMMA lor_expression { $2 }) { Tuple ($1 :: $2) |> new_tree } | lor_expression { $1 }
 
@@ -223,7 +228,8 @@ application_expression: application_expression dot_expression { Apply ($1, $2) |
 dot_expression: dot_expression DOT LOWER_IDENTIFIER { RecordSelection ($1, $3) |> new_tree } | simple_expression { $1 }
 
 simple_expression:
-  | long_id { Ident $1 |> new_tree }
+  | lower_long_id { Ident $1 |> new_tree }
+  | upper_long_id { Construct ($1, None) |> new_tree}
   | LPAREN RPAREN { Unit |> new_tree }
   | LCBRACKET seq RCBRACKET { Seq $2 |> new_tree }
   | TEXT { Text $1 |> new_tree }
@@ -283,7 +289,7 @@ refinement_body:
   | expression semi refinement_body { $1 :: $3 }
 
 given_ty:
-  | given_ty GIVEN separated_nonempty_list(COMMA, long_id) { EGiven ($1, $3) |> new_tree } | fun_ty { $1 }
+  | given_ty GIVEN separated_nonempty_list(COMMA, lower_long_id) { EGiven ($1, $3) |> new_tree } | fun_ty { $1 }
 
 fun_ty:
   | fun_ty HYPHEN_GREATER tuple_ty { EArrow ($1, $3) |> new_tree } | tuple_ty { $1 }
@@ -292,7 +298,7 @@ tuple_ty:
   | ty_with_effect nonempty_list(ASTERISK ty_with_effect { $2 }) { ETuple ($1 :: $2) |> new_tree } | ty_with_effect { $1 }
 
 ty_with_effect:
-  | application_ty AT separated_nonempty_list(COMMA, long_id) { EEff ($1, $3) |> new_tree } | application_ty { $1 }
+  | application_ty AT separated_nonempty_list(COMMA, lower_long_id) { EEff ($1, $3) |> new_tree } | application_ty { $1 }
 
 application_ty:
   | simple_ty application_ty {
@@ -303,7 +309,7 @@ application_ty:
   | simple_ty { $1 }
 
 simple_ty:
-  | long_id { EIdent $1 |> new_tree }
+  | lower_long_id { EIdent $1 |> new_tree }
   | type_variable { EGeneric $1 |> new_tree }
   | LPAREN ty RPAREN { $2 }
 
@@ -339,7 +345,7 @@ interface_decl:
   | INTERFACE UPPER_IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($2, false, $4)  |> new_tree }
   | GIVEN INTERFACE UPPER_IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($3, true, $5)  |> new_tree }
 
-interface_ref: interface_exp  { InterfaceExp $1 |> new_tree } | long_id { InterfaceId $1  |> new_tree }
+interface_ref: interface_exp  { InterfaceExp $1 |> new_tree } | upper_long_id { InterfaceId $1  |> new_tree }
 
 interface_where_part: type_variable* LOWER_IDENTIFIER EQ ty { $1, $2, $4 }
 

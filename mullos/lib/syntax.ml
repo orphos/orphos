@@ -140,6 +140,7 @@ module Make (Data : Data) = struct
     | RecordSelection of exp * string
     | PolymorphicVariantConstruction of string * exp
     | Handle of exp * pat_clause list
+    | Construct of long_id * exp option
 
   and exp = Data.t * exp'
 
