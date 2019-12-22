@@ -76,10 +76,10 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
         else if other_level > tvar_level then
           other_tvar := Unbound (other_id, tvar_level)
         else ()
-    | TApp (ty_args, ty) -> f ty ; List.iter f ty_args
-    | TFun (param_ty, return_ty) -> f param_ty ; f return_ty
+    | TApply (ty_args, ty) -> f ty ; List.iter f ty_args
+    | TArrow (param_ty, return_ty) -> f param_ty ; f return_ty
     | TLongId _ -> ()
-    | TProduct tys -> List.iter f tys
+    | TTuple tys -> List.iter f tys
     | TVariant (_, _, ctors) -> List.iter (function _, ty -> f ty) ctors
   in
   f ty
@@ -89,10 +89,10 @@ let rec unify ty1 ty2 =
   else
     match (ty1, ty2) with
     | TLongId long_id1, TLongId long_id2 when long_id1 = long_id2 -> ()
-    | TApp (ty_args1, ty1), TApp (ty_args2, ty2) ->
+    | TApply (ty_args1, ty1), TApply (ty_args2, ty2) ->
         unify ty1 ty2 ;
         List.iter2 unify ty_args1 ty_args2
-    | TFun (param_ty1, return_ty1), TFun (param_ty2, return_ty2) ->
+    | TArrow (param_ty1, return_ty1), TArrow (param_ty2, return_ty2) ->
         unify param_ty1 param_ty2 ;
         unify return_ty1 return_ty2
     | TVar {contents= Link ty1}, ty2 | ty1, TVar {contents= Link ty2} ->
@@ -104,17 +104,17 @@ let rec unify ty1 ty2 =
      |ty, TVar ({contents= Unbound (id, level)} as tvar) ->
         occurs_check_adjust_levels id level ty ;
         tvar := Link ty
-    | TProduct xs, TProduct ys -> List.iter2 unify xs ys
+    | TTuple xs, TTuple ys -> List.iter2 unify xs ys
     | _, _ -> error "cannot unify types "
 
 let rec generalize level = function
   | TVar {contents= Unbound (id, other_level)} when other_level > level ->
       TVar (ref (Generic id))
-  | TApp (ty_args, ty) ->
-      TApp (List.map (generalize level) ty_args, generalize level ty)
-  | TFun (param_ty, return_ty) ->
-      TFun (generalize level param_ty, generalize level return_ty)
-  | TProduct tys -> TProduct (List.map (generalize level) tys)
+  | TApply (ty_args, ty) ->
+      TApply (List.map (generalize level) ty_args, generalize level ty)
+  | TArrow (param_ty, return_ty) ->
+      TArrow (generalize level param_ty, generalize level return_ty)
+  | TTuple tys -> TTuple (List.map (generalize level) tys)
   | TVariant (params, name, ctors) ->
       TVariant
         ( params
@@ -137,9 +137,9 @@ let instantiate level ty =
         Hashtbl.add id_var_map id var ;
         var )
     | TVar {contents= Unbound _} -> ty
-    | TApp (ty_args, ty) -> TApp (List.map f ty_args, f ty)
-    | TFun (param_ty, return_ty) -> TFun (f param_ty, f return_ty)
-    | TProduct tys -> TProduct (List.map f tys)
+    | TApply (ty_args, ty) -> TApply (List.map f ty_args, f ty)
+    | TArrow (param_ty, return_ty) -> TArrow (f param_ty, f return_ty)
+    | TTuple tys -> TTuple (List.map f tys)
     | TVariant (params, name, ctors) ->
         TVariant
           (params, name, List.map (function name, ty -> (name, f ty)) ctors)
@@ -151,20 +151,20 @@ let rec elab_type env = function
       let elab = elab_type env in
       let ty =
         match type_exp with
-        | TIdent id -> resolve_type env id |> get_ty_of
-        | TGeneric id -> resolve_type env (long_id [id]) |> get_ty_of
-        | TLazy _ -> noimpl "lazy"
-        | TLabel _ -> noimpl "record"
-        | TEff _ -> noimpl "effect"
-        | TRecord _ -> noimpl "record"
-        | TPolymorphicVariant _ -> noimpl "polymorphic variant"
-        | TOr _ -> noimpl "union type"
-        | TRefinement _ -> noimpl "refinement type"
-        | TGiven _ -> noimpl "given type"
-        | TArrow (param, ret) -> TFun (elab param, elab ret)
-        | TTuple elems -> TProduct (elems |> List.map elab)
-        | TApply (params, applicant) ->
-            TApp (params |> List.map elab, elab applicant)
+        | EIdent id -> resolve_type env id |> get_ty_of
+        | EGeneric id -> resolve_type env (long_id [id]) |> get_ty_of
+        | ELazy _ -> noimpl "lazy"
+        | ELabel _ -> noimpl "record"
+        | EEff _ -> noimpl "effect"
+        | ERecord _ -> noimpl "record"
+        | EPolymorphicVariant _ -> noimpl "polymorphic variant"
+        | EOr _ -> noimpl "union type"
+        | ERefinement _ -> noimpl "refinement type"
+        | EGiven _ -> noimpl "given type"
+        | EArrow (param, ret) -> TArrow (elab param, elab ret)
+        | ETuple elems -> TTuple (elems |> List.map elab)
+        | EApply (params, applicant) ->
+            TApply (params |> List.map elab, elab applicant)
       in
       set_ty data ty ; ty
 
@@ -177,7 +177,7 @@ let rec elab_pat (env : env) (level : level) = function
         | PCapture (_, pat) -> elab_pat env level pat
         | PCtor _ -> noimpl "variant constructor pattern"
         | PTuple pats ->
-            TProduct (List.map (fun pat -> elab_pat env level pat) pats)
+            TTuple (List.map (fun pat -> elab_pat env level pat) pats)
         | PWildcard -> new_var level
         | PText _ -> TLongId (LongId ["text"])
         | PNumber _ -> TLongId (LongId ["i32"])
@@ -207,7 +207,7 @@ let rec elab_exp env level = function
               extend_value env (LongId [param_name]) (Captured param)
             in
             let return_ty = elab_exp env level body in
-            TFun (param_ty, return_ty)
+            TArrow (param_ty, return_ty)
         | Lambda ((_, _), _) -> noimpl "pattern param"
         | Let (((_, PIdent name) as bindant), _, value, body) ->
             let value_ty = elab_exp env (level + 1) value in
@@ -244,7 +244,7 @@ let rec elab_exp env level = function
             elab_exp env level body
         | Apply (fn, arg) -> (
           match elab_exp env level fn with
-          | TFun (param, ret) ->
+          | TArrow (param, ret) ->
               let arg = elab_exp env level arg in
               unify param arg ; ret
           | _ -> error "expected function" )
@@ -293,17 +293,17 @@ let rec elab_exp env level = function
             | PrefixIncrement | PrefixDecrement ->
                 noimpl "increment/decrement operators" )
         | PostfixOp _ -> noimpl "postfix operators"
-        | Tuple values -> TProduct (List.map elab values)
+        | Tuple values -> TTuple (List.map elab values)
         | ListLiteral values ->
             let types = List.map elab values in
             let elemType = new_var level in
             List.iter (unify elemType) types ;
-            TApp ([elemType], listType)
+            TApply ([elemType], listType)
         | ArrayLiteral values ->
             let types = List.map elab values in
             let elemType = new_var level in
             List.iter (unify elemType) types ;
-            TApp ([elemType], arrayType)
+            TApply ([elemType], arrayType)
         | IfThenElse (cond, body, Some fallback) ->
             elab cond |> unify i1 ;
             let bodyType = elab body in

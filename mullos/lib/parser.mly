@@ -269,12 +269,12 @@ simple_pattern:
 
 ty:
   | refinement_ty { $1 }
-  | LCBRACKET row=option(ty WITH { $1 }) fields=list_nonauto_semi(DOT LOWER_IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { TRecord (row, fields) |> new_tree }
-  | GRAVE_ACCENT UPPER_IDENTIFIER OF ty { TPolymorphicVariant ($2, $4) |> new_tree }
-  | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { TOr $2 |> new_tree }
+  | LCBRACKET row=option(ty WITH { $1 }) fields=list_nonauto_semi(DOT LOWER_IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { ERecord (row, fields) |> new_tree }
+  | GRAVE_ACCENT UPPER_IDENTIFIER OF ty { EPolymorphicVariant ($2, $4) |> new_tree }
+  | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { EOr $2 |> new_tree }
 
 refinement_ty:
-  | refinement_ty WHERE refinement_body END { TRefinement ($1, $3) |> new_tree } | given_ty { $1 }
+  | refinement_ty WHERE refinement_body END { ERefinement ($1, $3) |> new_tree } | given_ty { $1 }
 
 refinement_body:
   | expression { [$1] }
@@ -283,28 +283,28 @@ refinement_body:
   | expression semi refinement_body { $1 :: $3 }
 
 given_ty:
-  | given_ty GIVEN separated_nonempty_list(COMMA, long_id) { TGiven ($1, $3) |> new_tree } | fun_ty { $1 }
+  | given_ty GIVEN separated_nonempty_list(COMMA, long_id) { EGiven ($1, $3) |> new_tree } | fun_ty { $1 }
 
 fun_ty:
-  | fun_ty HYPHEN_GREATER tuple_ty { TArrow ($1, $3) |> new_tree } | tuple_ty { $1 }
+  | fun_ty HYPHEN_GREATER tuple_ty { EArrow ($1, $3) |> new_tree } | tuple_ty { $1 }
 
 tuple_ty:
-  | ty_with_effect nonempty_list(ASTERISK ty_with_effect { $2 }) { TTuple ($1 :: $2) |> new_tree } | ty_with_effect { $1 }
+  | ty_with_effect nonempty_list(ASTERISK ty_with_effect { $2 }) { ETuple ($1 :: $2) |> new_tree } | ty_with_effect { $1 }
 
 ty_with_effect:
-  | application_ty AT separated_nonempty_list(COMMA, long_id) { TEff ($1, $3) |> new_tree } | application_ty { $1 }
+  | application_ty AT separated_nonempty_list(COMMA, long_id) { EEff ($1, $3) |> new_tree } | application_ty { $1 }
 
 application_ty:
   | simple_ty application_ty {
       match $2 with
-        | _, TApply (params, fn) -> TApply ($1 :: params, fn) |> new_tree
-        | fn -> TApply ([$1], fn) |> new_tree
+        | _, EApply (params, fn) -> EApply ($1 :: params, fn) |> new_tree
+        | fn -> EApply ([$1], fn) |> new_tree
       }
   | simple_ty { $1 }
 
 simple_ty:
-  | long_id { TIdent $1 |> new_tree }
-  | type_variable { TGeneric $1 |> new_tree }
+  | long_id { EIdent $1 |> new_tree }
+  | type_variable { EGeneric $1 |> new_tree }
   | LPAREN ty RPAREN { $2 }
 
 type_variable: SINGLE_QUOTE LOWER_IDENTIFIER { $2 }

@@ -13,9 +13,9 @@ module Type = struct
 
   type ty =
     | TLongId of long_id
-    | TApp of ty list * ty
-    | TFun of ty * ty
-    | TProduct of ty list
+    | TApply of ty list * ty
+    | TArrow of ty * ty
+    | TTuple of ty list
     | TVar of tvar ref
     | TVariant of string list * string * (string * ty) list
 
@@ -172,19 +172,19 @@ module Make (Data : Data) = struct
   type ty_bin_op = TComma | TArrow | TApply*)
 
   type type_exp' =
-    | TIdent of long_id
-    | TGeneric of string
-    | TLazy of type_exp
-    | TLabel of string * type_exp
-    | TEff of type_exp * long_id list
-    | TRecord of type_exp option * (string * type_exp) list
-    | TPolymorphicVariant of string * type_exp
-    | TOr of type_exp list
-    | TRefinement of type_exp * exp list
-    | TGiven of type_exp * long_id list
-    | TArrow of type_exp * type_exp
-    | TTuple of type_exp list
-    | TApply of type_exp list * type_exp
+    | EIdent of long_id
+    | EGeneric of string
+    | ELazy of type_exp
+    | ELabel of string * type_exp
+    | EEff of type_exp * long_id list
+    | ERecord of type_exp option * (string * type_exp) list
+    | EPolymorphicVariant of string * type_exp
+    | EOr of type_exp list
+    | ERefinement of type_exp * exp list
+    | EGiven of type_exp * long_id list
+    | EArrow of type_exp * type_exp
+    | ETuple of type_exp list
+    | EApply of type_exp list * type_exp
 
   and type_exp = Data.t * type_exp'
 
