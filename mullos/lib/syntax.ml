@@ -2,7 +2,7 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-open Mullos_aux
+open Aux
 
 type long_id = LongId of string list
 

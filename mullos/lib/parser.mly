@@ -2,12 +2,12 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-%parameter <Data : Mullos_syntax.Data>
+%parameter <Data : Syntax.Data>
 %{
 
-open Mullos_aux
-open Mullos_syntax
-module Tree = Mullos_syntax.Make(Data)
+open Aux
+open Syntax
+module Tree = Syntax.Make(Data)
 open Tree
 
 let noimpl () = failwith "not implemented"
@@ -71,7 +71,7 @@ let new_tree x = Data.allocate (),  x
 %token MATCH
 %token MODULE
 %token NL
-%token <Mullos_syntax.number> NUMBER
+%token <Syntax.number> NUMBER
 %token NUMBERSIGN
 %token OF
 %token PERCENT
@@ -98,7 +98,7 @@ let new_tree x = Data.allocate (),  x
 %token WITH
 %token WITHOUT
 
-%start<Mullos_syntax.Make(Data).compilation_unit> compilation_unit
+%start<Syntax.Make(Data).compilation_unit> compilation_unit
 
 %%
 

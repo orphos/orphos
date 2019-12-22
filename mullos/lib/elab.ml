@@ -2,10 +2,10 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-open Mullos_aux
-open Mullos_syntax
+open Aux
+open Syntax
 
-type data = {mutable ty_field: Mullos_syntax.Type.ty option; oid: oid}
+type data = {mutable ty_field: Syntax.Type.ty option; oid: oid}
 
 let get_ty = function
   | {ty_field= Some ty} -> ty
@@ -24,9 +24,9 @@ module ElabData = struct
 end
 
 open ElabData
-module Tree = Mullos_syntax.Make (ElabData)
+module Tree = Syntax.Make (ElabData)
 open Tree
-open Mullos_syntax.Type
+open Syntax.Type
 
 exception TypeError of string
 

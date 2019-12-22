@@ -2,7 +2,7 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-module Make (Data : Mullos_syntax.Data) : sig
+module Make (Data : Syntax.Data) : sig
   val new_reader :
-    unit -> Sedlexing.lexbuf -> Mullos_parser.Make(Data).token list
+    unit -> Sedlexing.lexbuf -> Parser.Make(Data).token list
 end

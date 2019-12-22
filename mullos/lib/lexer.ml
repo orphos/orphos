@@ -2,11 +2,11 @@
  *
  * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
  *)
-open Mullos_parser
-open Mullos_syntax
+open Parser
+open Syntax
 
-module Make (Data : Mullos_syntax.Data) = struct
-  module Parser = Mullos_parser.Make (Data)
+module Make (Data : Syntax.Data) = struct
+  module Parser = Parser.Make (Data)
   open Parser
 
   let is_auto_semi_followed = function
