@@ -202,10 +202,7 @@ module Make (Data : Data) = struct
 
   type let_rec_def_part = Data.t * let_rec_def_part'
 
-  type module_part' =
-    | TypeDeclInModule of type_decl
-    | LetDef of pat * exp
-    | LetRecDef of let_rec_def_part list
+  type module_part' = TypeDeclInModule of type_decl | LetDef of pat * exp | LetRecDef of let_rec_def_part list
 
   type module_part = Data.t * module_part'
 

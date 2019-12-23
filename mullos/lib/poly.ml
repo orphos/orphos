@@ -113,16 +113,12 @@ let rec type_of env = function
       | (_, h) :: t ->
           let ty = type_of env h in
           t
-          |> List.iter (function _, exp ->
-                 if type_of env exp <> ty then
-                   error "type of switch clauses do not match");
+          |> List.iter (function _, exp -> if type_of env exp <> ty then error "type of switch clauses do not match");
           ty )
   | PSeq exps -> exps |> List.map (type_of env) |> BatList.last
   | PLambda (_, ty, exp) -> PArrow (ty, type_of env exp)
   | PLet (bindings, body) ->
-      bindings
-      |> List.iter (function _, ty, exp ->
-             if type_of env exp <> ty then error "type of let do not match");
+      bindings |> List.iter (function _, ty, exp -> if type_of env exp <> ty then error "type of let do not match");
       type_of env body
   | PHandle (value, clauses) -> (
       type_of env value |> ignore;
@@ -131,9 +127,7 @@ let rec type_of env = function
       | (_, _, h) :: t ->
           let ty = type_of env h in
           t
-          |> List.iter (function _, _, exp ->
-                 if type_of env exp <> ty then
-                   error "type of handle clauses do not match");
+          |> List.iter (function _, _, exp -> if type_of env exp <> ty then error "type of handle clauses do not match");
           ty )
   | PConstruct _ -> assert false
   | _ -> noimpl "Poly.type_of"

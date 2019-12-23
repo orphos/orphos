@@ -9,17 +9,15 @@ module Make (Data : Syntax.Data) = struct
   open Parser
 
   let is_auto_semi_followed = function
-    | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET | GRAVE_ACCENT
-    | PLUS | HYPHEN | EXCLAMATION | AMPERSAND | ASTERISK | BIG_PLUS
-    | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _
-    | LOWER_IDENTIFIER _ | LPAREN | TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL
-    | EXCEPTION ->
+    | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET | GRAVE_ACCENT | PLUS | HYPHEN | EXCLAMATION
+    | AMPERSAND | ASTERISK | BIG_PLUS | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
+    | LPAREN | TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL | EXCEPTION ->
         true
     | _ -> false
 
   let is_followed_by_auto_semi = function
-    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _
-    | LOWER_IDENTIFIER _ | RPAREN | TEXT _ | NUMBER _ | BOOL _ ->
+    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | RPAREN | TEXT _
+    | NUMBER _ | BOOL _ ->
         true
     | _ -> false
 
@@ -46,10 +44,7 @@ module Make (Data : Syntax.Data) = struct
         | i -> (
             let ret base_char base_value =
               loop
-                ( (acc * 16)
-                + ( Uchar.to_int (Sedlexing.lexeme_char lexbuf 0)
-                  - Char.code base_char )
-                + base_value )
+                ((acc * 16) + (Uchar.to_int (Sedlexing.lexeme_char lexbuf 0) - Char.code base_char) + base_value)
                 (i + 1)
             in
             match%sedlex lexbuf with
@@ -95,9 +90,7 @@ module Make (Data : Syntax.Data) = struct
     let read_precision lexbuf =
       let rec aux acc =
         match%sedlex lexbuf with
-        | '0' .. '9' ->
-            aux
-              ((acc * 10) + Uchar.to_int (lexeme_char lexbuf 0) - Char.code '0')
+        | '0' .. '9' -> aux ((acc * 10) + Uchar.to_int (lexeme_char lexbuf 0) - Char.code '0')
         | _ -> acc
       in
       aux 0
@@ -112,11 +105,7 @@ module Make (Data : Syntax.Data) = struct
         if radix < digit_value then (
           rollback lexbuf;
           ret m e n )
-        else
-          aux
-            ((m * radix) + digit_value)
-            (if reading_exponent then e + 1 else e)
-            n reading_exponent
+        else aux ((m * radix) + digit_value) (if reading_exponent then e + 1 else e) n reading_exponent
       and aux m e n reading_exponent =
         match%sedlex lexbuf with
         | '0' .. '9' -> proceed m e n '0' 0 reading_exponent
@@ -171,11 +160,9 @@ module Make (Data : Syntax.Data) = struct
       | "|>" -> VERTICAL_GREATER
       | "||" -> BIG_VERTICAL
       (* raw identifiers starting with uppercase character *)
-      | 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
-          UPPER_IDENTIFIER (lexeme lexbuf)
+      | 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> UPPER_IDENTIFIER (lexeme lexbuf)
       (* raw identifiers starting with lowercase or lowline character, or keyword *)
-      | ('a' .. 'z' | '_'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9')
-        -> (
+      | ('a' .. 'z' | '_'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> (
           match lexeme lexbuf with
           | "and" -> AND
           | "as" -> AS
@@ -254,21 +241,15 @@ module Make (Data : Syntax.Data) = struct
     in
     let read_raw_tokens lexbuf =
       (* read all tokens *)
-      let aux acc =
-        match read_raw_token lexbuf with
-        | EOF -> List.rev (EOF :: acc)
-        | t -> t :: acc
-      in
+      let aux acc = match read_raw_token lexbuf with EOF -> List.rev (EOF :: acc) | t -> t :: acc in
       aux []
     in
     let filter_nl tokens =
       (* Remove NL inside auto semicolon disabled region *)
       let rec aux acc = function
         | stack, LCBRACKET :: tl -> aux (LCBRACKET :: acc) (true :: stack, tl)
-        | stack, (LPAREN | LBRACKET) :: tl ->
-            aux (LCBRACKET :: acc) (false :: stack, tl)
-        | _ :: stack, (RCBRACKET | RPAREN | RBRACKET) :: tl ->
-            aux (LCBRACKET :: acc) (stack, tl)
+        | stack, (LPAREN | LBRACKET) :: tl -> aux (LCBRACKET :: acc) (false :: stack, tl)
+        | _ :: stack, (RCBRACKET | RPAREN | RBRACKET) :: tl -> aux (LCBRACKET :: acc) (stack, tl)
         | (false :: _ as stack), NL :: tl -> aux acc (stack, tl)
         | stack, hd :: tl -> aux (hd :: acc) (stack, tl)
         | _, [] -> List.rev acc
@@ -279,8 +260,7 @@ module Make (Data : Syntax.Data) = struct
       (* Remove NL unless semicolon should be auto inserted *)
       let rec aux acc = function
         | NL :: tl -> aux acc tl
-        | t1 :: (NL as t2) :: t3 :: tl
-          when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
+        | t1 :: (NL as t2) :: t3 :: tl when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
             aux (t3 :: t2 :: t1 :: acc) tl
         | hd :: tl -> aux (hd :: acc) tl
         | [] -> List.rev acc
