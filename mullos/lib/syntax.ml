@@ -168,9 +168,6 @@ module Make (Data : Data) = struct
 
   and pat = Data.t * pat'
 
-(*
-  type ty_bin_op = TComma | TArrow | TApply*)
-
   type type_exp' =
     | EIdent of long_id
     | EGeneric of string
