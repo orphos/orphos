@@ -9,16 +9,17 @@ module Make (Data : Syntax.Data) = struct
   open Parser
 
   let is_auto_semi_followed = function
-    | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET
-     |GRAVE_ACCENT | PLUS | HYPHEN | EXCLAMATION | AMPERSAND | ASTERISK
-     |BIG_PLUS | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | LPAREN
-     |TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL | EXCEPTION ->
+    | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET | GRAVE_ACCENT
+    | PLUS | HYPHEN | EXCLAMATION | AMPERSAND | ASTERISK | BIG_PLUS
+    | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _
+    | LOWER_IDENTIFIER _ | LPAREN | TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL
+    | EXCEPTION ->
         true
     | _ -> false
 
   let is_followed_by_auto_semi = function
-    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
-     |RPAREN | TEXT _ | NUMBER _ | BOOL _ ->
+    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _
+    | LOWER_IDENTIFIER _ | RPAREN | TEXT _ | NUMBER _ | BOOL _ ->
         true
     | _ -> false
 
@@ -31,9 +32,13 @@ module Make (Data : Syntax.Data) = struct
     let lexeme_char = Sedlexing.lexeme_char in
     let rec read_newline lexbuf =
       match%sedlex lexbuf with
-      | '\n' -> Sedlexing.new_line lexbuf ; read_newline lexbuf
+      | '\n' ->
+          Sedlexing.new_line lexbuf;
+          read_newline lexbuf
       | ' ' | '\t' -> read_newline lexbuf
-      | _ -> rollback lexbuf ; NL
+      | _ ->
+          rollback lexbuf;
+          NL
     in
     let read_unicode_escape lexbuf limit =
       let rec loop acc = function
@@ -78,10 +83,10 @@ module Make (Data : Syntax.Data) = struct
         | '"' -> Buffer.contents buf
         | eof -> failwith "unexpeted EOF"
         | '\\' ->
-            Buf.add_char buf (read_escape lexbuf) ;
+            Buf.add_char buf (read_escape lexbuf);
             aux ()
         | any ->
-            Buf.add_string buf (lexeme lexbuf) ;
+            Buf.add_string buf (lexeme lexbuf);
             aux ()
         | _ -> failwith "unreachable"
       in
@@ -104,7 +109,9 @@ module Make (Data : Syntax.Data) = struct
       in
       let rec proceed m e n base_char base_value reading_exponent =
         let digit_value = read_digit_char base_char base_value in
-        if radix < digit_value then ( rollback lexbuf ; ret m e n )
+        if radix < digit_value then (
+          rollback lexbuf;
+          ret m e n )
         else
           aux
             ((m * radix) + digit_value)
@@ -116,13 +123,17 @@ module Make (Data : Syntax.Data) = struct
         | 'a' .. 'e' -> proceed m e n 'a' 10 reading_exponent
         | 'A' .. 'F' -> proceed m e n 'A' 10 reading_exponent
         | '.' ->
-            if reading_exponent then ( rollback lexbuf ; ret m e n )
+            if reading_exponent then (
+              rollback lexbuf;
+              ret m e n )
             else aux m e QType true
         | 'i' -> ret m e (IntType (read_precision lexbuf))
         | 'u' -> ret m e (IntType (read_precision lexbuf))
         | 'f' ->
             if radix = 10 then ret m e (FloatType (read_precision lexbuf))
-            else ( rollback lexbuf ; ret m e n )
+            else (
+              rollback lexbuf;
+              ret m e n )
         | _ -> ret m e n
       in
       aux 0 0 ZType false
@@ -130,7 +141,9 @@ module Make (Data : Syntax.Data) = struct
     let rec read_raw_token lexbuf =
       match%sedlex lexbuf with
       | Plus (' ' | '\t') -> read_raw_token lexbuf
-      | Plus '\n' -> Sedlexing.new_line lexbuf ; read_newline lexbuf
+      | Plus '\n' ->
+          Sedlexing.new_line lexbuf;
+          read_newline lexbuf
       (* three character symbols *)
       | ":+:" -> COLON_PLUS_COLON
       | ":-:" -> COLON_HYPHEN_COLON
@@ -158,39 +171,41 @@ module Make (Data : Syntax.Data) = struct
       | "|>" -> VERTICAL_GREATER
       | "||" -> BIG_VERTICAL
       (* raw identifiers starting with uppercase character *)
-      | ('A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> UPPER_IDENTIFIER (lexeme lexbuf)
+      | 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
+          UPPER_IDENTIFIER (lexeme lexbuf)
       (* raw identifiers starting with lowercase or lowline character, or keyword *)
-      | ( 'a' .. 'z' | '_' ), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> (
-        match lexeme lexbuf with
-        | "and" -> AND
-        | "as" -> AS
-        | "case" -> CASE
-        | "effect" -> EFFECT
-        | "else" -> ELSE
-        | "end" -> END
-        | "exception" -> EXCEPTION
-        | "false" -> BOOL false
-        | "fn" -> FN
-        | "given" -> GIVEN
-        | "handle" -> HANDLE
-        | "if" -> IF
-        | "interface" -> INTERFACE
-        | "lazy" -> LAZY
-        | "let" -> LET
-        | "match" -> MATCH
-        | "module" -> MODULE
-        | "of" -> OF
-        | "raise" -> RAISE
-        | "rec" -> REC
-        | "then" -> THEN
-        | "true" -> BOOL true
-        | "type" -> TYPE
-        | "val" -> VAL
-        | "when" -> WHEN
-        | "where" -> WHERE
-        | "with" -> WITH
-        | "without" -> WITHOUT
-        | id -> LOWER_IDENTIFIER id )
+      | ('a' .. 'z' | '_'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9')
+        -> (
+          match lexeme lexbuf with
+          | "and" -> AND
+          | "as" -> AS
+          | "case" -> CASE
+          | "effect" -> EFFECT
+          | "else" -> ELSE
+          | "end" -> END
+          | "exception" -> EXCEPTION
+          | "false" -> BOOL false
+          | "fn" -> FN
+          | "given" -> GIVEN
+          | "handle" -> HANDLE
+          | "if" -> IF
+          | "interface" -> INTERFACE
+          | "lazy" -> LAZY
+          | "let" -> LET
+          | "match" -> MATCH
+          | "module" -> MODULE
+          | "of" -> OF
+          | "raise" -> RAISE
+          | "rec" -> REC
+          | "then" -> THEN
+          | "true" -> BOOL true
+          | "type" -> TYPE
+          | "val" -> VAL
+          | "when" -> WHEN
+          | "where" -> WHERE
+          | "with" -> WITH
+          | "without" -> WITHOUT
+          | id -> LOWER_IDENTIFIER id )
       (* quoted lower-identifier *)
       | "${", Sub (any, '}'), '}' ->
           let s = lexeme lexbuf in
@@ -228,12 +243,12 @@ module Make (Data : Syntax.Data) = struct
       | '~' -> TILDE
       | '"' -> TEXT (read_text lexbuf)
       | "0", '0' .. '7' ->
-          rollback lexbuf ;
+          rollback lexbuf;
           NUMBER (read_number lexbuf 8)
       | "0x" -> NUMBER (read_number lexbuf 16)
       | "0b" -> NUMBER (read_number lexbuf 2)
       | '0' .. '9' ->
-          rollback lexbuf ;
+          rollback lexbuf;
           NUMBER (read_number lexbuf 10)
       | _ -> EOF
     in
@@ -258,10 +273,10 @@ module Make (Data : Syntax.Data) = struct
         | stack, hd :: tl -> aux (hd :: acc) (stack, tl)
         | _, [] -> List.rev acc
       in
-      aux [] ([true], tokens)
+      aux [] ([ true ], tokens)
     in
     let autoinsert_semicolon tokens =
-      (* Remove NL unless semicolon should be auto inserted  *)
+      (* Remove NL unless semicolon should be auto inserted *)
       let rec aux acc = function
         | NL :: tl -> aux acc tl
         | t1 :: (NL as t2) :: t3 :: tl

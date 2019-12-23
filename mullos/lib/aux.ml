@@ -11,7 +11,7 @@ let current_oid = ref 0
 
 let new_oid () =
   let ret = !current_oid in
-  current_oid := ret + 1 ;
+  current_oid := ret + 1;
   ret
 
 let with_oid x = (new_oid (), x)

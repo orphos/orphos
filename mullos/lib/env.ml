@@ -14,7 +14,7 @@ let put env key value = List.hd env |> Hashtbl.add key value
 let rec lookup env key =
   match env with
   | h :: t -> (
-    match Hashtbl.find_opt h key with
-    | Some v -> Some v
-    | None -> lookup t key )
+      match Hashtbl.find_opt h key with
+      | Some v -> Some v
+      | None -> lookup t key )
   | [] -> None

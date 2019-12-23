@@ -36,15 +36,25 @@ type exp =
 
 module Emit = struct
   let int = 1
+
   let float = 2
+
   let text = 3
+
   let ident = 4
+
   let product = 5
+
   let apply = 6
+
   let switch = 7
+
   let seq = 8
+
   let lambda = 9
+
   let letrec = 10
+
   let emit_uint8 out = Buffer.add_uint8 out
 
   let emit_varint out =
@@ -53,11 +63,13 @@ module Emit = struct
       Buffer.add_uint8 out a0;
       let buf = Bytes.create 8 in
       Bytes.set_int64_be buf 0 v;
-      Buffer.add_subbytes out buf 0 bits in function
+      Buffer.add_subbytes out buf 0 bits
+    in
+    function
     | v when v <= 240L -> Buffer.add_uint8 out (to_int v)
     | v when v <= 2287L ->
         let v = to_int v in
-        Buffer.add_uint8 out ((v - 240) / 256 + 241);
+        Buffer.add_uint8 out (((v - 240) / 256) + 241);
         Buffer.add_uint8 out ((v - 2288) mod 256)
     | v when v <= 16777215L -> emit_large 250 3 v
     | v when v <= 4294967295L -> emit_large 251 4 v
@@ -67,7 +79,10 @@ module Emit = struct
     | v -> emit_large 255 8 v
 
   let compile out = function
-    | PInt (value, bits) -> emit_uint8 out int; emit_uint8 out bits; emit_varint out value
+    | PInt (value, bits) ->
+        emit_uint8 out int;
+        emit_uint8 out bits;
+        emit_varint out value
     | _ -> noimpl "Poly.Emit.compile"
 end
 
@@ -75,7 +90,7 @@ exception TypeError of string
 
 let error message = raise (TypeError message)
 
-module Env = Map.Make(String)
+module Env = Map.Make (String)
 
 type env = ty Env.t
 
@@ -88,30 +103,37 @@ let rec type_of env = function
   | PFloat (_, bits) -> PFloatType bits
   | PText _ -> PTypeIdent "Orphos::Core::Text::t"
   | PIdent (id, ty) ->
-    if ty <> lookup id env then error "type of id does not match";
-    ty
+      if ty <> lookup id env then error "type of id does not match";
+      ty
   | PProduct exps -> PProductType (exps |> List.map (type_of env))
   | PApply (fn, arg) -> PArrow (type_of env fn, type_of env arg)
-  | PSwitch clauses ->
-      (match clauses with
+  | PSwitch clauses -> (
+      match clauses with
       | [] -> error "empty switch"
       | (_, h) :: t ->
-        let ty = type_of env h in
-        t |> List.iter (function _, exp -> if type_of env exp <> ty then error "type of switch clauses do not match");
-        ty)
+          let ty = type_of env h in
+          t
+          |> List.iter (function _, exp ->
+                 if type_of env exp <> ty then
+                   error "type of switch clauses do not match");
+          ty )
   | PSeq exps -> exps |> List.map (type_of env) |> BatList.last
   | PLambda (_, ty, exp) -> PArrow (ty, type_of env exp)
   | PLet (bindings, body) ->
-      bindings |> List.iter (function _, ty, exp -> if type_of env exp <> ty then error "type of let do not match");
+      bindings
+      |> List.iter (function _, ty, exp ->
+             if type_of env exp <> ty then error "type of let do not match");
       type_of env body
-  | PHandle (value, clauses) ->
+  | PHandle (value, clauses) -> (
       type_of env value |> ignore;
-      (match clauses with
+      match clauses with
       | [] -> error "empty handle clause"
       | (_, _, h) :: t ->
-        let ty = type_of env h in
-        t |> List.iter (function _, _, exp -> if type_of env exp <> ty then error "type of handle clauses do not match");
-        ty)
+          let ty = type_of env h in
+          t
+          |> List.iter (function _, _, exp ->
+                 if type_of env exp <> ty then
+                   error "type of handle clauses do not match");
+          ty )
   | PConstruct _ -> assert false
   | _ -> noimpl "Poly.type_of"
-

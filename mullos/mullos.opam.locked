@@ -31,6 +31,7 @@ depends: [
   "menhir" {= "20190924"}
   "num" {= "1.3"}
   "ocaml" {= "4.09.0"}
+  "ocaml-config" {= "1"}
   "ocaml-migrate-parsetree" {= "1.5.0"}
   "ocamlbuild" {= "0.14.0"}
   "ocamlfind" {= "1.8.1"}
