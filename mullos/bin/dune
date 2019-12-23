@@ -2,10 +2,16 @@
  (names mullos_compiler)
  (libraries mullos)
  (modules mullos_compiler)
- (preprocess (pps sedlex.ppx)))
+ (preprocess
+  (pps sedlex.ppx)))
 
 (install
  (section bin)
-(files (mullos_compiler.exe as mullos-compiler)))
+ (files
+  (mullos_compiler.exe as mullos-compiler)))
 
-(env (dev (flags (:standard -w +a) (:standard -warn-error -a+31))))
+(env
+ (dev
+  (flags
+   (:standard -w +a)
+   (:standard -warn-error -a+31))))

@@ -1,22 +1,16 @@
 (library
  (public_name mullos)
- (libraries
-   base
-   sedlex
-   zarith
-   camomile
-   batteries)
- (modules
-   poly
-   lexer
-   parser
-   elab
-   syntax
-   aux)
- (preprocess (pps sedlex.ppx)))
+ (libraries base sedlex zarith camomile batteries)
+ (modules poly lexer parser elab syntax aux)
+ (preprocess
+  (pps sedlex.ppx)))
 
 (menhir
-  (flags --explain)
-  (modules parser))
+ (flags --explain)
+ (modules parser))
 
-(env (dev (flags (:standard -w +a-4) (:standard -warn-error -a+31))))
+(env
+ (dev
+  (flags
+   (:standard -w +a-4)
+   (:standard -warn-error -a+31))))
