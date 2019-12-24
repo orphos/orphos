@@ -55,6 +55,8 @@ module Emit = struct
 
   let letrec = 10
 
+  let product_end = 11
+
   let emit_uint8 out = Buffer.add_uint8 out
 
   let emit_varint out =
@@ -78,11 +80,15 @@ module Emit = struct
     | v when v <= 72057594037927935L -> emit_large 254 7 v
     | v -> emit_large 255 8 v
 
-  let compile out = function
+  let rec compile out = function
     | PInt (value, bits) ->
         emit_uint8 out int;
         emit_uint8 out bits;
         emit_varint out value
+    | PProduct xs ->
+        emit_uint8 out product;
+        xs |> List.iter (compile out);
+        emit_uint8 out product_end
     | _ -> noimpl "Poly.Emit.compile"
 end
 
