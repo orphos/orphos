@@ -359,7 +359,18 @@ let rec elab_exp env level = function
             unify label_type (elab_exp env level value);
             unify rest_type (elab_exp env level rest);
             ret_type
-        | RecordSelection _ | RecordRestrictionLiteral _ -> noimpl "record"
+        | RecordSelection (record, label) ->
+            let rest_type = new_var level in
+            let label_type = new_var level in
+            let record_type = TRowExtend (label, label_type, rest_type) in
+            unify record_type (elab_exp env level record);
+            label_type
+        | RecordRestrictionLiteral (record, label) ->
+            let rest_type = new_var level in
+            let label_type = new_var level in
+            let record_type = TRowExtend (label, label_type, rest_type) in
+            unify record_type (elab_exp env level record);
+            rest_type
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
         | Construct _ -> noimpl "monomorphic variant"
       in
