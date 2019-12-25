@@ -104,7 +104,18 @@ semi:
   | NL { () }
   | SEMI { () }
 
-lower_long_id: LOWER_IDENTIFIER { LongId [$1] }
+lower_id:
+  | LOWER_IDENTIFIER { $1 }
+  (* contextual keywords *)
+  | AS { "as" }
+  | INTERFACE { "interface" }
+  | MODULE { "module" }
+  | OF { "of" }
+  | TYPE { "type" }
+  | VAL { "val" }
+  | WHEN { "when" }
+
+lower_long_id: lower_id { LongId [$1] }
   | UPPER_IDENTIFIER BIG_COLON lower_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
 
 upper_long_id: UPPER_IDENTIFIER { LongId [$1] }
