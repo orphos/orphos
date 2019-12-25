@@ -47,6 +47,7 @@ module Type = struct
     | TTuple of ty list
     | TVar of tvar ref
     | TVariant of string list * string * (string * ty) list
+    | TRecord of ty
     | TRowExtend of oid * ty * ty
     | TRowEmpty
 

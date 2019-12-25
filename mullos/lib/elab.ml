@@ -90,6 +90,7 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
     | TLongId _ -> ()
     | TTuple tys -> List.iter f tys
     | TVariant (_, _, ctors) -> List.iter (function _, ty -> f ty) ctors
+    | TRecord row -> f row
     | TRowEmpty -> ()
     | TRowExtend (_, ty, rest) ->
         f ty;
@@ -115,6 +116,7 @@ let rec unify ty1 ty2 =
         occurs_check_adjust_levels id level ty;
         tvar := Link ty
     | TTuple xs, TTuple ys -> List.iter2 unify xs ys
+    | TRecord left, TRecord right -> unify left right
     | TRowEmpty, TRowEmpty -> ()
     | TRowExtend (label1, ty1, rest1), (TRowExtend _ as row2) ->
         let rest_row1_tvar_ref_option =
@@ -148,6 +150,7 @@ let rec generalize level = function
       TVariant (params, name, List.map (function name, ty -> (name, generalize level ty)) ctors)
   | TVar { contents = Link ty } -> generalize level ty
   | (TVar { contents = Generic _ } | TVar { contents = Unbound _ } | TLongId _) as ty -> ty
+  | TRecord row -> TRecord (generalize level row)
   | TRowEmpty -> TRowEmpty
   | TRowExtend (label, ty, rest) -> TRowExtend (label, generalize level ty, generalize level rest)
 
@@ -168,6 +171,7 @@ let instantiate level ty =
     | TArrow (param_ty, return_ty) -> TArrow (f param_ty, f return_ty)
     | TTuple tys -> TTuple (List.map f tys)
     | TVariant (params, name, ctors) -> TVariant (params, name, List.map (function name, ty -> (name, f ty)) ctors)
+    | TRecord row -> TRecord (f row)
     | TRowEmpty -> TRowEmpty
     | TRowExtend (label, ty, rest) -> TRowExtend (label, f ty, f rest)
   in
@@ -351,25 +355,25 @@ let rec elab_exp env level = function
             aux exps
         | Match _ -> noimpl "pattern matching"
         | Handle _ -> noimpl "effect handler"
-        | RecordEmpty -> TRowEmpty
+        | RecordEmpty -> TRecord TRowEmpty
         | RecordExtend (rest, label, value) ->
             let rest_type = new_var level in
             let label_type = new_var level in
-            let ret_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
+            let ret_type = TRecord (TRowExtend (Type.label_to_oid label, label_type, rest_type)) in
             unify label_type (elab_exp env level value);
-            unify rest_type (elab_exp env level rest);
-            ret_type
+            unify (TRecord rest_type) (elab_exp env level rest);
+            TRecord ret_type
         | RecordSelection (record, label) ->
             let rest_type = new_var level in
             let label_type = new_var level in
-            let record_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
+            let record_type = TRecord (TRowExtend (Type.label_to_oid label, label_type, rest_type)) in
             unify record_type (elab_exp env level record);
             label_type
         | RecordRestrictionLiteral (record, label) ->
             let rest_type = new_var level in
             let label_type = new_var level in
             let record_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
-            unify record_type (elab_exp env level record);
+            unify (TRecord record_type) (elab_exp env level record);
             rest_type
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
         | Construct _ -> noimpl "monomorphic variant"
