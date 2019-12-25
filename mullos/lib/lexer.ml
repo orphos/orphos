@@ -196,7 +196,6 @@ module Make (Data : Syntax.Data) = struct
           | "when" -> WHEN (loc ())
           | "where" -> WHERE (loc ())
           | "with" -> WITH (loc ())
-          | "without" -> WITHOUT (loc ())
           | id -> LOWER_IDENTIFIER (loc (), id) )
       (* quoted lower-identifier *)
       | "${", Sub (any, '}'), '}' ->

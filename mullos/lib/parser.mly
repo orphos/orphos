@@ -96,7 +96,6 @@ let without_loc (_, v) = v
 %token <Location.t> WHEN
 %token <Location.t> WHERE
 %token <Location.t> WITH
-%token <Location.t> WITHOUT
 
 %start<Syntax.Make(Data).compilation_unit> compilation_unit
 
@@ -155,7 +154,6 @@ expression:
       | None -> RecordEmpty |> new_tree in
       fields |> List.fold_left (fun acc -> function key, value -> RecordExtend (acc, key, value) |> new_tree) row
     }
-  | LCBRACKET left=expression WITHOUT DOT right=lower_id RCBRACKET { RecordRestrictionLiteral (left, right) |> new_tree }
   | GRAVE_ACCENT upper_id expression { PolymorphicVariantConstruction ($2, $3) |> new_tree }
 
 assignment_expression: assignment_expression binop_assignment pipeline_expression { BinOp ($1, $2, $3) |> new_tree } | pipeline_expression { $1 }
@@ -207,7 +205,10 @@ binop_cons:
    | PLUS_COLON { Append }
    | HYPHEN_COLON { Erase }
 
-add_expression: add_expression binop_add multiply_expression { BinOp ($1, $2, $3) |> new_tree } | multiply_expression { $1 }
+add_expression:
+  | add_expression binop_add multiply_expression { BinOp ($1, $2, $3) |> new_tree }
+  | left=add_expression HYPHEN DOT right=lower_id { RecordRestrictionLiteral (left, right) |> new_tree }
+  | multiply_expression { $1 }
 %inline
 binop_add:
   | PLUS { Add }
