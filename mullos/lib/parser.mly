@@ -11,89 +11,92 @@ open Tree
 
 let new_tree x = Data.allocate (),  x
 
+let without_loc (_, v) = v
+
 %}
 
-%token AMPERSAND
-%token AND
-%token AS
-%token ASTERISK
-%token AT
-%token BIG_AMPERSAND
-%token BIG_COLON
-%token BIG_EQ
-%token BIG_GREATER
-%token BIG_HYPHEN
-%token BIG_LESS
-%token BIG_PLUS
-%token BIG_VERTICAL
-%token <bool> BOOL
-%token CASE
-%token CIRCUMFLEX
-%token COLON
-%token COLON_EQ
-%token COLON_HYPHEN
-%token COLON_HYPHEN_COLON
-%token COLON_PLUS
-%token COLON_PLUS_COLON
-%token COMMA
-%token DOT
-%token EFFECT
-%token ELSE
-%token END
-%token EOF
-%token EQ
-%token EQ_GREATER
-%token EXCEPTION
-%token EXCLAMATION
-%token EXCLAMATION_EQ
-%token FN
-%token GIVEN
-%token GRAVE_ACCENT
-%token GREATER
-%token HANDLE
-%token HYPHEN
-%token HYPHEN_COLON
-%token HYPHEN_EQ
-%token HYPHEN_GREATER
-%token IF
-%token INTERFACE
-%token LAZY
-%token LCBRACKET
-%token LBRACKET
-%token LESS
-%token LET
-%token <string> LOWER_IDENTIFIER
-%token LOWLINE
-%token LPAREN
-%token MATCH
-%token MODULE
-%token NL
-%token <Syntax.number> NUMBER
-%token NUMBERSIGN
-%token OF
-%token PERCENT
-%token PLUS
-%token PLUS_COLON
-%token PLUS_EQ
-%token RAISE
-%token RBRACKET
-%token RCBRACKET
-%token REC
-%token RPAREN
-%token SEMI
-%token SINGLE_QUOTE
-%token SOLIDUS
-%token <string> TEXT
-%token THEN
-%token TILDE
-%token TYPE
-%token <string> UPPER_IDENTIFIER
-%token VAL
-%token VERTICAL
-%token VERTICAL_GREATER
-%token WHEN
-%token WHERE %token WITH
-%token WITHOUT
+%token <Location.t> AMPERSAND
+%token <Location.t> AND
+%token <Location.t> AS
+%token <Location.t> ASTERISK
+%token <Location.t> AT
+%token <Location.t> BIG_AMPERSAND
+%token <Location.t> BIG_COLON
+%token <Location.t> BIG_EQ
+%token <Location.t> BIG_GREATER
+%token <Location.t> BIG_HYPHEN
+%token <Location.t> BIG_LESS
+%token <Location.t> BIG_PLUS
+%token <Location.t> BIG_VERTICAL
+%token <Location.t * bool> BOOL
+%token <Location.t> CASE
+%token <Location.t> CIRCUMFLEX
+%token <Location.t> COLON
+%token <Location.t> COLON_EQ
+%token <Location.t> COLON_HYPHEN
+%token <Location.t> COLON_HYPHEN_COLON
+%token <Location.t> COLON_PLUS
+%token <Location.t> COLON_PLUS_COLON
+%token <Location.t> COMMA
+%token <Location.t> DOT
+%token <Location.t> EFFECT
+%token <Location.t> ELSE
+%token <Location.t> END
+%token <Location.t> EOF
+%token <Location.t> EQ
+%token <Location.t> EQ_GREATER
+%token <Location.t> EXCEPTION
+%token <Location.t> EXCLAMATION
+%token <Location.t> EXCLAMATION_EQ
+%token <Location.t> FN
+%token <Location.t> GIVEN
+%token <Location.t> GRAVE_ACCENT
+%token <Location.t> GREATER
+%token <Location.t> HANDLE
+%token <Location.t> HYPHEN
+%token <Location.t> HYPHEN_COLON
+%token <Location.t> HYPHEN_EQ
+%token <Location.t> HYPHEN_GREATER
+%token <Location.t> IF
+%token <Location.t> INTERFACE
+%token <Location.t> LAZY
+%token <Location.t> LCBRACKET
+%token <Location.t> LBRACKET
+%token <Location.t> LESS
+%token <Location.t> LET
+%token <Location.t * string> LOWER_IDENTIFIER
+%token <Location.t> LOWLINE
+%token <Location.t> LPAREN
+%token <Location.t> MATCH
+%token <Location.t> MODULE
+%token <Location.t> NL
+%token <Location.t * Syntax.number> NUMBER
+%token <Location.t> NUMBERSIGN
+%token <Location.t> OF
+%token <Location.t> PERCENT
+%token <Location.t> PLUS
+%token <Location.t> PLUS_COLON
+%token <Location.t> PLUS_EQ
+%token <Location.t> RAISE
+%token <Location.t> RBRACKET
+%token <Location.t> RCBRACKET
+%token <Location.t> REC
+%token <Location.t> RPAREN
+%token <Location.t> SEMI
+%token <Location.t> SINGLE_QUOTE
+%token <Location.t> SOLIDUS
+%token <Location.t * string> TEXT
+%token <Location.t> THEN
+%token <Location.t> TILDE
+%token <Location.t> TYPE
+%token <Location.t * string> UPPER_IDENTIFIER
+%token <Location.t> VAL
+%token <Location.t> VERTICAL
+%token <Location.t> VERTICAL_GREATER
+%token <Location.t> WHEN
+%token <Location.t> WHERE
+%token <Location.t> WITH
+%token <Location.t> WITHOUT
 
 %start<Syntax.Make(Data).compilation_unit> compilation_unit
 
@@ -105,7 +108,7 @@ semi:
   | SEMI { () }
 
 lower_id:
-  | LOWER_IDENTIFIER { $1 }
+  | LOWER_IDENTIFIER { without_loc $1 }
   (* contextual keywords *)
   | AS { "as" }
   | INTERFACE { "interface" }
@@ -115,11 +118,13 @@ lower_id:
   | VAL { "val" }
   | WHEN { "when" }
 
-lower_long_id: lower_id { LongId [$1] }
-  | UPPER_IDENTIFIER BIG_COLON lower_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
+upper_id: UPPER_IDENTIFIER { without_loc $1 }
 
-upper_long_id: UPPER_IDENTIFIER { LongId [$1] }
-  | UPPER_IDENTIFIER BIG_COLON upper_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
+lower_long_id: lower_id { LongId [$1] }
+  | upper_id BIG_COLON lower_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
+
+upper_long_id: upper_id { LongId [$1] }
+  | upper_id BIG_COLON upper_long_id { let LongId tail = $3 in LongId ($1 :: tail) }
 
 seq:
   | expression semi seq { $1 :: $3 }
@@ -135,18 +140,18 @@ expression:
   | IF expression THEN expression END { IfThenElse ($2, $4, None) |> new_tree }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) |> new_tree }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) |> new_tree }
-  | LET name=LOWER_IDENTIFIER params=list(LOWER_IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression semi exp=expression { Let (PIdent name |> new_tree , params, body, exp) |> new_tree }
-  | LET REC name=LOWER_IDENTIFIER params=list(LOWER_IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression
-      ands=list(AND name=LOWER_IDENTIFIER params=list(LOWER_IDENTIFIER { PIdent $1 |> new_tree }) EQ body=expression { PIdent name |> new_tree, params, body }) semi exp=expression {
+  | LET name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression semi exp=expression { Let (PIdent name |> new_tree , params, body, exp) |> new_tree }
+  | LET REC name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression
+      ands=list(AND name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression { PIdent name |> new_tree, params, body }) semi exp=expression {
       LetRec ((PIdent name |> new_tree, params, body) :: ands, exp) |> new_tree
     }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) |> new_tree }
   | assignment_expression { $1 }
   | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 |> new_tree }
   | NUMBERSIGN LBRACKET list_nonauto_semi(expression) RBRACKET { ArrayLiteral $3 |> new_tree }
-  | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT LOWER_IDENTIFIER EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) |> new_tree }
-  | LCBRACKET left=expression WITHOUT DOT right=LOWER_IDENTIFIER RCBRACKET { RecordRestrictionLiteral (left, right) |> new_tree }
-  | GRAVE_ACCENT UPPER_IDENTIFIER expression { PolymorphicVariantConstruction ($2, $3) |> new_tree }
+  | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT lower_id EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) |> new_tree }
+  | LCBRACKET left=expression WITHOUT DOT right=lower_id RCBRACKET { RecordRestrictionLiteral (left, right) |> new_tree }
+  | GRAVE_ACCENT upper_id expression { PolymorphicVariantConstruction ($2, $3) |> new_tree }
 
 assignment_expression: assignment_expression binop_assignment pipeline_expression { BinOp ($1, $2, $3) |> new_tree } | pipeline_expression { $1 }
 %inline
@@ -236,16 +241,16 @@ postfix_op:
 
 application_expression: application_expression dot_expression { Apply ($1, $2) |> new_tree } | dot_expression { $1 }
 
-dot_expression: dot_expression DOT LOWER_IDENTIFIER { RecordSelection ($1, $3) |> new_tree } | simple_expression { $1 }
+dot_expression: dot_expression DOT lower_id { RecordSelection ($1, $3) |> new_tree } | simple_expression { $1 }
 
 simple_expression:
   | lower_long_id { Ident $1 |> new_tree }
   | upper_long_id { Construct ($1, None) |> new_tree}
   | LPAREN RPAREN { Unit |> new_tree }
   | LCBRACKET seq RCBRACKET { Seq $2 |> new_tree }
-  | TEXT { Text $1 |> new_tree }
-  | NUMBER { Number $1 |> new_tree }
-  | BOOL { Bool $1 |> new_tree }
+  | TEXT { Text (without_loc $1) |> new_tree }
+  | NUMBER { Number (without_loc $1) |> new_tree }
+  | BOOL { Bool (without_loc $1) |> new_tree }
   | LPAREN expression RPAREN { $2 }
 
 pattern_clause:
@@ -263,31 +268,31 @@ pattern:
   | LBRACKET list_nonauto_semi(pattern) RBRACKET { PListLiteral $2 |> new_tree }
   | NUMBERSIGN LBRACKET list_nonauto_semi(pattern) RBRACKET { PArrayLiteral $3 |> new_tree }
   | tuple_pattern { $1 }
-  | GRAVE_ACCENT UPPER_IDENTIFIER pattern { PPolymorphicVariant ($2, $3) |> new_tree }
+  | GRAVE_ACCENT upper_id pattern { PPolymorphicVariant ($2, $3) |> new_tree }
 
 tuple_pattern: lazy_pattern COMMA separated_nonempty_list(COMMA, lazy_pattern) { PTuple ($1 :: $3) |> new_tree } | lazy_pattern { $1 }
 
 lazy_pattern: LAZY capture_pattern { PLazy $2 |> new_tree } | capture_pattern { $1 }
 
 capture_pattern:
-  | ctor_pattern AS LOWER_IDENTIFIER { PCapture ($3, $1) |> new_tree } | ctor_pattern { $1 }
+  | ctor_pattern AS lower_id { PCapture ($3, $1) |> new_tree } | ctor_pattern { $1 }
 
 ctor_pattern:
-  | UPPER_IDENTIFIER simple_pattern { PCtor ($1, $2) |> new_tree } | simple_pattern { $1 }
+  | upper_id simple_pattern { PCtor ($1, $2) |> new_tree } | simple_pattern { $1 }
 
 simple_pattern:
-  | LOWER_IDENTIFIER { PIdent $1 |> new_tree }
+  | lower_id { PIdent $1 |> new_tree }
   | LPAREN RPAREN { PUnit |> new_tree }
   | LPAREN pattern RPAREN { $2 }
   | LOWLINE { PWildcard |> new_tree }
-  | TEXT { PText $1 |> new_tree }
-  | NUMBER { PNumber $1 |> new_tree }
-  | BOOL { PBool $1 |> new_tree }
+  | TEXT { PText (without_loc $1) |> new_tree }
+  | NUMBER { PNumber (without_loc $1) |> new_tree }
+  | BOOL { PBool (without_loc $1) |> new_tree }
 
 ty:
   | refinement_ty { $1 }
-  | LCBRACKET row=option(ty WITH { $1 }) fields=list_nonauto_semi(DOT LOWER_IDENTIFIER COLON ty { $2, $4 }) RCBRACKET { ERecord (row, fields) |> new_tree }
-  | GRAVE_ACCENT UPPER_IDENTIFIER OF ty { EPolymorphicVariant ($2, $4) |> new_tree }
+  | LCBRACKET row=option(ty WITH { $1 }) fields=list_nonauto_semi(DOT lower_id COLON ty { $2, $4 }) RCBRACKET { ERecord (row, fields) |> new_tree }
+  | GRAVE_ACCENT upper_id OF ty { EPolymorphicVariant ($2, $4) |> new_tree }
   | LBRACKET separated_list(VERTICAL, ty { $1 }) RBRACKET { EOr $2 |> new_tree }
 
 refinement_ty:
@@ -324,21 +329,23 @@ simple_ty:
   | type_variable { EGeneric $1 |> new_tree }
   | LPAREN ty RPAREN { $2 }
 
-type_variable: SINGLE_QUOTE LOWER_IDENTIFIER { $2 }
+type_variable: SINGLE_QUOTE lower_id { $2 }
 
 type_definition:
-  | TYPE type_variable* LOWER_IDENTIFIER { TypeDecl ($2, $3) |> new_tree }
-  | TYPE type_variable* LOWER_IDENTIFIER EQ ty { TypeAlias ($2, $3, $5) |> new_tree }
-  | TYPE params=type_variable* name=LOWER_IDENTIFIER EQ ioption(VERTICAL) ctor=UPPER_IDENTIFIER OF ty=ty tail=nonempty_list(VERTICAL UPPER_IDENTIFIER OF ty { Ctor ($2, $4) |> new_tree }) { MonomorphicVariant (params, name, (Ctor (ctor, ty) |> new_tree) :: tail) |> new_tree }
+  | TYPE type_variable* lower_id { TypeDecl ($2, $3) |> new_tree }
+  | TYPE type_variable* lower_id EQ ty { TypeAlias ($2, $3, $5) |> new_tree }
+  | TYPE params=type_variable* name=lower_id EQ ioption(VERTICAL) ctor=upper_id OF ty=ty tail=nonempty_list(VERTICAL upper_id OF ty {
+    Ctor ($2, $4) |> new_tree }) {
+      MonomorphicVariant (params, name, (Ctor (ctor, ty) |> new_tree) :: tail) |> new_tree }
 
-val_definition: VAL name=LOWER_IDENTIFIER COLON ty=ty { ValDef (name, ty) |> new_tree }
+val_definition: VAL name=lower_id COLON ty=ty { ValDef (name, ty) |> new_tree }
 
 let_definition:
   | LET bindant=pattern EQ exp=expression { LetDef (bindant, exp) |> new_tree }
   | LET REC bindant=pattern EQ exp=expression ands=list(AND bindant=pattern EQ exp=expression{ LetRecDefPart (bindant, exp) |> new_tree }) { LetRecDef ((LetRecDefPart (bindant, exp) |> new_tree) :: ands) |> new_tree }
 
 exception_definition:
-  | EXCEPTION UPPER_IDENTIFIER option(OF ty { $2 }) { ExceptionDef ($2, $3) |> new_tree }
+  | EXCEPTION upper_id option(OF ty { $2 }) { ExceptionDef ($2, $3) |> new_tree }
 
 interface_body_part:
   | val_definition { $1 }
@@ -353,12 +360,12 @@ interface_exp_tail:
 interface_exp: INTERFACE interface_exp_tail { $2 }
 
 interface_decl:
-  | INTERFACE UPPER_IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($2, false, $4)  |> new_tree }
-  | GIVEN INTERFACE UPPER_IDENTIFIER EQ interface_exp_tail { InterfaceDecl ($3, true, $5)  |> new_tree }
+  | INTERFACE upper_id EQ interface_exp_tail { InterfaceDecl ($2, false, $4)  |> new_tree }
+  | GIVEN INTERFACE upper_id EQ interface_exp_tail { InterfaceDecl ($3, true, $5)  |> new_tree }
 
 interface_ref: interface_exp  { InterfaceExp $1 |> new_tree } | upper_long_id { InterfaceId $1  |> new_tree }
 
-interface_where_part: type_variable* LOWER_IDENTIFIER EQ ty { $1, $2, $4 }
+interface_where_part: type_variable* lower_id EQ ty { $1, $2, $4 }
 
 module_body_part:
   | val_definition { TypeDeclInModule $1 |> new_tree }
@@ -372,16 +379,17 @@ module_with_constraint:
   | module_exp module_interface_constraint { $1, $2 }
 
 module_or_functor_decl:
-  | GIVEN MODULE UPPER_IDENTIFIER module_interface_constraint EQ module_exp  {
-        ModuleDecl (Some $3, true, (($6, $4): module_exp)) |> new_tree
+  | GIVEN MODULE upper_id module_interface_constraint EQ module_exp  {
+        ModuleDecl (Some ($3), true, (($6, $4): module_exp)) |> new_tree
       }
   | GIVEN module_with_constraint {
         ModuleDecl (None, false, $2) |> new_tree
       }
-  | MODULE UPPER_IDENTIFIER module_interface_constraint EQ module_exp {
-        ModuleDecl (Some $2, false, ($5, $3)) |> new_tree
+  | MODULE upper_id module_interface_constraint EQ module_exp {
+        ModuleDecl (Some ($2), false, ($5, $3)) |> new_tree
       }
-  | MODULE UPPER_IDENTIFIER separated_nonempty_list(COMMA, UPPER_IDENTIFIER COLON interface_ref { $1, $3 }) module_interface_constraint EQ module_exp { FunctorDecl ($2, ($3 : (string * interface_ref) list), (($6, $4): module_exp)) |> new_tree }
+  | MODULE upper_id separated_nonempty_list(COMMA, upper_id COLON interface_ref { $1, $3 }) module_interface_constraint EQ module_exp {
+    FunctorDecl ($2, ($3 : (string * interface_ref) list), (($6, $4): module_exp)) |> new_tree }
 
 module_interface_constraint: | { [] } | COLON separated_nonempty_list(COMMA, interface_ref) { $2 }
 

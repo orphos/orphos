@@ -1,7 +1,7 @@
 (library
  (public_name mullos)
  (libraries base sedlex zarith camomile batteries)
- (modules poly lexer parser elab syntax aux env)
+ (modules poly lexer parser elab syntax aux env location)
  (preprocess
   (pps sedlex.ppx)))
 

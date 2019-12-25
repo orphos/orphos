@@ -9,14 +9,14 @@ module Make (Data : Syntax.Data) = struct
   open Parser
 
   let is_auto_semi_followed = function
-    | IF | MATCH | FN | LET | LBRACKET | NUMBERSIGN | LCBRACKET | GRAVE_ACCENT | PLUS | HYPHEN | EXCLAMATION
-    | AMPERSAND | ASTERISK | BIG_PLUS | BIG_HYPHEN | RAISE | LAZY | TILDE | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
-    | LPAREN | TEXT _ | NUMBER _ | BOOL _ | TYPE | VAL | EXCEPTION ->
+    | IF _ | MATCH _ | FN _ | LET _ | LBRACKET _ | NUMBERSIGN _ | LCBRACKET _ | GRAVE_ACCENT _ | PLUS _ | HYPHEN _ | EXCLAMATION _
+    | AMPERSAND _ | ASTERISK _ | BIG_PLUS _ | BIG_HYPHEN _ | RAISE _ | LAZY _ | TILDE _ | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
+    | LPAREN _ | TEXT _ | NUMBER _ | BOOL _ | TYPE _ | VAL _ | EXCEPTION _ ->
         true
     | _ -> false
 
   let is_followed_by_auto_semi = function
-    | END | RBRACKET | RCBRACKET | BIG_PLUS | BIG_HYPHEN | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | RPAREN | TEXT _
+    | END _ | RBRACKET _ | RCBRACKET _ | BIG_PLUS _ | BIG_HYPHEN _ | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | RPAREN _ | TEXT _
     | NUMBER _ | BOOL _ ->
         true
     | _ -> false
@@ -28,6 +28,7 @@ module Make (Data : Syntax.Data) = struct
     let rollback = Sedlexing.rollback in
     let lexeme = Sedlexing.Utf8.lexeme in
     let lexeme_char = Sedlexing.lexeme_char in
+    let loc lexbuf = let start, _ = Sedlexing.lexing_positions lexbuf in start in
     let rec read_newline lexbuf =
       match%sedlex lexbuf with
       | '\n' ->
@@ -36,7 +37,7 @@ module Make (Data : Syntax.Data) = struct
       | ' ' | '\t' -> read_newline lexbuf
       | _ ->
           rollback lexbuf;
-          NL
+          NL (loc lexbuf)
     in
     let read_unicode_escape lexbuf limit =
       let rec loop acc = function
@@ -128,129 +129,138 @@ module Make (Data : Syntax.Data) = struct
       aux 0 0 ZType false
     in
     let rec read_raw_token lexbuf =
+      let loc () = loc lexbuf in
       match%sedlex lexbuf with
       | Plus (' ' | '\t') -> read_raw_token lexbuf
       |  '\n' ->
           Sedlexing.new_line lexbuf;
           read_newline lexbuf
       (* three character symbols *)
-      | ":+:" -> COLON_PLUS_COLON
-      | ":-:" -> COLON_HYPHEN_COLON
+      | ":+:" -> COLON_PLUS_COLON (loc ())
+      | ":-:" -> COLON_HYPHEN_COLON (loc ())
       (* two character symbols *)
-      | "!=" -> EXCLAMATION_EQ
-      | "&&" -> BIG_AMPERSAND
-      | "++" -> BIG_PLUS
-      | "+:" -> PLUS_COLON
-      | "+=" -> PLUS_EQ
-      | "," -> COMMA
-      | "--" -> BIG_HYPHEN
-      | "-:" -> HYPHEN_COLON
-      | "-=" -> HYPHEN_EQ
-      | "->" -> HYPHEN_GREATER
-      | ":+" -> COLON_PLUS
-      | ":-" -> COLON_HYPHEN
-      | "::" -> BIG_COLON
-      | ":=" -> COLON_EQ
-      | "<<" -> BIG_LESS
-      | "==" -> BIG_EQ
-      | "=>" -> EQ_GREATER
-      | ">>" -> BIG_GREATER
-      | "[" -> LBRACKET
-      | "]" -> RBRACKET
-      | "|>" -> VERTICAL_GREATER
-      | "||" -> BIG_VERTICAL
+      | "!=" -> EXCLAMATION_EQ (loc ())
+      | "&&" -> BIG_AMPERSAND (loc ())
+      | "++" -> BIG_PLUS (loc ())
+      | "+:" -> PLUS_COLON (loc ())
+      | "+=" -> PLUS_EQ (loc ())
+      | "," -> COMMA (loc ())
+      | "--" -> BIG_HYPHEN (loc ())
+      | "-:" -> HYPHEN_COLON (loc ())
+      | "-=" -> HYPHEN_EQ (loc ())
+      | "->" -> HYPHEN_GREATER (loc ())
+      | ":+" -> COLON_PLUS (loc ())
+      | ":-" -> COLON_HYPHEN (loc ())
+      | "::" -> BIG_COLON (loc ())
+      | ":=" -> COLON_EQ (loc ())
+      | "<<" -> BIG_LESS (loc ())
+      | "==" -> BIG_EQ (loc ())
+      | "=>" -> EQ_GREATER (loc ())
+      | ">>" -> BIG_GREATER (loc ())
+      | "[" -> LBRACKET (loc ())
+      | "]" -> RBRACKET (loc ())
+      | "|>" -> VERTICAL_GREATER (loc ())
+      | "||" -> BIG_VERTICAL (loc ())
       (* raw identifiers starting with uppercase character *)
-      | 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> UPPER_IDENTIFIER (lexeme lexbuf)
+      | 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> UPPER_IDENTIFIER (loc (), lexeme lexbuf)
       (* raw identifiers starting with lowercase or lowline character, or keyword *)
       | ('a' .. 'z' | '_'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') -> (
           match lexeme lexbuf with
-          | "and" -> AND
-          | "as" -> AS
-          | "case" -> CASE
-          | "effect" -> EFFECT
-          | "else" -> ELSE
-          | "end" -> END
-          | "exception" -> EXCEPTION
-          | "false" -> BOOL false
-          | "fn" -> FN
-          | "given" -> GIVEN
-          | "handle" -> HANDLE
-          | "if" -> IF
-          | "interface" -> INTERFACE
-          | "lazy" -> LAZY
-          | "let" -> LET
-          | "match" -> MATCH
-          | "module" -> MODULE
-          | "of" -> OF
-          | "raise" -> RAISE
-          | "rec" -> REC
-          | "then" -> THEN
-          | "true" -> BOOL true
-          | "type" -> TYPE
-          | "val" -> VAL
-          | "when" -> WHEN
-          | "where" -> WHERE
-          | "with" -> WITH
-          | "without" -> WITHOUT
-          | id -> LOWER_IDENTIFIER id )
+          | "and" -> AND (loc ())
+          | "as" -> AS (loc ())
+          | "case" -> CASE (loc ())
+          | "effect" -> EFFECT (loc ())
+          | "else" -> ELSE (loc ())
+          | "end" -> END (loc ())
+          | "exception" -> EXCEPTION (loc ())
+          | "false" -> BOOL (loc (), false)
+          | "fn" -> FN (loc ())
+          | "given" -> GIVEN (loc ())
+          | "handle" -> HANDLE (loc ())
+          | "if" -> IF (loc ())
+          | "interface" -> INTERFACE (loc ())
+          | "lazy" -> LAZY (loc ())
+          | "let" -> LET (loc ())
+          | "match" -> MATCH (loc ())
+          | "module" -> MODULE (loc ())
+          | "of" -> OF (loc ())
+          | "raise" -> RAISE (loc ())
+          | "rec" -> REC (loc ())
+          | "then" -> THEN (loc ())
+          | "true" -> BOOL (loc (), true)
+          | "type" -> TYPE (loc ())
+          | "val" -> VAL (loc ())
+          | "when" -> WHEN (loc ())
+          | "where" -> WHERE (loc ())
+          | "with" -> WITH (loc ())
+          | "without" -> WITHOUT (loc ())
+          | id -> LOWER_IDENTIFIER (loc (), id) )
       (* quoted lower-identifier *)
       | "${", Sub (any, '}'), '}' ->
           let s = lexeme lexbuf in
-          LOWER_IDENTIFIER (String.sub s 2 (String.length s - 3))
+          LOWER_IDENTIFIER (loc (), String.sub s 2 (String.length s - 3))
       (* quoted upper-identifier *)
       | "$[", Sub (any, ']'), ']' ->
           let s = lexeme lexbuf in
-          UPPER_IDENTIFIER (String.sub s 2 (String.length s - 3))
+          UPPER_IDENTIFIER (loc (), String.sub s 2 (String.length s - 3))
+      (* lower identifier prefixed with $ *)
+      | '$', ('a' .. 'z' | '_'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
+          let s = lexeme lexbuf in
+          LOWER_IDENTIFIER (loc (), String.sub s 1 (String.length s - 1))
+      (* upper identifier prefixed with $ *)
+      | '$', ('A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
+        let s = lexeme lexbuf in
+        UPPER_IDENTIFIER (loc (), String.sub s 1 (String.length s - 1))
       (* one character symbols *)
-      | "-" -> HYPHEN
-      | '!' -> EXCLAMATION
-      | '#' -> NUMBERSIGN
-      | '%' -> PERCENT
-      | '&' -> AMPERSAND
-      | '(' -> LPAREN
-      | ')' -> RPAREN
-      | '*' -> ASTERISK
-      | '+' -> PLUS
-      | '.' -> DOT
-      | '/' -> SOLIDUS
-      | ':' -> COLON
-      | ';' -> SEMI
-      | '<' -> LESS
-      | '=' -> EQ
-      | '>' -> GREATER
-      | '@' -> AT
-      | '\'' -> SINGLE_QUOTE
-      | '^' -> CIRCUMFLEX
-      | '_' -> LOWLINE
-      | '_' -> LOWLINE
-      | '`' -> GRAVE_ACCENT
-      | '{' -> LCBRACKET
-      | '|' -> VERTICAL
-      | '}' -> RCBRACKET
-      | '~' -> TILDE
-      | '"' -> TEXT (read_text lexbuf)
+      | "-" -> HYPHEN (loc ())
+      | '!' -> EXCLAMATION (loc ())
+      | '#' -> NUMBERSIGN (loc ())
+      | '%' -> PERCENT (loc ())
+      | '&' -> AMPERSAND (loc ())
+      | '(' -> LPAREN (loc ())
+      | ')' -> RPAREN (loc ())
+      | '*' -> ASTERISK (loc ())
+      | '+' -> PLUS (loc ())
+      | '.' -> DOT (loc ())
+      | '/' -> SOLIDUS (loc ())
+      | ':' -> COLON (loc ())
+      | ';' -> SEMI (loc ())
+      | '<' -> LESS (loc ())
+      | '=' -> EQ (loc ())
+      | '>' -> GREATER (loc ())
+      | '@' -> AT (loc ())
+      | '\'' -> SINGLE_QUOTE (loc ())
+      | '^' -> CIRCUMFLEX (loc ())
+      | '_' -> LOWLINE (loc ())
+      | '_' -> LOWLINE (loc ())
+      | '`' -> GRAVE_ACCENT (loc ())
+      | '{' -> LCBRACKET (loc ())
+      | '|' -> VERTICAL (loc ())
+      | '}' -> RCBRACKET (loc ())
+      | '~' -> TILDE (loc ())
+      | '"' -> TEXT (loc (), read_text lexbuf)
       | "0", '0' .. '7' ->
           rollback lexbuf;
-          NUMBER (read_number lexbuf 8)
-      | "0x" -> NUMBER (read_number lexbuf 16)
-      | "0b" -> NUMBER (read_number lexbuf 2)
+          NUMBER (loc (), read_number lexbuf 8)
+      | "0x" -> NUMBER (loc (), read_number lexbuf 16)
+      | "0b" -> NUMBER (loc (), read_number lexbuf 2)
       | '0' .. '9' ->
           rollback lexbuf;
-          NUMBER (read_number lexbuf 10)
-      | _ -> EOF
+          NUMBER (loc (), read_number lexbuf 10)
+      | _ -> EOF (loc ())
     in
     let read_raw_tokens lexbuf =
       (* read all tokens *)
-      let aux acc = match read_raw_token lexbuf with EOF -> List.rev (EOF :: acc) | t -> t :: acc in
+      let aux acc = match read_raw_token lexbuf with EOF _ as eof -> List.rev (eof :: acc) | t -> t :: acc in
       aux []
     in
     let filter_nl tokens =
       (* Remove NL inside auto semicolon disabled region *)
       let rec aux acc = function
-        | stack, LCBRACKET :: tl -> aux (LCBRACKET :: acc) (true :: stack, tl)
-        | stack, (LPAREN | LBRACKET) :: tl -> aux (LCBRACKET :: acc) (false :: stack, tl)
-        | _ :: stack, (RCBRACKET | RPAREN | RBRACKET) :: tl -> aux (LCBRACKET :: acc) (stack, tl)
-        | (false :: _ as stack), NL :: tl -> aux acc (stack, tl)
+        | stack, (LCBRACKET _ as sym) :: tl -> aux (sym :: acc) (true :: stack, tl)
+        | stack, ((LPAREN  _ | LBRACKET _) as sym) :: tl -> aux (sym :: acc) (false :: stack, tl)
+        | _ :: stack, ((RCBRACKET  _ | RPAREN  _ | RBRACKET _) as sym) :: tl -> aux (sym :: acc) (stack, tl)
+        | (false :: _ as stack), NL _ :: tl -> aux acc (stack, tl)
         | stack, hd :: tl -> aux (hd :: acc) (stack, tl)
         | _, [] -> List.rev acc
       in
@@ -259,8 +269,8 @@ module Make (Data : Syntax.Data) = struct
     let autoinsert_semicolon tokens =
       (* Remove NL unless semicolon should be auto inserted *)
       let rec aux acc = function
-        | NL :: tl -> aux acc tl
-        | t1 :: (NL as t2) :: t3 :: tl when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
+        | NL _ :: tl -> aux acc tl
+        | t1 :: (NL _ as t2) :: t3 :: tl when is_auto_semi_followed t1 && is_followed_by_auto_semi t3 ->
             aux (t3 :: t2 :: t1 :: acc) tl
         | hd :: tl -> aux (hd :: acc) tl
         | [] -> List.rev acc
