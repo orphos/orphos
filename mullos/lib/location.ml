@@ -4,4 +4,3 @@
  *)
 
 type t = Lexing.position
-

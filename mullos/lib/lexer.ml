@@ -9,15 +9,15 @@ module Make (Data : Syntax.Data) = struct
   open Parser
 
   let is_auto_semi_followed = function
-    | IF _ | MATCH _ | FN _ | LET _ | LBRACKET _ | NUMBERSIGN _ | LCBRACKET _ | GRAVE_ACCENT _ | PLUS _ | HYPHEN _ | EXCLAMATION _
-    | AMPERSAND _ | ASTERISK _ | BIG_PLUS _ | BIG_HYPHEN _ | RAISE _ | LAZY _ | TILDE _ | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
-    | LPAREN _ | TEXT _ | NUMBER _ | BOOL _ | TYPE _ | VAL _ | EXCEPTION _ ->
+    | IF _ | MATCH _ | FN _ | LET _ | LBRACKET _ | NUMBERSIGN _ | LCBRACKET _ | GRAVE_ACCENT _ | PLUS _ | HYPHEN _
+    | EXCLAMATION _ | AMPERSAND _ | ASTERISK _ | BIG_PLUS _ | BIG_HYPHEN _ | RAISE _ | LAZY _ | TILDE _
+    | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | LPAREN _ | TEXT _ | NUMBER _ | BOOL _ | TYPE _ | VAL _ | EXCEPTION _ ->
         true
     | _ -> false
 
   let is_followed_by_auto_semi = function
-    | END _ | RBRACKET _ | RCBRACKET _ | BIG_PLUS _ | BIG_HYPHEN _ | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _ | RPAREN _ | TEXT _
-    | NUMBER _ | BOOL _ ->
+    | END _ | RBRACKET _ | RCBRACKET _ | BIG_PLUS _ | BIG_HYPHEN _ | UPPER_IDENTIFIER _ | LOWER_IDENTIFIER _
+    | RPAREN _ | TEXT _ | NUMBER _ | BOOL _ ->
         true
     | _ -> false
 
@@ -28,7 +28,10 @@ module Make (Data : Syntax.Data) = struct
     let rollback = Sedlexing.rollback in
     let lexeme = Sedlexing.Utf8.lexeme in
     let lexeme_char = Sedlexing.lexeme_char in
-    let loc lexbuf = let start, _ = Sedlexing.lexing_positions lexbuf in start in
+    let loc lexbuf =
+      let start, _ = Sedlexing.lexing_positions lexbuf in
+      start
+    in
     let rec read_newline lexbuf =
       match%sedlex lexbuf with
       | '\n' ->
@@ -132,7 +135,7 @@ module Make (Data : Syntax.Data) = struct
       let loc () = loc lexbuf in
       match%sedlex lexbuf with
       | Plus (' ' | '\t') -> read_raw_token lexbuf
-      |  '\n' ->
+      | '\n' ->
           Sedlexing.new_line lexbuf;
           read_newline lexbuf
       (* three character symbols *)
@@ -208,9 +211,9 @@ module Make (Data : Syntax.Data) = struct
           let s = lexeme lexbuf in
           LOWER_IDENTIFIER (loc (), String.sub s 1 (String.length s - 1))
       (* upper identifier prefixed with $ *)
-      | '$', ('A' .. 'Z'), Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
-        let s = lexeme lexbuf in
-        UPPER_IDENTIFIER (loc (), String.sub s 1 (String.length s - 1))
+      | '$', 'A' .. 'Z', Star ('a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9') ->
+          let s = lexeme lexbuf in
+          UPPER_IDENTIFIER (loc (), String.sub s 1 (String.length s - 1))
       (* one character symbols *)
       | "-" -> HYPHEN (loc ())
       | '!' -> EXCLAMATION (loc ())
@@ -258,8 +261,8 @@ module Make (Data : Syntax.Data) = struct
       (* Remove NL inside auto semicolon disabled region *)
       let rec aux acc = function
         | stack, (LCBRACKET _ as sym) :: tl -> aux (sym :: acc) (true :: stack, tl)
-        | stack, ((LPAREN  _ | LBRACKET _) as sym) :: tl -> aux (sym :: acc) (false :: stack, tl)
-        | _ :: stack, ((RCBRACKET  _ | RPAREN  _ | RBRACKET _) as sym) :: tl -> aux (sym :: acc) (stack, tl)
+        | stack, ((LPAREN _ | LBRACKET _) as sym) :: tl -> aux (sym :: acc) (false :: stack, tl)
+        | _ :: stack, ((RCBRACKET _ | RPAREN _ | RBRACKET _) as sym) :: tl -> aux (sym :: acc) (stack, tl)
         | (false :: _ as stack), NL _ :: tl -> aux acc (stack, tl)
         | stack, hd :: tl -> aux (hd :: acc) (stack, tl)
         | _, [] -> List.rev acc
