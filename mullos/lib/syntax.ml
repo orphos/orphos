@@ -50,6 +50,7 @@ module Type = struct
     | TRecord of ty
     | TRowExtend of oid * ty * ty
     | TRowEmpty
+    | TGiven of ty * ty
 
   and tvar = Unbound of int * level | Link of ty | Generic of int
 

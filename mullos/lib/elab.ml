@@ -95,6 +95,9 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
     | TRowExtend (_, ty, rest) ->
         f ty;
         f rest
+    | TGiven (value, row) ->
+        f value;
+        f row
   in
   f ty
 
@@ -139,6 +142,12 @@ let rec unify ty1 ty2 =
         let rest2 = rewrite_row label1 ty1 row2 in
         (match rest_row1_tvar_ref_option with Some { contents = Link _ } -> error "recursive row types" | _ -> ());
         unify rest1 rest2
+    | TGiven (value1, row1), TGiven (value2, row2) ->
+        unify value1 value2;
+        unify row1 row2
+    | TGiven (value1, _), value2 | value1, TGiven (value2, _) ->
+        (* TODO: check type class constraint *)
+        unify value1 value2
     | _, _ -> error "cannot unify types "
 
 let rec generalize level = function
@@ -153,6 +162,7 @@ let rec generalize level = function
   | TRecord row -> TRecord (generalize level row)
   | TRowEmpty -> TRowEmpty
   | TRowExtend (label, ty, rest) -> TRowExtend (label, generalize level ty, generalize level rest)
+  | TGiven (value, row) -> TGiven (generalize level value, generalize level row)
 
 let instantiate level ty =
   let id_var_map = Hashtbl.create 10 in
@@ -174,6 +184,7 @@ let instantiate level ty =
     | TRecord row -> TRecord (f row)
     | TRowEmpty -> TRowEmpty
     | TRowExtend (label, ty, rest) -> TRowExtend (label, f ty, f rest)
+    | TGiven (value, row) -> TGiven (f value, f row)
   in
   f ty
 
