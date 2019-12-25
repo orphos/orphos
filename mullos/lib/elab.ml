@@ -121,7 +121,7 @@ let rec unify ty1 ty2 =
           match rest1 with TVar ({ contents = Unbound _ } as tvar_ref) -> Some tvar_ref | _ -> None
         in
         let rec rewrite_row label1 ty1 = function
-          | TRowEmpty -> "row does not contain label " ^ label1 |> error
+          | TRowEmpty -> "row does not contain label " ^ Type.oid_to_label label1 |> error
           | TRowExtend (label2, ty2, rest2) when label2 = label1 ->
               unify ty1 ty2;
               rest2
@@ -355,20 +355,20 @@ let rec elab_exp env level = function
         | RecordExtend (rest, label, value) ->
             let rest_type = new_var level in
             let label_type = new_var level in
-            let ret_type = TRowExtend (label, label_type, rest_type) in
+            let ret_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
             unify label_type (elab_exp env level value);
             unify rest_type (elab_exp env level rest);
             ret_type
         | RecordSelection (record, label) ->
             let rest_type = new_var level in
             let label_type = new_var level in
-            let record_type = TRowExtend (label, label_type, rest_type) in
+            let record_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
             unify record_type (elab_exp env level record);
             label_type
         | RecordRestrictionLiteral (record, label) ->
             let rest_type = new_var level in
             let label_type = new_var level in
-            let record_type = TRowExtend (label, label_type, rest_type) in
+            let record_type = TRowExtend (Type.label_to_oid label, label_type, rest_type) in
             unify record_type (elab_exp env level record);
             rest_type
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"

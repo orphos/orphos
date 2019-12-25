@@ -25,6 +25,21 @@ let show_long_id long_id =
 module Type = struct
   type level = int
 
+  let label_map : (string, oid) Hashtbl.t = Hashtbl.create 1024
+
+  let label_oid_map : (oid, string) Hashtbl.t = Hashtbl.create 1024
+
+  let label_to_oid label =
+    match Hashtbl.find_opt label_map label with
+    | Some oid -> oid
+    | None ->
+        let ret = new_oid () in
+        Hashtbl.add label_map label ret;
+        Hashtbl.add label_oid_map ret label;
+        ret
+
+  let oid_to_label oid = Hashtbl.find label_oid_map oid
+
   type ty =
     | TLongId of long_id
     | TApply of ty list * ty
@@ -32,7 +47,7 @@ module Type = struct
     | TTuple of ty list
     | TVar of tvar ref
     | TVariant of string list * string * (string * ty) list
-    | TRowExtend of string * ty * ty
+    | TRowExtend of oid * ty * ty
     | TRowEmpty
 
   and tvar = Unbound of int * level | Link of ty | Generic of int
