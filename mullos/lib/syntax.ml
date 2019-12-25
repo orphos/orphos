@@ -8,6 +8,20 @@ type long_id = LongId of string list
 
 let long_id components = LongId components
 
+let show_long_id long_id =
+  let (LongId components) = long_id in
+  let rec aux out = function
+    | [ h ] -> Buffer.add_string out h
+    | h :: t ->
+        Buffer.add_string out h;
+        Buffer.add_string out "::";
+        aux out t
+    | [] -> failwith "Empty long_id"
+  in
+  let buf = Buffer.create 100 in
+  aux buf components;
+  Buffer.contents buf
+
 module Type = struct
   type level = int
 

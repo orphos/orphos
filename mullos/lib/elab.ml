@@ -51,17 +51,27 @@ type value = Exp of exp | CtorValue of ctor | Captured of pat
 
 let get_ty_of_value = function Exp (data, _) | CtorValue (data, _) | Captured (data, _) -> get_ty data
 
-type env = { values : value IdMap.t; types : type_decl IdMap.t }
+type env = { values : (long_id, value) Env.t; types : (long_id, type_decl) Env.t }
 
-let empty = { values = IdMap.empty; types = IdMap.empty }
+let enter env =
+  Env.enter env.values;
+  Env.enter env.types
 
-let extend_value env name value = { env with values = IdMap.add name value env.values }
+let leave env =
+  Env.leave env.values;
+  Env.leave env.types
 
-let extend_type env name type_exp = { env with types = IdMap.add name type_exp env.types }
+let empty () : env = { values = Env.create (); types = Env.create () }
 
-let resolve_value env name = IdMap.find name env.values
+let extend_value env name value = Env.put env.values name value
 
-let resolve_type env name = IdMap.find name env.types
+let extend_type env name type_exp = Env.put env.types name type_exp
+
+let resolve_value env name =
+  match Env.lookup env.values name with None -> error ("Could not resolve " ^ show_long_id name) | Some ret -> ret
+
+let resolve_type env name =
+  match Env.lookup env.types name with None -> error ("Coudl not resolve " ^ show_long_id name) | Some ret -> ret
 
 let occurs_check_adjust_levels tvar_id tvar_level ty =
   let rec f = function
@@ -181,6 +191,7 @@ let rec elab_pat (env : env) (level : level) = function
 
 let rec elab_exp env level = function
   | data, exp' ->
+      enter env;
       let elab = elab_exp env level in
       let ret =
         match exp' with
@@ -190,7 +201,7 @@ let rec elab_exp env level = function
         | Lambda (((param_data, PIdent param_name) as param), body) ->
             let param_ty = new_var level in
             set_ty param_data param_ty;
-            let env = extend_value env (LongId [ param_name ]) (Captured param) in
+            extend_value env (LongId [ param_name ]) (Captured param);
             let return_ty = elab_exp env level body in
             TArrow (param_ty, return_ty)
         | Lambda ((_, _), _) -> noimpl "pattern param"
@@ -198,27 +209,30 @@ let rec elab_exp env level = function
             let value_ty = elab_exp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
             set_ty data generalized_ty;
-            elab_exp (extend_value env (LongId [ name ]) (Captured bindant)) level body
+            extend_value env (LongId [ name ]) (Captured bindant);
+            elab_exp env level body
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
-            let rec allocate_type_vars env = function
+            let rec allocate_type_vars = function
               | (((pat_data, PIdent name) as bindant), _, _) :: t ->
                   let ty = new_var (level + 1) in
                   set_ty pat_data ty;
-                  allocate_type_vars (extend_value env (LongId [ name ]) (Captured bindant)) t
+                  extend_value env (LongId [ name ]) (Captured bindant);
+                  allocate_type_vars t
               | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
-              | [] -> env
+              | [] -> ()
             in
-            let env = allocate_type_vars env lets in
-            let rec elabBindees env = function
+            allocate_type_vars lets;
+            let rec elabBindees = function
               | (((pat_data, PIdent name) as bindant), _, value) :: t ->
                   let value_ty = elab_exp env (level + 1) value in
                   set_ty pat_data value_ty;
-                  elabBindees (extend_value env (LongId [ name ]) (Captured bindant)) t
-              | [] -> env
+                  extend_value env (LongId [ name ]) (Captured bindant);
+                  elabBindees t
+              | [] -> ()
               | ((_, _), _, _) :: _ -> noimpl "binding to pattern"
             in
-            let env = elabBindees env lets in
+            elabBindees lets;
             (* elab_exp body *)
             elab_exp env level body
         | Apply (fn, arg) -> (
@@ -312,12 +326,13 @@ let rec elab_exp env level = function
         | Construct _ -> noimpl "monomorphic variant"
       in
       set_ty data ret;
+      leave env;
       ret
 
 let elab_module_part path _ = function
   | _, part -> (
       (* prepare *)
-      let env = empty in
+      let env = empty () in
       let level = 0 in
       match part with
       | TypeDeclInModule ((_, MonomorphicVariant (params, name, ctors)) as decl) ->
@@ -332,13 +347,14 @@ let elab_module_part path _ = function
           in
           let ty = TVariant (params, name, ctor_types) in
           set_ty_of decl ty;
-          let env = extend_type env (LongId (List.append path [ name ])) decl in
-          let rec aux env = function
+          extend_type env (LongId (List.append path [ name ])) decl;
+          let rec aux = function
             | ((_, Ctor (name, _)) as ctor) :: t ->
-                aux (extend_value env (LongId (List.append path [ name ])) (CtorValue ctor)) t
-            | [] -> env
+                extend_value env (LongId (List.append path [ name ])) (CtorValue ctor);
+                aux t
+            | [] -> ()
           in
-          aux env ctors
+          aux ctors
       | TypeDeclInModule _ -> noimpl "interface"
       | LetDef (((_, PIdent name) as bindant), exp) ->
           let exp_type = elab_exp env (level + 1) exp in
@@ -347,37 +363,36 @@ let elab_module_part path _ = function
           extend_value env (LongId (List.append path [ name ])) (Captured bindant)
       | LetDef ((_, _), _) -> noimpl "pattern binding"
       | LetRecDef lets ->
-          let rec allocate_type_vars env = function
+          let rec allocate_type_vars = function
             | (_, LetRecDefPart (((_, PIdent name) as bindant), _)) :: t ->
                 let ty = new_var (level + 1) in
                 set_ty_of bindant ty;
-                allocate_type_vars (extend_value env (LongId [ name ]) (Captured bindant)) t
+                extend_value env (LongId [ name ]) (Captured bindant);
+                allocate_type_vars t
             | (_, _) :: _ -> noimpl "pattern binding"
-            | [] -> env
+            | [] -> ()
           in
-          let env = allocate_type_vars env lets in
-          let rec elabParts env = function
+          allocate_type_vars lets;
+          let rec elabParts = function
             | (_, LetRecDefPart (_, exp)) :: t ->
                 elab_exp env (level + 1) exp |> ignore;
-                elabParts env t
-            | [] -> env
+                elabParts t
+            | [] -> ()
           in
-          elabParts env lets )
+          elabParts lets )
 
-let rec elab_module' path env type_env module_id name = function
-  | h :: t ->
-      let env = elab_module_part path env h in
-      elab_module' path env type_env module_id name t
-  | [] -> env
+let elab_module' path env _ _ decls = List.iter (elab_module_part path env) decls
 
-let elab_module module_id name module_parts = elab_module' [ name ] empty empty module_id name module_parts
+let elab_module module_id name module_parts env =
+  enter env;
+  elab_module' [ name ] (empty ()) module_id name module_parts
 
 let elab_decl = function
   | data, decl -> (
       match decl with
       | InterfaceDecl _ -> noimpl "interface"
       | FunctorDecl _ -> noimpl "functor"
-      | ModuleDecl (Some name, false, (module_parts, [])) -> elab_module data name module_parts
+      | ModuleDecl (Some name, false, (module_parts, [])) -> elab_module data name module_parts (empty ())
       | ModuleDecl (Some _, false, (_, _ :: _)) -> noimpl "interface"
       | ModuleDecl (_, true, _) -> noimpl "given module"
       | ModuleDecl (None, _, _) -> noimpl "anonymous module" )
