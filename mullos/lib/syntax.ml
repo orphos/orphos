@@ -32,6 +32,8 @@ module Type = struct
     | TTuple of ty list
     | TVar of tvar ref
     | TVariant of string list * string * (string * ty) list
+    | TRowExtend of string * ty * ty
+    | TRowEmpty
 
   and tvar = Unbound of int * level | Link of ty | Generic of int
 
@@ -148,7 +150,8 @@ module Make (Data : Data) = struct
     | Match of exp * pat_clause list
     | ListLiteral of exp list
     | ArrayLiteral of exp list
-    | RecordLiteral of exp option * (string * exp) list
+    | RecordEmpty
+    | RecordExtend of exp * string * exp
     | RecordRestrictionLiteral of exp * string
     | RecordSelection of exp * string
     | PolymorphicVariantConstruction of string * exp

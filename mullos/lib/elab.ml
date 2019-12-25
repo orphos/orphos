@@ -90,6 +90,10 @@ let occurs_check_adjust_levels tvar_id tvar_level ty =
     | TLongId _ -> ()
     | TTuple tys -> List.iter f tys
     | TVariant (_, _, ctors) -> List.iter (function _, ty -> f ty) ctors
+    | TRowEmpty -> ()
+    | TRowExtend (_, ty, rest) ->
+        f ty;
+        f rest
   in
   f ty
 
@@ -111,6 +115,28 @@ let rec unify ty1 ty2 =
         occurs_check_adjust_levels id level ty;
         tvar := Link ty
     | TTuple xs, TTuple ys -> List.iter2 unify xs ys
+    | TRowEmpty, TRowEmpty -> ()
+    | TRowExtend (label1, ty1, rest1), (TRowExtend _ as row2) ->
+        let rest_row1_tvar_ref_option =
+          match rest1 with TVar ({ contents = Unbound _ } as tvar_ref) -> Some tvar_ref | _ -> None
+        in
+        let rec rewrite_row label1 ty1 = function
+          | TRowEmpty -> "row does not contain label " ^ label1 |> error
+          | TRowExtend (label2, ty2, rest2) when label2 = label1 ->
+              unify ty1 ty2;
+              rest2
+          | TRowExtend (label2, ty2, rest2) -> TRowExtend (label2, ty2, rewrite_row label1 ty1 rest2)
+          | TVar { contents = Link row2 } -> rewrite_row label1 ty1 row2
+          | TVar ({ contents = Unbound (_, level) } as tvar) ->
+              let rest2 = new_var level in
+              let ty2 = TRowExtend (label1, ty1, rest2) in
+              tvar := Link ty2;
+              rest2
+          | _ -> error "row type exepcted"
+        in
+        let rest2 = rewrite_row label1 ty1 row2 in
+        (match rest_row1_tvar_ref_option with Some { contents = Link _ } -> error "recursive row types" | _ -> ());
+        unify rest1 rest2
     | _, _ -> error "cannot unify types "
 
 let rec generalize level = function
@@ -122,6 +148,8 @@ let rec generalize level = function
       TVariant (params, name, List.map (function name, ty -> (name, generalize level ty)) ctors)
   | TVar { contents = Link ty } -> generalize level ty
   | (TVar { contents = Generic _ } | TVar { contents = Unbound _ } | TLongId _) as ty -> ty
+  | TRowEmpty -> TRowEmpty
+  | TRowExtend (label, ty, rest) -> TRowExtend (label, generalize level ty, generalize level rest)
 
 let instantiate level ty =
   let id_var_map = Hashtbl.create 10 in
@@ -140,6 +168,8 @@ let instantiate level ty =
     | TArrow (param_ty, return_ty) -> TArrow (f param_ty, f return_ty)
     | TTuple tys -> TTuple (List.map f tys)
     | TVariant (params, name, ctors) -> TVariant (params, name, List.map (function name, ty -> (name, f ty)) ctors)
+    | TRowEmpty -> TRowEmpty
+    | TRowExtend (label, ty, rest) -> TRowExtend (label, f ty, f rest)
   in
   f ty
 
@@ -321,7 +351,15 @@ let rec elab_exp env level = function
             aux exps
         | Match _ -> noimpl "pattern matching"
         | Handle _ -> noimpl "effect handler"
-        | RecordLiteral _ | RecordSelection _ | RecordRestrictionLiteral _ -> noimpl "record"
+        | RecordEmpty -> TRowEmpty
+        | RecordExtend (rest, label, value) ->
+            let rest_type = new_var level in
+            let label_type = new_var level in
+            let ret_type = TRowExtend (label, label_type, rest_type) in
+            unify label_type (elab_exp env level value);
+            unify rest_type (elab_exp env level rest);
+            ret_type
+        | RecordSelection _ | RecordRestrictionLiteral _ -> noimpl "record"
         | PolymorphicVariantConstruction _ -> noimpl "polymorphic variant"
         | Construct _ -> noimpl "monomorphic variant"
       in

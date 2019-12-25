@@ -149,7 +149,12 @@ expression:
   | assignment_expression { $1 }
   | LBRACKET list_nonauto_semi(expression) RBRACKET { ListLiteral $2 |> new_tree }
   | NUMBERSIGN LBRACKET list_nonauto_semi(expression) RBRACKET { ArrayLiteral $3 |> new_tree }
-  | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT lower_id EQ expression { $2, $4 }) RCBRACKET { RecordLiteral (row, fields) |> new_tree }
+  | LCBRACKET row=ioption(expression WITH { $1 }) fields=list_nonauto_semi(DOT lower_id EQ expression { $2, $4 }) RCBRACKET {
+      let row = match row with
+      | Some row -> row
+      | None -> RecordEmpty |> new_tree in
+      fields |> List.fold_left (fun acc -> function key, value -> RecordExtend (acc, key, value) |> new_tree) row
+    }
   | LCBRACKET left=expression WITHOUT DOT right=lower_id RCBRACKET { RecordRestrictionLiteral (left, right) |> new_tree }
   | GRAVE_ACCENT upper_id expression { PolymorphicVariantConstruction ($2, $3) |> new_tree }
 
