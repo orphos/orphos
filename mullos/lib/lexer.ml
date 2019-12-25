@@ -130,7 +130,7 @@ module Make (Data : Syntax.Data) = struct
     let rec read_raw_token lexbuf =
       match%sedlex lexbuf with
       | Plus (' ' | '\t') -> read_raw_token lexbuf
-      | Plus '\n' ->
+      |  '\n' ->
           Sedlexing.new_line lexbuf;
           read_newline lexbuf
       (* three character symbols *)
