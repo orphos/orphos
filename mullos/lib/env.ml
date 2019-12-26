@@ -1,6 +1,6 @@
 (* Copyright (C) 2019 Takezoe,Tomoaki <tomoaki3478@res.ac>
  *
- * SPDX-Identifier: Apache-2.0 WITH LLVM-exception
+ * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  *)
 
 type ('a, 'b) t = ('a, 'b) Hashtbl.t list ref
