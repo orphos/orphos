@@ -8,5 +8,5 @@ Mullos is an implementation of Orphos Programming Language, written in OCaml.
 4. Build mullos package (opam install . --locked).
 
 # Etymology
-From μύλλος (Acient Greek "red mullet"), phonologically influenced by ML (because Mullos is written in Ocaml).
+From μύλλος (Acient Greek "red mullet"), phonologically influenced by ML (because Orphos is a descendant of ML and written in Ocaml).
 
