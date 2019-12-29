@@ -139,10 +139,10 @@ expression:
   | IF expression THEN expression END { IfThenElse ($2, $4, None) |> new_tree }
   | MATCH lhs=expression WITH rhs=pattern_clause+ END { Match (lhs, rhs) |> new_tree }
   | FN pattern HYPHEN_GREATER expression { Lambda ($2, $4) |> new_tree }
-  | LET name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression semi exp=expression { Let (PIdent name |> new_tree , params, body, exp) |> new_tree }
-  | LET REC name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression
-      ands=list(AND name=lower_id params=list(lower_id { PIdent $1 |> new_tree }) EQ body=expression { PIdent name |> new_tree, params, body }) semi exp=expression {
-      LetRec ((PIdent name |> new_tree, params, body) :: ands, exp) |> new_tree
+  | LET name=lower_id params=list(lower_id { PCapture ($1, PWildcard |> new_tree) |> new_tree }) EQ body=expression semi exp=expression { Let (PCapture (name, PWildcard |> new_tree) |> new_tree , params, body, exp) |> new_tree }
+  | LET REC name=lower_id params=list(lower_id { PCapture ($1, PWildcard |> new_tree) |> new_tree }) EQ body=expression
+      ands=list(AND name=lower_id params=list(lower_id { PCapture ($1, PWildcard |> new_tree) |> new_tree }) EQ body=expression { PCapture (name, PWildcard |> new_tree) |> new_tree, params, body }) semi exp=expression {
+      LetRec ((PCapture (name, PWildcard |> new_tree) |> new_tree, params, body) :: ands, exp) |> new_tree
     }
   | assignment_expression HANDLE pattern_clause+ END { Handle ($1, $3) |> new_tree }
   | assignment_expression { $1 }
@@ -287,7 +287,7 @@ ctor_pattern:
   | upper_id simple_pattern { PCtor ($1, $2) |> new_tree } | simple_pattern { $1 }
 
 simple_pattern:
-  | lower_id { PIdent $1 |> new_tree }
+  | lower_id { PCapture ($1, PWildcard |> new_tree) |> new_tree }
   | LPAREN RPAREN { PUnit |> new_tree }
   | LPAREN pattern RPAREN { $2 }
   | LOWLINE { PWildcard |> new_tree }

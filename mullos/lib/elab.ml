@@ -214,7 +214,7 @@ let rec elab_pat (env : env) (level : level) = function
   | data, pat' ->
       let ty =
         match pat' with
-        | PIdent _ -> new_var level
+        | PCapture (_, (_, PWildcard)) -> new_var level
         | PUnit -> TLongId (LongId [ "unit" ])
         | PCapture (_, pat) -> elab_pat env level pat
         | PCtor _ -> noimpl "variant constructor pattern"
@@ -243,14 +243,14 @@ let rec elab_exp env level = function
         | Ident name -> (
             try instantiate level (resolve_value env name |> get_ty_of_value)
             with Not_found -> error "variable not found" )
-        | Lambda (((param_data, PIdent param_name) as param), body) ->
+        | Lambda (((param_data, PCapture (param_name, (_, PWildcard))) as param), body) ->
             let param_ty = new_var level in
             set_ty param_data param_ty;
             extend_value env (LongId [ param_name ]) (Captured param);
             let return_ty = elab_exp env level body in
             TArrow (param_ty, return_ty)
         | Lambda ((_, _), _) -> noimpl "pattern param"
-        | Let (((_, PIdent name) as bindant), _, value, body) ->
+        | Let (((_, PCapture (name, (_, PWildcard))) as bindant), _, value, body) ->
             let value_ty = elab_exp env (level + 1) value in
             let generalized_ty = generalize level value_ty in
             set_ty data generalized_ty;
@@ -259,7 +259,7 @@ let rec elab_exp env level = function
         | Let _ -> noimpl "binding to pattern"
         | LetRec (lets, body) ->
             let rec allocate_type_vars = function
-              | (((pat_data, PIdent name) as bindant), _, _) :: t ->
+              | (((pat_data, PCapture (name, (_, PWildcard))) as bindant), _, _) :: t ->
                   let ty = new_var (level + 1) in
                   set_ty pat_data ty;
                   extend_value env (LongId [ name ]) (Captured bindant);
@@ -269,7 +269,7 @@ let rec elab_exp env level = function
             in
             allocate_type_vars lets;
             let rec elabBindees = function
-              | (((pat_data, PIdent name) as bindant), _, value) :: t ->
+              | (((pat_data, PCapture (name, (_, PWildcard))) as bindant), _, value) :: t ->
                   let value_ty = elab_exp env (level + 1) value in
                   set_ty pat_data value_ty;
                   extend_value env (LongId [ name ]) (Captured bindant);
@@ -420,7 +420,7 @@ let elab_module_part path _ = function
           in
           aux ctors
       | TypeDeclInModule _ -> noimpl "interface"
-      | LetDef (((_, PIdent name) as bindant), exp) ->
+      | LetDef (((_, PCapture (name, (_, PWildcard))) as bindant), exp) ->
           let exp_type = elab_exp env (level + 1) exp in
           let generalized_type = generalize level exp_type in
           set_ty_of bindant generalized_type;
@@ -428,7 +428,7 @@ let elab_module_part path _ = function
       | LetDef ((_, _), _) -> noimpl "pattern binding"
       | LetRecDef lets ->
           let rec allocate_type_vars = function
-            | (_, LetRecDefPart (((_, PIdent name) as bindant), _)) :: t ->
+            | (_, LetRecDefPart (((_, PCapture (name, (_, PWildcard))) as bindant), _)) :: t ->
                 let ty = new_var (level + 1) in
                 set_ty_of bindant ty;
                 extend_value env (LongId [ name ]) (Captured bindant);

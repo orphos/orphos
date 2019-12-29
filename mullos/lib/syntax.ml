@@ -185,7 +185,6 @@ module Make (Data : Data) = struct
   and pat_clause = Data.t * pat_clause'
 
   and pat' =
-    | PIdent of string
     | PUnit
     | PCapture of string * pat
     | PCtor of string * pat
