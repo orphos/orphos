@@ -27,14 +27,13 @@ module Make (Data : Syntax.Data) = struct
   type auto_semi_region_type = TopLevel | InCbracket | InParen | InPatternClause
 
   type context = {
-    ahead2 : Parser.token option ref;
-    ahead : Parser.token option ref;
-    current : Parser.token option ref;
-    auto_semi_regions : auto_semi_region_type list ref;
+    ahead2 : Parser.token option;
+    ahead : Parser.token option;
+    current : Parser.token option;
+    auto_semi_regions : auto_semi_region_type list;
   }
 
-  let new_context () =
-    { ahead2 = ref None; ahead = ref None; current = ref None; auto_semi_regions = ref [ TopLevel ] }
+  let new_context () = ref { ahead2 = None; ahead = None; current = None; auto_semi_regions = [ TopLevel ] }
 
   let rollback = Sedlexing.rollback
 
@@ -265,94 +264,59 @@ module Make (Data : Syntax.Data) = struct
 
   let rec read_token lexbuf region_in_sync context =
     match (region_in_sync, context) with
-    | _, { current = { contents = None }; ahead = { contents = None }; ahead2 = { contents = None }; _ } ->
-        context.ahead2 := Some (read_raw_token lexbuf);
+    | _, { contents = { current = None; ahead = None; ahead2 = None; _ } } ->
+        context := { !context with ahead2 = Some (read_raw_token lexbuf) };
         read_token lexbuf false context
-    | ( true,
-        { current = { contents = None }; ahead = { contents = None }; ahead2 = { contents = Some ahead2 }; _ } )
+    | true, { contents = { current = None; ahead = None; ahead2 = Some ahead2; _ } } ->
+        context := { !context with ahead2 = Some (read_raw_token lexbuf); ahead = Some ahead2 };
+        read_token lexbuf false context
+    | true, { contents = { current = None; ahead = Some ahead; ahead2 = Some ahead2; _ } } ->
+        context := { !context with ahead2 = Some (read_raw_token lexbuf); ahead = Some ahead2; current = Some ahead };
+        read_token lexbuf false context
+    | false, { contents = { ahead2 = Some (LCBRACKET _); auto_semi_regions = regions; _ } } ->
+        context := { !context with auto_semi_regions = InCbracket :: regions };
+        read_token lexbuf true context
+    | false, { contents = { ahead2 = Some (LPAREN _ | LBRACKET _); auto_semi_regions = regions; _ } } ->
+        context := { !context with auto_semi_regions = InParen :: regions };
+        read_token lexbuf true context
+    | ( false,
+        { contents = { ahead2 = Some (RCBRACKET _ | RPAREN _ | RBRACKET _); auto_semi_regions = _ :: regions_tail; _ } }
+      ) ->
+        context := { !context with auto_semi_regions = regions_tail };
+        read_token lexbuf true context
+    | false, { contents = { ahead2 = Some (CASE _); auto_semi_regions = regions; _ } } ->
+        context := { !context with auto_semi_regions = InPatternClause :: regions };
+        read_token lexbuf true context
+    | false, { contents = { ahead2 = Some (HYPHEN_GREATER _); auto_semi_regions = InPatternClause :: regions_tail; _ } }
       ->
-        context.ahead2 := Some (read_raw_token lexbuf);
-        context.ahead := Some ahead2;
-        read_token lexbuf false context
-    | ( true,
-        {
-          current = { contents = None };
-          ahead = { contents = Some ahead };
-          ahead2 = { contents = Some ahead2 };
-          _;
-        } ) ->
-        context.ahead2 := Some (read_raw_token lexbuf);
-        context.ahead := Some ahead2;
-        context.current := Some ahead;
-        read_token lexbuf false context
-    | false, { ahead2 = { contents = Some (LCBRACKET _) }; auto_semi_regions = { contents = regions }; _ } ->
-        context.auto_semi_regions := InCbracket :: regions;
+        context := { !context with auto_semi_regions = regions_tail };
         read_token lexbuf true context
-    | false, { ahead2 = { contents = Some (LPAREN _ | LBRACKET _) }; auto_semi_regions = { contents = regions }; _ } ->
-        context.auto_semi_regions := InParen :: regions;
-        read_token lexbuf true context
-    | ( false,
-        {
-          ahead2 = { contents = Some (RCBRACKET _ | RPAREN _ | RBRACKET _) };
-          auto_semi_regions = { contents = _ :: regions_tail };
-          _;
-        } ) ->
-        context.auto_semi_regions := regions_tail;
-        read_token lexbuf true context
-    | false, { ahead2 = { contents = Some (CASE _) }; auto_semi_regions = { contents = regions }; _ } ->
-        context.auto_semi_regions := InPatternClause :: regions;
-        read_token lexbuf true context
-    | ( false,
-        {
-          ahead2 = { contents = Some (HYPHEN_GREATER _) };
-          auto_semi_regions = { contents = InPatternClause :: regions_tail };
-          _;
-        } ) ->
-        context.auto_semi_regions := regions_tail;
-        read_token lexbuf true context
-    | ( false,
-        {
-          ahead2 = { contents = Some (NL _) };
-          auto_semi_regions = { contents = (InParen | InPatternClause) :: _ };
-          _;
-        } ) ->
+    | false, { contents = { ahead2 = Some (NL _); auto_semi_regions = (InParen | InPatternClause) :: _; _ } } ->
         (* skip NL inside autoinsertion-disabled region *)
-        context.ahead2 := Some (read_raw_token lexbuf);
+        context := { !context with ahead2 = Some (read_raw_token lexbuf) };
         read_token lexbuf false context
     | false, context -> read_token lexbuf true context
-    | ( true,
-        {
-          current = { contents = Some current };
-          ahead = { contents = Some (NL _) };
-          ahead2 = { contents = Some ahead2 };
-          _;
-        } )
+    | true, { contents = { current = Some current; ahead = Some (NL _); ahead2 = Some ahead2; _ } }
       when is_auto_semi_followed current && is_followed_by_auto_semi ahead2 ->
-        context.current := None;
+        context := { !context with current = None };
         current
-    | ( true,
-        { current = { contents = Some current }; ahead = { contents = Some (NL _) }; ahead2 = { contents = Some _ }; _ }
-      ) ->
+    | true, { contents = { current = Some current; ahead = Some (NL _); ahead2 = Some _; _ } } ->
         (* skip NL that is not between auto_semi_followed and followed_by_auto_semi *)
-        context.current := None;
-        context.ahead := Some current;
+        context := { !context with current = None; ahead = Some current };
         read_token lexbuf true context
-    | true, { current = { contents = Some current }; ahead = { contents = Some _ }; ahead2 = { contents = Some _ }; _ }
-      ->
-        context.current := None;
+    | true, { contents = { current = Some current; ahead = Some _; ahead2 = Some _; _ } } ->
+        context := { !context with current = None };
         current
-    | true, { current = { contents = Some _ }; ahead2 = { contents = None }; _ }
-    | true, { current = { contents = Some _ }; ahead = { contents = None }; _ }
-    | true, { ahead = { contents = Some _ }; ahead2 = { contents = None }; _ } ->
+    | true, { contents = { current = Some _; ahead2 = None; _ } }
+    | true, { contents = { current = Some _; ahead = None; _ } }
+    | true, { contents = { ahead = Some _; ahead2 = None; _ } } ->
         failwith "unreachable"
-  type t = { read : unit -> Parser.token; context : context; lexbuf : Sedlexing.lexbuf }
-  let from_sedlex (lexbuf: Sedlexing.lexbuf): t =
+
+  type t = { read : unit -> Parser.token; context : context ref; lexbuf : Sedlexing.lexbuf }
+
+  let from_sedlex (lexbuf : Sedlexing.lexbuf) : t =
     let context = new_context () in
-    {
-      read = (fun () -> read_token lexbuf true context);
-      context = context;
-      lexbuf = lexbuf;
-    }
+    { read = (fun () -> read_token lexbuf true context); context; lexbuf }
 
   let from_string source = Sedlexing.Utf8.from_string source |> from_sedlex
 

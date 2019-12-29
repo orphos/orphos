@@ -4,7 +4,8 @@
  *)
 module Make (Data : Syntax.Data) : sig
   type context
-type t = { read : unit -> Parser.Make(Data).token; context : context; lexbuf : Sedlexing.lexbuf }
+
+  type t = { read : unit -> Parser.Make(Data).token; context : context ref; lexbuf : Sedlexing.lexbuf }
 
   val from_sedlex : Sedlexing.lexbuf -> t
 
